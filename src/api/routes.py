@@ -1,17 +1,26 @@
-"""Main API router"""
+"""
+Main API router - aggregates all route modules
+"""
 from fastapi import APIRouter
+from src.api.jurisdictions import router as jurisdictions_router
 
 router = APIRouter()
 
+# Include jurisdiction routes
+router.include_router(jurisdictions_router)
+
+
 @router.get("/")
 async def api_root():
+    """API root endpoint"""
     return {
         "message": "Tax-Incentive Compliance Platform API",
+        "version": "v1",
         "endpoints": {
             "jurisdictions": "/api/v1/jurisdictions",
-            "incentive_rules": "/api/v1/incentive-rules",
-            "productions": "/api/v1/productions",
-            "expenses": "/api/v1/expenses",
-            "calculations": "/api/v1/calculations"
+            "incentive_rules": "/api/v1/incentive-rules (coming soon)",
+            "productions": "/api/v1/productions (coming soon)",
+            "expenses": "/api/v1/expenses (coming soon)",
+            "calculations": "/api/v1/calculations (coming soon)"
         }
     }
