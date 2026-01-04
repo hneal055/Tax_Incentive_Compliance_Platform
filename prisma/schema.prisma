@@ -1,0 +1,173 @@
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Jurisdiction {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique
+  country     String
+  type        String
+  active      Boolean  @default(true)
+  description String?
+  website     String?
+  contactInfo Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  incentiveRules IncentiveRule[]
+  productions    Production[]
+
+  @@index([country, type])
+  @@index([active])
+  @@map("jurisdictions")
+}
+
+model IncentiveRule {
+  id               String       @id @default(uuid())
+  jurisdictionId   String
+  jurisdiction     Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  ruleName         String
+  ruleCode         String
+  incentiveType    String
+  percentage       Float?
+  fixedAmount      Float?
+  minSpend         Float?
+  maxCredit        Float?
+  eligibleExpenses String[]
+  excludedExpenses String[]
+  effectiveDate    DateTime
+  expirationDate   DateTime?
+  requirements     Json
+  metadata         Json?
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  calculations Calculation[]
+
+  @@index([jurisdictionId])
+  @@index([incentiveType])
+  @@index([active])
+  @@map("incentive_rules")
+}
+
+model Production {
+  id                String       @id @default(uuid())
+  title             String
+  productionType    String
+  jurisdictionId    String
+  jurisdiction      Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  budgetTotal       Float
+  budgetQualifying  Float?
+  startDate         DateTime
+  endDate           DateTime?
+  wrapDate          DateTime?
+  productionCompany String
+  accountant        String?
+  contact           Json?
+  status            String
+  metadata          Json?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  expenses     Expense[]
+  calculations Calculation[]
+
+  @@index([jurisdictionId])
+  @@index([status])
+  @@index([productionType])
+  @@map("productions")
+}
+
+model Expense {
+  id             String     @id @default(uuid())
+  productionId   String
+  production     Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  category       String
+  subcategory    String?
+  description    String
+  amount         Float
+  expenseDate    DateTime
+  paymentDate    DateTime?
+  isQualifying   Boolean    @default(false)
+  qualifyingNote String?
+  vendorName     String?
+  vendorLocation String?
+  receiptNumber  String?
+  invoiceNumber  String?
+  metadata       Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([productionId])
+  @@index([category])
+  @@index([isQualifying])
+  @@map("expenses")
+}
+
+model Calculation {
+  id                 String        @id @default(uuid())
+  productionId       String
+  production         Production    @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  incentiveRuleId    String
+  incentiveRule      IncentiveRule @relation(fields: [incentiveRuleId], references: [id])
+  qualifyingExpenses Float
+  creditAmount       Float
+  calculationDate    DateTime      @default(now())
+  breakdown          Json
+  notes              String?
+  approved           Boolean       @default(false)
+  submittedDate      DateTime?
+  approvedDate       DateTime?
+  rejectedDate       DateTime?
+  rejectionNote      String?
+  submittedBy        String?
+  approvedBy         String?
+  metadata           Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([productionId])
+  @@index([incentiveRuleId])
+  @@index([approved])
+  @@map("calculations")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      String
+  company   String?
+  password  String
+  active    Boolean  @default(true)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  entityType String
+  entityId   String
+  action     String
+  changes    Json
+  timestamp  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
