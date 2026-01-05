@@ -5,30 +5,46 @@ Main application entry point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from contextlib import asynccontextmanager
 import logging
 from typing import Dict
 
 from src.api.routes import router
+from src.utils.database import prisma
 from src.utils.config import settings
 
-# Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI application
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events"""
+    # Startup
+    logger.info("Starting Tax-Incentive Compliance Platform")
+    await prisma.connect()
+    logger.info("Database connected")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down Tax-Incentive Compliance Platform")
+    await prisma.disconnect()
+    logger.info("Database disconnected")
+
+
 app = FastAPI(
     title=settings.API_TITLE,
     description="Jurisdictional Rule Engine for Film & Television Tax Incentives",
     version=settings.API_VERSION,
+    lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    redoc_url="/redoc"
 )
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -37,16 +53,12 @@ app.add_middleware(
     allow_headers=settings.ALLOWED_HEADERS,
 )
 
-# Add GZip compression
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-# Include API routes
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
 @app.get("/")
 async def root() -> Dict[str, str]:
-    """Root endpoint"""
     return {
         "message": "Tax-Incentive Compliance Platform",
         "version": settings.API_VERSION,
@@ -56,20 +68,15 @@ async def root() -> Dict[str, str]:
 
 @app.get("/health")
 async def health_check() -> Dict[str, str]:
-    """Health check endpoint"""
+    try:
+        await prisma.execute_raw("SELECT 1")
+        db_status = "healthy"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        db_status = "unhealthy"
+    
     return {
-        "status": "healthy",
-        "database": "not configured",
+        "status": "healthy" if db_status == "healthy" else "unhealthy",
+        "database": db_status,
         "api_version": settings.API_VERSION
     }
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "src.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG,
-        log_level=settings.LOG_LEVEL.lower()
-    )
