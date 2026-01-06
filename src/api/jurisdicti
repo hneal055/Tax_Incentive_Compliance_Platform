@@ -15,14 +15,14 @@ def _clean(s: Optional[str]) -> Optional[str]:
 
 
 def _dt(v: Any) -> Any:
-    # Ensure JSON-friendly timestamps
+    # Keep JSON-friendly timestamps
     if isinstance(v, datetime):
         return v.isoformat()
     return v
 
 
 def _to_jurisdiction_dict(j: Any) -> Dict[str, Any]:
-    # Tight, stable payload (no nested relations unless requested)
+    # Tight, stable payload
     return {
         "id": getattr(j, "id", None),
         "name": getattr(j, "name", None),
@@ -66,13 +66,6 @@ async def list_jurisdictions(
     order_dir: str = Query("asc", description="Sort direction: asc|desc"),
     include_relations: bool = Query(False, description="Include related incentiveRules and productions"),
 ) -> Dict[str, Any]:
-    """
-    Optimized + compatible:
-    - DB-side filtering/paging/sorting
-    - Correct DB count for `total`
-    - Tight response mapping in Python (no Prisma `select`, which your client rejects)
-    """
-
     q = _clean(q)
     country = _clean(country)
     type = _clean(type)
@@ -85,7 +78,6 @@ async def list_jurisdictions(
     if od not in {"asc", "desc"}:
         raise HTTPException(status_code=400, detail="Invalid order_dir. Use asc or desc.")
 
-    # Build Prisma where
     where: Dict[str, Any] = {}
     if country:
         where["country"] = country
@@ -101,9 +93,9 @@ async def list_jurisdictions(
             {"type": {"contains": q, "mode": "insensitive"}},
         ]
 
-    # Sorting: list-of-dicts is broadly compatible
     order = [{order_by: od}]
 
+    # total BEFORE pagination
     total = await prisma.jurisdiction.count(where=where)
 
     find_kwargs: Dict[str, Any] = {
@@ -114,7 +106,7 @@ async def list_jurisdictions(
     }
 
     if include_relations:
-        # Only include relations when requested
+        # Keep relations, but we will still trim them in the response
         find_kwargs["include"] = {"incentiveRules": True, "productions": True}
 
     rows = await prisma.jurisdiction.find_many(**find_kwargs)
@@ -122,13 +114,11 @@ async def list_jurisdictions(
     jurisdictions: List[Dict[str, Any]] = []
     for j in rows:
         item = _to_jurisdiction_dict(j)
-
         if include_relations:
             rules = getattr(j, "incentiveRules", None) or []
             prods = getattr(j, "productions", None) or []
             item["incentiveRules"] = [_to_rule_dict(r) for r in rules]
             item["productions"] = [_to_production_dict(p) for p in prods]
-
         jurisdictions.append(item)
 
     return {
@@ -161,7 +151,6 @@ async def get_jurisdiction(
         raise HTTPException(status_code=404, detail=f"Jurisdiction not found: {code}")
 
     item = _to_jurisdiction_dict(j)
-
     if include_relations:
         rules = getattr(j, "incentiveRules", None) or []
         prods = getattr(j, "productions", None) or []

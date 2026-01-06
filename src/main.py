@@ -12,10 +12,11 @@ from typing import Dict
 from src.api.routes import router
 from src.utils.database import prisma
 from src.utils.config import settings
+from src.utils.startup_banner import print_api_urls
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,12 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Tax-Incentive Compliance Platform")
     await prisma.connect()
     logger.info("Database connected")
-    
+
+    # Print helpful URLs for local dev
+    print_api_urls(api_version=settings.API_VERSION, host="localhost", port=8000)
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Tax-Incentive Compliance Platform")
     await prisma.disconnect()
@@ -42,7 +46,7 @@ app = FastAPI(
     version=settings.API_VERSION,
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 app.add_middleware(
@@ -62,7 +66,7 @@ async def root() -> Dict[str, str]:
     return {
         "message": "Tax-Incentive Compliance Platform",
         "version": settings.API_VERSION,
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -74,9 +78,9 @@ async def health_check() -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
-    
+
     return {
         "status": "healthy" if db_status == "healthy" else "unhealthy",
         "database": db_status,
-        "api_version": settings.API_VERSION
+        "api_version": settings.API_VERSION,
     }
