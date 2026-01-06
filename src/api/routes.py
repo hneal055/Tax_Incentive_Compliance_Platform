@@ -1,23 +1,37 @@
+"""
+API router aggregation
+
+This file is intentionally defensive: missing optional routers will not crash app startup.
+"""
+from __future__ import annotations
+
+import logging
 from fastapi import APIRouter
 
-from src.api.jurisdictions import router as jurisdictions_router
-from src.api.incentive_rules import router as incentive_rules_router
-from src.api.calculations import router as calculations_router
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-router.include_router(jurisdictions_router)
-router.include_router(incentive_rules_router)
-router.include_router(calculations_router)
 
-@router.get("/")
-async def api_root():
-    return {
-        "message": "Tax-Incentive Compliance API",
-        "endpoints": {
-            "jurisdictions": "/api/v1/jurisdictions",
-            "incentive_rules": "/api/v1/incentive-rules",
-            "calculations": "/api/v1/calculations",
-            "docs": "/docs"
-        }
-    }
+def _safe_include(module_path: str, attr: str = "router") -> None:
+    try:
+        mod = __import__(module_path, fromlist=[attr])
+        sub_router = getattr(mod, attr)
+        router.include_router(sub_router)
+        logger.info("Included router: %s", module_path)
+    except ModuleNotFoundError as e:
+        logger.warning("Router module missing, skipping: %s (%s)", module_path, e)
+    except Exception as e:
+        logger.exception("Failed including router %s: %s", module_path, e)
+
+
+# Core routers (expected to exist)
+_safe_include("src.api.jurisdictions")
+_safe_include("src.api.incentive_rules")
+
+# Optional/phase routers (may not exist yet)
+_safe_include("src.api.calculations")
+_safe_include("src.api.productions")
+_safe_include("src.api.expenses")
+_safe_include("src.api.audit_logs")
+_safe_include("src.api.users")

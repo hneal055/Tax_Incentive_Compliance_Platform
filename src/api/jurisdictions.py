@@ -1,171 +1,233 @@
-from fastapi import APIRouter, Query, HTTPException
-from typing import Optional, Dict, Any, List
-from datetime import datetime
+"""
+Jurisdictions API
+- Robust list endpoint with filtering, ordering, pagination
+- Tight payload by default (no relations, no timestamps)
+"""
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Literal
 
 from src.utils.database import prisma
+
 
 router = APIRouter(prefix="/jurisdictions", tags=["Jurisdictions"])
 
 
-def _clean(s: Optional[str]) -> Optional[str]:
-    if s is None:
-        return None
-    s = str(s).strip()
-    return s if s else None
+# ----------------------------
+# Response Models (tight by default)
+# ----------------------------
+
+class JurisdictionTight(BaseModel):
+    id: str
+    code: str
+    name: str
+    country: str
+    type: str
+    active: bool
+    description: Optional[str] = None
+    website: Optional[str] = None
 
 
-def _dt(v: Any) -> Any:
-    # Ensure JSON-friendly timestamps
-    if isinstance(v, datetime):
-        return v.isoformat()
-    return v
+class JurisdictionMeta(JurisdictionTight):
+    contactInfo: Optional[str] = None
+    createdAt: Optional[str] = None
+    updatedAt: Optional[str] = None
 
 
-def _to_jurisdiction_dict(j: Any) -> Dict[str, Any]:
-    # Tight, stable payload (no nested relations unless requested)
-    return {
-        "id": getattr(j, "id", None),
-        "name": getattr(j, "name", None),
-        "code": getattr(j, "code", None),
-        "country": getattr(j, "country", None),
-        "type": getattr(j, "type", None),
-        "description": getattr(j, "description", None),
-        "website": getattr(j, "website", None),
-        "active": getattr(j, "active", None),
-        "contactInfo": getattr(j, "contactInfo", None),
-        "createdAt": _dt(getattr(j, "createdAt", None)),
-        "updatedAt": _dt(getattr(j, "updatedAt", None)),
-    }
+class JurisdictionsListResponse(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    q: Optional[str] = None
+    filters: Dict[str, Any] = Field(default_factory=dict)
+    order: Dict[str, str] = Field(default_factory=dict)
+    jurisdictions: List[Dict[str, Any]]
 
 
-def _to_rule_dict(r: Any) -> Dict[str, Any]:
-    return {
-        "id": getattr(r, "id", None),
-        "name": getattr(r, "name", None),
-        "active": getattr(r, "active", None),
-    }
+# ----------------------------
+# Helpers
+# ----------------------------
 
+ALLOWED_ORDER_FIELDS = {
+    "code",
+    "name",
+    "country",
+    "type",
+    "active",
+    "createdAt",
+    "updatedAt",
+}
 
-def _to_production_dict(p: Any) -> Dict[str, Any]:
-    return {
-        "id": getattr(p, "id", None),
-        "name": getattr(p, "name", None),
-        "active": getattr(p, "active", None),
-    }
-
-
-@router.get("/")
-async def list_jurisdictions(
-    q: Optional[str] = Query(None, description="Search (matches name/code/country/type)"),
-    country: Optional[str] = Query(None, description="Filter by country (exact match)"),
-    type: Optional[str] = Query(None, description="Filter by type (state/province/country/etc.)"),
-    active: Optional[bool] = Query(None, description="Filter by active status"),
-    limit: int = Query(1000, ge=1, le=5000, description="Max rows to return"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
-    order_by: str = Query("code", description="Sort field: code|name|country|type"),
-    order_dir: str = Query("asc", description="Sort direction: asc|desc"),
-    include_relations: bool = Query(False, description="Include related incentiveRules and productions"),
-) -> Dict[str, Any]:
+def _tighten_row(row: Any, include_meta: bool) -> Dict[str, Any]:
     """
-    Optimized + compatible:
-    - DB-side filtering/paging/sorting
-    - Correct DB count for `total`
-    - Tight response mapping in Python (no Prisma `select`, which your client rejects)
+    Prisma returns model objects; convert to dict using model_dump() if present.
+    Then shrink payload to allowed keys.
     """
+    if hasattr(row, "model_dump"):
+        data = row.model_dump()
+    elif isinstance(row, dict):
+        data = row
+    else:
+        # best-effort fallback
+        data = dict(row)
 
-    q = _clean(q)
-    country = _clean(country)
-    type = _clean(type)
+    base = {
+        "id": data.get("id"),
+        "code": data.get("code"),
+        "name": data.get("name"),
+        "country": data.get("country"),
+        "type": data.get("type"),
+        "active": data.get("active"),
+        "description": data.get("description"),
+        "website": data.get("website"),
+    }
 
-    allowed_order_fields = {"code", "name", "country", "type"}
-    if order_by not in allowed_order_fields:
-        raise HTTPException(status_code=400, detail=f"Invalid order_by. Allowed: {sorted(allowed_order_fields)}")
+    if include_meta:
+        base.update(
+            {
+                "contactInfo": data.get("contactInfo"),
+                "createdAt": str(data.get("createdAt")) if data.get("createdAt") is not None else None,
+                "updatedAt": str(data.get("updatedAt")) if data.get("updatedAt") is not None else None,
+            }
+        )
 
-    od = order_dir.lower()
-    if od not in {"asc", "desc"}:
-        raise HTTPException(status_code=400, detail="Invalid order_dir. Use asc or desc.")
+    # Remove None values to keep payload tight
+    return {k: v for k, v in base.items() if v is not None}
 
-    # Build Prisma where
-    where: Dict[str, Any] = {}
+
+def _build_where(
+    q: Optional[str],
+    country: Optional[str],
+    j_type: Optional[str],
+    active: Optional[bool],
+) -> Optional[Dict[str, Any]]:
+    clauses: List[Dict[str, Any]] = []
+
     if country:
-        where["country"] = country
-    if type:
-        where["type"] = type
+        clauses.append({"country": {"equals": country}})
+
+    if j_type:
+        clauses.append({"type": {"equals": j_type}})
+
     if active is not None:
-        where["active"] = active
+        clauses.append({"active": {"equals": active}})
+
     if q:
-        where["OR"] = [
-            {"name": {"contains": q, "mode": "insensitive"}},
-            {"code": {"contains": q, "mode": "insensitive"}},
-            {"country": {"contains": q, "mode": "insensitive"}},
-            {"type": {"contains": q, "mode": "insensitive"}},
-        ]
+        # Prisma Client Python supports string filters incl. mode=insensitive on PostgreSQL :contentReference[oaicite:1]{index=1}
+        q_clause = {
+            "OR": [
+                {"name": {"contains": q, "mode": "insensitive"}},
+                {"code": {"contains": q, "mode": "insensitive"}},
+                {"country": {"contains": q, "mode": "insensitive"}},
+                {"description": {"contains": q, "mode": "insensitive"}},
+            ]
+        }
+        clauses.append(q_clause)
 
-    # Sorting: list-of-dicts is broadly compatible
-    order = [{order_by: od}]
+    if not clauses:
+        return None
+    if len(clauses) == 1:
+        return clauses[0]
+    return {"AND": clauses}
 
-    total = await prisma.jurisdiction.count(where=where)
 
+# ----------------------------
+# Routes
+# ----------------------------
+
+@router.get("/", response_model=JurisdictionsListResponse)
+async def list_jurisdictions(
+    limit: int = Query(50, ge=1, le=2000),
+    offset: int = Query(0, ge=0),
+    q: Optional[str] = Query(None, min_length=1, max_length=200),
+    country: Optional[str] = Query(None, max_length=60),
+    type: Optional[str] = Query(None, max_length=30, alias="type"),
+    active: Optional[bool] = Query(None),
+    order_by: str = Query("code"),
+    order_dir: Literal["asc", "desc"] = Query("asc"),
+    include_meta: bool = Query(False, description="Include timestamps/contactInfo"),
+    include_relations: bool = Query(False, description="Include related objects (can expand payload)"),
+) -> JurisdictionsListResponse:
+    """
+    List jurisdictions with filtering, ordering, pagination.
+
+    IMPORTANT: Prisma Client Python uses `order=` (not `order_by=`) and `take/skip`. :contentReference[oaicite:2]{index=2}
+    """
+    if order_by not in ALLOWED_ORDER_FIELDS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid order_by '{order_by}'. Allowed: {sorted(ALLOWED_ORDER_FIELDS)}",
+        )
+
+    where = _build_where(q=q, country=country, j_type=type, active=active)
+
+    # Prisma Client Python: take/skip/order/include :contentReference[oaicite:3]{index=3}
     find_kwargs: Dict[str, Any] = {
-        "where": where,
-        "skip": offset,
         "take": limit,
-        "order": order,
+        "skip": offset,
+        "order": {order_by: order_dir},
     }
+    if where is not None:
+        find_kwargs["where"] = where
 
+    # Only include relations if explicitly asked (keeps default payload tight)
     if include_relations:
-        # Only include relations when requested
-        find_kwargs["include"] = {"incentiveRules": True, "productions": True}
+        # Adjust relation names if your schema differs
+        find_kwargs["include"] = {
+            "incentiveRules": True,
+            "productions": True,
+        }
 
-    rows = await prisma.jurisdiction.find_many(**find_kwargs)
+    try:
+        total = await prisma.jurisdiction.count(where=where) if where is not None else await prisma.jurisdiction.count()
+        rows = await prisma.jurisdiction.find_many(**find_kwargs)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list jurisdictions: {e}")
 
-    jurisdictions: List[Dict[str, Any]] = []
-    for j in rows:
-        item = _to_jurisdiction_dict(j)
+    # Tighten each row for response payload
+    jurisdictions_out: List[Dict[str, Any]] = []
+    for r in rows:
+        jurisdictions_out.append(_tighten_row(r, include_meta=include_meta))
 
-        if include_relations:
-            rules = getattr(j, "incentiveRules", None) or []
-            prods = getattr(j, "productions", None) or []
-            item["incentiveRules"] = [_to_rule_dict(r) for r in rules]
-            item["productions"] = [_to_production_dict(p) for p in prods]
-
-        jurisdictions.append(item)
-
-    return {
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-        "q": q,
-        "filters": {"country": country, "type": type, "active": active},
-        "order": {"by": order_by, "dir": od},
-        "include_relations": include_relations,
-        "jurisdictions": jurisdictions,
-    }
+    return JurisdictionsListResponse(
+        total=int(total),
+        limit=limit,
+        offset=offset,
+        q=q,
+        filters={"country": country, "type": type, "active": active},
+        order={"by": order_by, "dir": order_dir},
+        jurisdictions=jurisdictions_out,
+    )
 
 
 @router.get("/{code}")
-async def get_jurisdiction(
+async def get_jurisdiction_by_code(
     code: str,
-    include_relations: bool = Query(False, description="Include related incentiveRules and productions"),
+    include_meta: bool = Query(False),
+    include_relations: bool = Query(False),
 ) -> Dict[str, Any]:
-    code = str(code).strip().upper()
-    if not code:
-        raise HTTPException(status_code=400, detail="Code is required")
+    """
+    Fetch a single jurisdiction by code (case-insensitive).
+    """
+    code_norm = code.strip().upper()
 
-    kwargs: Dict[str, Any] = {"where": {"code": code}}
+    find_kwargs: Dict[str, Any] = {
+        "where": {"code": {"equals": code_norm}},
+    }
     if include_relations:
-        kwargs["include"] = {"incentiveRules": True, "productions": True}
+        find_kwargs["include"] = {
+            "incentiveRules": True,
+            "productions": True,
+        }
 
-    j = await prisma.jurisdiction.find_unique(**kwargs)
+    try:
+        j = await prisma.jurisdiction.find_unique(**find_kwargs)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch jurisdiction: {e}")
+
     if not j:
-        raise HTTPException(status_code=404, detail=f"Jurisdiction not found: {code}")
+        raise HTTPException(status_code=404, detail=f"Jurisdiction '{code_norm}' not found")
 
-    item = _to_jurisdiction_dict(j)
-
-    if include_relations:
-        rules = getattr(j, "incentiveRules", None) or []
-        prods = getattr(j, "productions", None) or []
-        item["incentiveRules"] = [_to_rule_dict(r) for r in rules]
-        item["productions"] = [_to_production_dict(p) for p in prods]
-
-    return {"jurisdiction": item, "include_relations": include_relations}
+    return _tighten_row(j, include_meta=include_meta)
