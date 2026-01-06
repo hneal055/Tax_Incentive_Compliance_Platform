@@ -1,65 +1,61 @@
-# Tax-Incentive Compliance API — North Star
+# North Star — Tax Incentive Compliance API
 
-## Mission
-Build a **Jurisdictional Rule Engine** that helps production companies, accountants, and studios **maximize eligible incentives** while **ensuring audit-ready compliance** across multiple jurisdictions.
+## North Star Priority Order (Canonical)
 
-## Purpose
-- Normalize incentive programs (credits, rebates, grants) into a consistent rules model
-- Evaluate productions + expenses against jurisdiction rules
-- Produce transparent calculations and defensible audit trails
+### 1) Rule Engine is the product
+**Non-negotiable centerpiece:** the Jurisdictional Rule Engine that evaluates eligibility + incentive amounts from jurisdiction rules.
 
-## Primary Users
-- Production accounting teams
-- Studios / finance teams
-- Incentive compliance accountants / auditors
-- Producers who need planning estimates (pre-production)
+**Must be true before anything else expands:**
+- Canonical rule registry + rules folder (`/rules/<CODE>.json`)
+- Deterministic evaluation (same input → same output)
+- Tight, stable response contract
+- Unit tests proving IL works + unknown jurisdiction behavior
 
-## Core Capabilities
-1) **Jurisdictions**
-   - Store jurisdictions (state/province/country)
-   - Search/filter/sort, active flags, metadata
+### 2) Rules authoring + governance (not more endpoints)
+We expand capability by improving **rule definitions**, not by adding random routes.
 
-2) **Incentive Rules**
-   - Model programs (effective dates, thresholds, categories, caps)
-   - Rule versioning + activation/deactivation
+**Lock these next:**
+- Rule JSON structure + validation schema
+- Effective dates + activation flags
+- Category inclusion/exclusion + thresholds
+- Caps + rate logic + clear trace/debug semantics
 
-3) **Productions + Expenses**
-   - Track productions (dates, jurisdiction, status)
-   - Track expenses (category, amount, eligibility attributes)
+### 3) Input normalization (productions + expenses as engine inputs)
+Before “budgets” and “reports,” normalize the input model so evaluation is reliable.
 
-4) **Calculation Engine**
-   - Compute qualified spend
-   - Apply rates, caps, and thresholds
-   - Emit compliance flags (why something was excluded)
-   - Output a calculation “trace” (audit trail)
+**Deliverables:**
+- Consistent expense categories + payroll flags + residency/location fields
+- Clear mapping rules (API payload → engine expense model)
+- Guardrails: invalid input → 422; valid input → deterministic evaluation
 
-5) **Compliance & Auditability**
-   - Audit log of rule changes + calculations
-   - Reproducible results (same inputs → same outputs)
+### 4) Persistence + audit trail (after engine semantics stabilize)
+Only after 1–3 are stable do we store results and generate compliance artifacts.
 
-## Non-Goals (for MVP)
-- Full UI / dashboard
-- Complex multi-jurisdiction stacking logic
-- Automated document ingestion/receipt OCR
-- Real-time integrations with third-party accounting systems
+**Then build:**
+- calculations storage
+- audit logs
+- rule evaluation history / reproducibility (rule version + timestamp)
 
-## Engineering Principles
-- **Deterministic**: same inputs produce same outputs
-- **Explainable**: trace every decision (included/excluded)
-- **Extensible**: add new jurisdictions/rules without code rewrites
-- **Tested**: unit tests for engine; API contract tests later
-- **Secure by default**: env-based config, least privilege DB users
+### 5) Reporting + dashboard (last)
+Dashboards are a visualization layer on top of stable engine outputs.
 
-## Architecture (Current Direction)
-- FastAPI (Python) API layer
-- PostgreSQL as source of truth
-- Prisma Client Python for DB access
-- Rule engine as a pure-Python module (testable independently)
-- Docker/Docker Compose for dev + prod stacks (later)
+**Only after the engine contract is stable:**
+- comparison reports
+- executive dashboard metrics
+- export packages (CSV/Excel/PDF) backed by stored calculations/audits
 
-## Definition of Done (MVP)
-- List jurisdictions reliably from DB
-- Create/read incentive rules
-- Run a calculation: inputs → eligibility + benefit + trace
-- Seed scripts are idempotent (upsert)
-- Tests pass in a clean local environment
+## Contract Stability Requirements (Always)
+
+**The Rule Engine endpoint must always return:**
+- `jurisdiction_code`
+- `total_eligible_spend`
+- `total_incentive_amount`
+- `breakdown[]`
+
+**Payload remains tight by default.**
+- No large trace unless explicitly requested with `?debug=true`
+
+**Error mapping:**
+- Unknown jurisdiction / rule file → **404**
+- Bad request payload → **422** (FastAPI validation)
+- Engine runtime error → **500** with safe message
