@@ -1,32 +1,78 @@
+# writer
+$path="src\api\routes.py"; New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null; @'
 """
 API route registry
 
-Includes routers that exist. Missing modules are skipped to keep dev moving.
+- Central place to mount versioned routers.
+- Safe-import optional modules (so the API can boot while phases build out).
 """
 from __future__ import annotations
 
+import importlib
+import logging
+from typing import Dict
+
 from fastapi import APIRouter
 
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
-def _include(module_path: str, mount_router_name: str = "router") -> None:
+api_router = APIRouter()
+
+
+def _safe_include(module_path: str, attr_name: str = "router") -> bool:
+    """
+    Import a module and include its router if present.
+    Returns True if included; False if missing or failed.
+    """
     try:
-        mod = __import__(module_path, fromlist=[mount_router_name])
-        sub = getattr(mod, mount_router_name)
-        router.include_router(sub)
+        mod = importlib.import_module(module_path)
+        router = getattr(mod, attr_name, None)
+        if router is None:
+            logger.warning("Router attr missing, skipping: %s.%s", module_path, attr_name)
+            return False
+
+        api_router.include_router(router)
+        return True
+
+    except ModuleNotFoundError as e:
+        logger.warning("Router module missing, skipping: %s (%s)", module_path, e)
+        return False
     except Exception as e:
-        print(f"Router module missing, skipping: {module_path} ({e})")
+        logger.exception("Router load failed, skipping: %s (%s)", module_path, e)
+        return False
 
-# Core working routes
-_include("src.api.jurisdictions")
-_include("src.api.incentive_rules")
 
-# Phase 1: Rule Engine MVP
-_include("src.api.rule_engine")
+# Core modules (should exist)
+_safe_include("src.api.jurisdictions")
+_safe_include("src.api.incentive_rules")
+_safe_include("src.api.rule_engine")  # POST /rule-engine/evaluate
 
-# Future modules (only if present)
-_include("src.api.calculations")
-_include("src.api.productions")
-_include("src.api.expenses")
-_include("src.api.audit_logs")
-_include("src.api.users")
+# Phase modules (may not exist yet)
+_safe_include("src.api.calculations")
+_safe_include("src.api.productions")
+_safe_include("src.api.expenses")
+_safe_include("src.api.users")
+_safe_include("src.api.audit_logs")
+
+
+@api_router.get("/")
+def index() -> Dict[str, str]:
+    """
+    Lightweight index for humans + quick smoke tests.
+    (Swagger is still at /docs.)
+    """
+    return {
+        "jurisdictions": "/jurisdictions",
+        "incentive_rules": "/incentive-rules",
+        "rule_engine_evaluate": "/rule-engine/evaluate",
+        "calculations": "/calculations",
+        "productions": "/productions",
+        "expenses": "/expenses",
+        "users": "/users",
+        "audit_logs": "/audit-logs",
+    }
+
+
+# Export name expected by src.main
+router = api_router
+'@ | Out-File -FilePath $path -Encoding utf8
