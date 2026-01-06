@@ -1,5 +1,3 @@
-# writer
-$path="src\api\routes.py"; New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null; @'
 """
 API route registry
 
@@ -75,4 +73,3 @@ def index() -> Dict[str, str]:
 
 # Export name expected by src.main
 router = api_router
-'@ | Out-File -FilePath $path -Encoding utf8
