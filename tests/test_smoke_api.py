@@ -1,4 +1,3 @@
-Set-Location C:\Projects\Tax_Incentive_Compliance_Platform; @'
 import os
 import socket
 import subprocess
@@ -16,7 +15,7 @@ def _is_port_open(host: str, port: int) -> bool:
         return False
 
 
-def _wait_for_health(base: str, timeout_s: float = 20.0) -> bool:
+def _wait_for_health(base: str, timeout_s: float = 25.0) -> bool:
     try:
         import requests
     except Exception:
@@ -85,7 +84,7 @@ def test_api_smoke_rule_engine_evaluate_200():
     try:
         import requests
     except Exception:
-        pytest.skip("requests not installed")
+        pytest.skip("requests not installed (python -m pip install requests)")
 
     base = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
     auto_start = os.getenv("AUTO_START_API", "1").strip() != "0"
@@ -129,4 +128,3 @@ def test_api_smoke_rule_engine_evaluate_200():
     finally:
         if proc is not None:
             _stop_process(proc)
-'@ | Out-File -FilePath .\tests\test_smoke_api.py -Encoding utf8
