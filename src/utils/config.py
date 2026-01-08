@@ -1,78 +1,89 @@
 """
-Application configuration (Pydantic v2)
+Central config (Phase 1 spine)
 
-Loads from environment variables and .env file at project root.
+Rule: Anything referenced during import/app startup MUST have a default.
+DB stays optional in Phase 1.
 """
+
 from __future__ import annotations
 
-import json
-from typing import List, Any
+from typing import List, Optional
 
-from pydantic import field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-def _coerce_list(value: Any) -> List[str]:
-    """
-    Accepts:
-      - list[str]
-      - "*" -> ["*"]
-      - JSON list string: '["http://localhost:3000"]'
-      - comma-separated: "a,b,c"
-      - empty/None -> []
-    """
-    if value is None:
+def _parse_csv(value: str) -> List[str]:
+    value = (value or "").strip()
+    if not value:
         return []
-    if isinstance(value, list):
-        return [str(x).strip() for x in value if str(x).strip()]
-    if isinstance(value, str):
-        s = value.strip()
-        if not s:
-            return []
-        if s == "*":
-            return ["*"]
-        # Try JSON first
-        if (s.startswith("[") and s.endswith("]")) or (s.startswith('"') and s.endswith('"')):
-            try:
-                parsed = json.loads(s)
-                if isinstance(parsed, list):
-                    return [str(x).strip() for x in parsed if str(x).strip()]
-            except Exception:
-                pass
-        # Comma-separated fallback
-        return [p.strip() for p in s.split(",") if p.strip()]
-    # Fallback
-    return [str(value).strip()] if str(value).strip() else []
+    return [x.strip() for x in value.split(",") if x.strip()]
 
 
 class Settings(BaseSettings):
-    # Core API settings
-    API_TITLE: str = "Tax-Incentive Compliance Platform"
-    API_VERSION: str = "v1"
-    LOG_LEVEL: str = "INFO"
+    # App basics
+    APP_ENV: str = Field(default="development")
+    APP_HOST: str = Field(default="127.0.0.1")
+    APP_PORT: int = Field(default=8000)
+    LOG_LEVEL: str = Field(default="INFO")
 
-    # CORS
-    ALLOWED_ORIGINS: List[str] = ["*"]
-    ALLOWED_METHODS: List[str] = ["*"]
-    ALLOWED_HEADERS: List[str] = ["*"]
+    # API metadata (referenced by src.main)
+    API_TITLE: str = Field(default="Tax Incentive Compliance Platform API")
+    API_DESCRIPTION: str = Field(default="Phase 1 spine: rule registry + rule engine + core API endpoints.")
+    API_VERSION: str = Field(default="0.1.0")
+    API_PREFIX: str = Field(default="/api/v1")
 
-    # Database (required)
-    DATABASE_URL: str
+    # CORS (src.main expects these)
+    # Defaults keep Phase 1 bootable everywhere; tighten in prod via .env.
+    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["*"])
+    ALLOWED_METHODS: List[str] = Field(default_factory=lambda: ["*"])
+    ALLOWED_HEADERS: List[str] = Field(default_factory=lambda: ["*"])
+    ALLOW_CREDENTIALS: bool = Field(default=False)
 
-    # Pydantic Settings config
+    # Back-compat / optional alt names
+    CORS_ALLOW_ORIGINS: str = Field(default="*")
+    CORS_ALLOW_METHODS: str = Field(default="*")
+    CORS_ALLOW_HEADERS: str = Field(default="*")
+    CORS_ALLOW_CREDENTIALS: Optional[bool] = Field(default=None)
+
+    # Phase 2+ (optional for Phase 1)
+    DATABASE_URL: Optional[str] = Field(default=None)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True,
         extra="ignore",
     )
 
-    # Allow env vars to be strings or lists
-    @field_validator("ALLOWED_ORIGINS", "ALLOWED_METHODS", "ALLOWED_HEADERS", mode="before")
-    @classmethod
-    def _validate_lists(cls, v: Any) -> List[str]:
-        return _coerce_list(v)
+    def model_post_init(self, __context) -> None:
+        # If someone sets legacy CORS_* values, honor them unless explicit ALLOWED_* set.
+        if self.CORS_ALLOW_ORIGINS and self.CORS_ALLOW_ORIGINS != "*" and self.ALLOWED_ORIGINS == ["*"]:
+            parsed = _parse_csv(self.CORS_ALLOW_ORIGINS)
+            if parsed:
+                self.ALLOWED_ORIGINS = parsed
+
+        if self.CORS_ALLOW_METHODS and self.CORS_ALLOW_METHODS != "*" and self.ALLOWED_METHODS == ["*"]:
+            parsed = _parse_csv(self.CORS_ALLOW_METHODS)
+            if parsed:
+                self.ALLOWED_METHODS = parsed
+
+        if self.CORS_ALLOW_HEADERS and self.CORS_ALLOW_HEADERS != "*" and self.ALLOWED_HEADERS == ["*"]:
+            parsed = _parse_csv(self.CORS_ALLOW_HEADERS)
+            if parsed:
+                self.ALLOWED_HEADERS = parsed
+
+        if self.CORS_ALLOW_CREDENTIALS is not None:
+            self.ALLOW_CREDENTIALS = bool(self.CORS_ALLOW_CREDENTIALS)
 
 
-# Singleton settings object
 settings = Settings()
+
+
+def require_database_url() -> str:
+    """Use ONLY in Phase 2+ code paths that truly need the DB."""
+    if not settings.DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL is required for database features. "
+            "Set it in .env (see .env.example)."
+        )
+    return settings.DATABASE_URL

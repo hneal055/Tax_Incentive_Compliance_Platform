@@ -1,104 +1,67 @@
 """
 Rule Engine API
 
-Contract stability (default response):
-  Always returns:
-    - jurisdiction_code
-    - total_eligible_spend
-    - total_incentive_amount
-    - breakdown[]
-
-Payload tightening:
-  - No large trace/meta unless explicitly requested via ?debug=true
-
-Error mapping:
-  - Unknown jurisdiction / rule file -> 404
-  - Bad request payload -> 422 (FastAPI validation)
-  - Engine runtime error -> 500 (safe message)
+Contract stability:
+- Always return (default): jurisdiction_code, total_eligible_spend, total_incentive_amount, breakdown[]
+- Tight payload by default (no trace/meta unless debug=true)
+- Error mapping:
+    * Unknown jurisdiction/rule file -> 404
+    * Bad request payload -> 422 (FastAPI)
+    * Engine runtime error -> 500 (safe message)
+- Optional debug: ?debug=true adds trace/meta/warnings
 """
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
-
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import ValidationError
 
 from src.rule_engine.engine import evaluate
-from src.rule_engine.models import EvaluateRequest
+from src.rule_engine.models import EvaluateRequest, EvaluateResponse
 
 logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/rule-engine", tags=["Rule Engine"])
-
-
-class BreakdownItem(BaseModel):
-    # Keep this aligned with what your engine produces
-    rule_id: str
-    rule_name: str
-    rule_type: str
-
-    eligible_spend: Any
-    rate: Any
-    raw_amount: Any
-    applied_amount: Any
-
-    capped: bool
-    cap_amount: Any
-
-    skipped: bool
-    skip_reason: Optional[str] = None
+router = APIRouter(prefix="/rule-engine", tags=["rule-engine"])
 
 
-class EvaluateStableResponse(BaseModel):
-    jurisdiction_code: str
-    total_eligible_spend: Any
-    total_incentive_amount: Any
-    breakdown: List[BreakdownItem]
+def _tight_contract(res: EvaluateResponse) -> dict:
+    """
+    Default response contract: tight + stable.
+    """
+    return {
+        "jurisdiction_code": res.jurisdiction_code,
+        "total_eligible_spend": res.total_eligible_spend,
+        "total_incentive_amount": res.total_incentive_amount,
+        "breakdown": res.breakdown,
+    }
 
-    # Optional debug bundle (only returned when ?debug=true)
-    debug: Optional[Dict[str, Any]] = None
 
-
-@router.post("/evaluate", response_model=EvaluateStableResponse)
-def evaluate_rule_engine(
+@router.post("/evaluate")
+async def evaluate_rule_engine(
     req: EvaluateRequest,
-    debug: bool = Query(False, description="Include debug fields (trace/meta/warnings). Off by default."),
-) -> Dict[str, Any]:
-    code = (getattr(req, "jurisdiction_code", "") or "").strip().upper()
-
+    debug: bool = Query(False, description="Include debug trace/meta in response"),
+):
     try:
         res = evaluate(req)
 
-        # Tight, stable default payload
-        payload: Dict[str, Any] = {
-            "jurisdiction_code": getattr(res, "jurisdiction_code", code),
-            "total_eligible_spend": getattr(res, "total_eligible_spend", 0),
-            "total_incentive_amount": getattr(res, "total_incentive_amount", 0),
-            "breakdown": [
-                (b.model_dump() if hasattr(b, "model_dump") else dict(b))  # type: ignore[arg-type]
-                for b in (getattr(res, "breakdown", []) or [])
-            ],
-        }
+        if not debug:
+            return _tight_contract(res)
 
-        if debug:
-            payload["debug"] = {
-                "warnings": getattr(res, "warnings", None),
-                "meta": getattr(res, "meta", None),
-                "trace": getattr(res, "trace", None),
-                "compliance_flags": getattr(res, "compliance_flags", None),
-            }
+        # Debug=true -> return full model (includes warnings/meta/trace if present)
+        return res.model_dump()
 
-        return payload
+    except FileNotFoundError as e:
+        # Unknown jurisdiction/rule file -> 404
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
-    except FileNotFoundError:
-        # Clean 404 (no filesystem path leakage)
-        raise HTTPException(status_code=404, detail=f"Rule not found for jurisdiction '{code}'")
+    except ValueError as e:
+        # Engine-level "bad request" style errors (if any)
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
-    except HTTPException:
-        # If something upstream already raised one, pass through
-        raise
+    except ValidationError as e:
+        # If engine returned something that can't validate to EvaluateResponse
+        logger.exception("Rule engine response validation error")
+        raise HTTPException(status_code=500, detail="Rule engine response schema invalid") from e
 
     except Exception as e:
-        logger.exception("Unhandled rule engine error: %s", e)
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        logger.exception("Unhandled rule engine error")
+        raise HTTPException(status_code=500, detail="Internal Server Error") from e
