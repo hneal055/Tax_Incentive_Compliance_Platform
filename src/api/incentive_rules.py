@@ -3,6 +3,7 @@ Incentive Rule API endpoints
 """
 from fastapi import APIRouter, HTTPException, status
 from typing import Optional
+import json
 
 from src.models.incentive_rule import (
     IncentiveRuleCreate,
@@ -82,8 +83,23 @@ async def create_incentive_rule(rule: IncentiveRuleCreate):
             detail=f"Incentive rule with code '{rule.ruleCode}' already exists"
         )
     
+    # Prepare data with proper Prisma relationships
+    rule_dict = rule.model_dump()
+    jurisdiction_id = rule_dict.pop("jurisdictionId")
+    
+    # Convert requirements dict to JSON string if not empty
+    if rule_dict.get("requirements"):
+        rule_dict["requirements"] = json.dumps(rule_dict["requirements"])
+    else:
+        rule_dict["requirements"] = json.dumps({})
+    
     new_rule = await prisma.incentiverule.create(
-        data=rule.model_dump()
+        data={
+            **rule_dict,
+            "jurisdiction": {
+                "connect": {"id": jurisdiction_id}
+            }
+        }
     )
     
     return new_rule
@@ -104,16 +120,22 @@ async def update_incentive_rule(rule_id: str, rule: IncentiveRuleUpdate):
     
     update_data = rule.model_dump(exclude_unset=True)
     
-    # If updating jurisdictionId, verify it exists
+    # Handle jurisdiction update
     if "jurisdictionId" in update_data:
+        jurisdiction_id = update_data.pop("jurisdictionId")
         jurisdiction = await prisma.jurisdiction.find_unique(
-            where={"id": update_data["jurisdictionId"]}
+            where={"id": jurisdiction_id}
         )
         if not jurisdiction:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Jurisdiction with ID {update_data['jurisdictionId']} not found"
+                detail=f"Jurisdiction with ID {jurisdiction_id} not found"
             )
+        update_data["jurisdiction"] = {"connect": {"id": jurisdiction_id}}
+    
+    # Handle requirements JSON
+    if "requirements" in update_data:
+        update_data["requirements"] = json.dumps(update_data["requirements"])
     
     updated = await prisma.incentiverule.update(
         where={"id": rule_id},

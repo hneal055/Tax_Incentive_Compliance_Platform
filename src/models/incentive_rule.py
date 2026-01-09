@@ -12,8 +12,7 @@ class IncentiveRuleBase(BaseModel):
     ruleName: str = Field(..., description="Name of the incentive rule")
     ruleCode: str = Field(..., description="Internal reference code")
     incentiveType: str = Field(..., description="Type: tax_credit, rebate, grant, exemption")
-    percentage: Optional[float] = Field(None, description="Percentage rate")
-    fixedAmount: Optional[float] = Field(None, description="Fixed dollar amount")
+    percentage: Optional[float] = Field(None, description="Percentage rate (e.g., 25.0 for 25%)")
     minSpend: Optional[float] = Field(None, description="Minimum spend required")
     maxCredit: Optional[float] = Field(None, description="Maximum credit cap")
     eligibleExpenses: List[str] = Field(default_factory=list, description="Eligible expense categories")
@@ -36,7 +35,6 @@ class IncentiveRuleUpdate(BaseModel):
     ruleCode: Optional[str] = None
     incentiveType: Optional[str] = None
     percentage: Optional[float] = None
-    fixedAmount: Optional[float] = None
     minSpend: Optional[float] = None
     maxCredit: Optional[float] = None
     eligibleExpenses: Optional[List[str]] = None
@@ -50,7 +48,6 @@ class IncentiveRuleUpdate(BaseModel):
 class IncentiveRuleResponse(IncentiveRuleBase):
     """Model for incentive rule responses"""
     id: str
-    metadata: Optional[Dict[str, Any]] = None
     createdAt: datetime
     updatedAt: datetime
     
