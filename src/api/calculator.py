@@ -10,7 +10,18 @@ from src.models.calculator import (
     SimpleCalculateResponse,
     CompareCalculateRequest,
     CompareCalculateResponse,
-    ComparisonResult
+    ComparisonResult,
+    ComplianceCheckRequest,
+    ComplianceCheckResponse,
+    RequirementCheck,
+    StackableCalculateRequest,
+    StackableCalculateResponse,
+    StackableCreditComponent,
+    ScenarioCalculateRequest,
+    ScenarioCalculateResponse,
+    ScenarioResult,
+    DateBasedRulesRequest,
+    DateBasedRulesResponse
 )
 from src.utils.database import prisma
 
@@ -343,3 +354,606 @@ async def calculate_jurisdiction_options(
         "options": options,
         "bestOption": options[0] if options else None
     }
+
+
+@router.post("/compliance", response_model=ComplianceCheckResponse, summary="Check compliance with incentive requirements")
+async def check_compliance(request: ComplianceCheckRequest):
+    """
+    Verify if a production meets all requirements for a specific incentive rule.
+    
+    Checks:
+    - Minimum spend requirements
+    - Shoot days requirements
+    - Local hiring percentages
+    - Special requirements (logos, cultural tests, etc.)
+    
+    Returns detailed compliance status with action items.
+    """
+    
+    # Get rule
+    rule = await prisma.incentiverule.find_unique(
+        where={"id": request.ruleId}
+    )
+    
+    if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incentive rule not found"
+        )
+    
+    # Get jurisdiction
+    jurisdiction = await prisma.jurisdiction.find_unique(
+        where={"id": rule.jurisdictionId}
+    )
+    
+    # Get production if ID provided
+    production = None
+    if request.productionId:
+        production = await prisma.production.find_unique(
+            where={"id": request.productionId}
+        )
+        if not production:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Production not found"
+            )
+    
+    # Determine budget (from production or request)
+    budget = None
+    if production:
+        budget = production.budgetTotal
+    elif request.productionBudget:
+        budget = request.productionBudget
+    
+    qualifying_budget = request.qualifyingBudget or budget
+    
+    # Parse requirements from rule
+    requirements_data = parse_json_field(rule.requirements)
+    
+    # Track all requirement checks
+    requirement_checks = []
+    requirements_met = 0
+    requirements_not_met = 0
+    requirements_unknown = 0
+    action_items = []
+    warnings = []
+    next_steps = []
+    
+    # Check 1: Minimum Spend
+    if rule.minSpend:
+        if budget and budget >= rule.minSpend:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_spend",
+                description=f"Minimum spend of ${rule.minSpend:,.0f}",
+                status="met",
+                required=True,
+                userValue=budget,
+                requiredValue=rule.minSpend,
+                notes=f"Budget of ${budget:,.0f} exceeds minimum"
+            ))
+            requirements_met += 1
+        elif budget:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_spend",
+                description=f"Minimum spend of ${rule.minSpend:,.0f}",
+                status="not_met",
+                required=True,
+                userValue=budget,
+                requiredValue=rule.minSpend,
+                notes=f"Budget of ${budget:,.0f} is below minimum"
+            ))
+            requirements_not_met += 1
+            action_items.append(f"❌ Increase budget to at least ${rule.minSpend:,.0f}")
+        else:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_spend",
+                description=f"Minimum spend of ${rule.minSpend:,.0f}",
+                status="unknown",
+                required=True,
+                requiredValue=rule.minSpend,
+                notes="Budget not provided"
+            ))
+            requirements_unknown += 1
+            action_items.append("⚠️ Provide production budget for verification")
+    
+    # Check 2: Shoot Days (if in requirements)
+    if "minShootDays" in requirements_data:
+        min_days = requirements_data["minShootDays"]
+        if request.shootDays and request.shootDays >= min_days:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_shoot_days",
+                description=f"Minimum {min_days} shoot days required",
+                status="met",
+                required=True,
+                userValue=request.shootDays,
+                requiredValue=min_days,
+                notes=f"{request.shootDays} days scheduled"
+            ))
+            requirements_met += 1
+        elif request.shootDays:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_shoot_days",
+                description=f"Minimum {min_days} shoot days required",
+                status="not_met",
+                required=True,
+                userValue=request.shootDays,
+                requiredValue=min_days,
+                notes=f"Only {request.shootDays} days planned"
+            ))
+            requirements_not_met += 1
+            action_items.append(f"❌ Extend shoot schedule to at least {min_days} days")
+        else:
+            requirement_checks.append(RequirementCheck(
+                requirement="minimum_shoot_days",
+                description=f"Minimum {min_days} shoot days required",
+                status="unknown",
+                required=True,
+                requiredValue=min_days,
+                notes="Shoot days not provided"
+            ))
+            requirements_unknown += 1
+            action_items.append("⚠️ Provide shoot schedule for verification")
+    
+    # Check 3: Local Hiring Percentage
+    local_hire_keys = ["californiaResidents", "georgiaResident", "localHirePercentage", 
+                       "nySpend", "bcResident", "ontarioResident"]
+    for key in local_hire_keys:
+        if key in requirements_data:
+            required_pct = requirements_data[key]
+            if request.localHirePercentage is not None:
+                if request.localHirePercentage >= required_pct:
+                    requirement_checks.append(RequirementCheck(
+                        requirement="local_hiring",
+                        description=f"Minimum {required_pct}% local hiring required",
+                        status="met",
+                        required=True,
+                        userValue=request.localHirePercentage,
+                        requiredValue=required_pct,
+                        notes=f"{request.localHirePercentage}% local hiring planned"
+                    ))
+                    requirements_met += 1
+                else:
+                    requirement_checks.append(RequirementCheck(
+                        requirement="local_hiring",
+                        description=f"Minimum {required_pct}% local hiring required",
+                        status="not_met",
+                        required=True,
+                        userValue=request.localHirePercentage,
+                        requiredValue=required_pct,
+                        notes=f"Only {request.localHirePercentage}% local hiring planned"
+                    ))
+                    requirements_not_met += 1
+                    action_items.append(f"❌ Increase local hiring to {required_pct}%")
+            else:
+                requirement_checks.append(RequirementCheck(
+                    requirement="local_hiring",
+                    description=f"Minimum {required_pct}% local hiring required",
+                    status="unknown",
+                    required=True,
+                    requiredValue=required_pct,
+                    notes="Local hiring percentage not provided"
+                ))
+                requirements_unknown += 1
+                action_items.append(f"⚠️ Confirm {required_pct}% local hiring commitment")
+            break
+    
+    # Check 4: Promotional Logo
+    if "georgiaPromo" in requirements_data or "logoInCredits" in requirements_data:
+        if request.hasPromoLogo is True:
+            requirement_checks.append(RequirementCheck(
+                requirement="promotional_logo",
+                description="Include jurisdiction logo in credits",
+                status="met",
+                required=True,
+                userValue=True,
+                notes="Logo placement confirmed"
+            ))
+            requirements_met += 1
+        elif request.hasPromoLogo is False:
+            requirement_checks.append(RequirementCheck(
+                requirement="promotional_logo",
+                description="Include jurisdiction logo in credits",
+                status="not_met",
+                required=True,
+                userValue=False,
+                notes="Logo not planned for credits"
+            ))
+            requirements_not_met += 1
+            action_items.append(f"❌ Add {jurisdiction.name} logo to end credits")
+        else:
+            requirement_checks.append(RequirementCheck(
+                requirement="promotional_logo",
+                description="Include jurisdiction logo in credits",
+                status="unknown",
+                required=True,
+                notes="Logo placement not confirmed"
+            ))
+            requirements_unknown += 1
+            action_items.append(f"⚠️ Confirm {jurisdiction.name} logo placement in credits")
+    
+    # Check 5: Cultural Test
+    if "culturalTest" in requirements_data:
+        if request.hasCulturalTest is True:
+            requirement_checks.append(RequirementCheck(
+                requirement="cultural_test",
+                description="Pass cultural test for content",
+                status="met",
+                required=True,
+                userValue=True,
+                notes="Cultural test passed"
+            ))
+            requirements_met += 1
+        elif request.hasCulturalTest is False:
+            requirement_checks.append(RequirementCheck(
+                requirement="cultural_test",
+                description="Pass cultural test for content",
+                status="not_met",
+                required=True,
+                userValue=False,
+                notes="Cultural test not passed"
+            ))
+            requirements_not_met += 1
+            warnings.append("⚠️ Cultural test failure may disqualify production")
+        else:
+            requirement_checks.append(RequirementCheck(
+                requirement="cultural_test",
+                description="Pass cultural test for content",
+                status="unknown",
+                required=True,
+                notes="Cultural test status unknown"
+            ))
+            requirements_unknown += 1
+            action_items.append("⚠️ Submit cultural test application")
+    
+    # Check 6: Relocating Production
+    if "relocatingProject" in requirements_data:
+        if request.isRelocating is not None:
+            if request.isRelocating == requirements_data["relocatingProject"]:
+                requirement_checks.append(RequirementCheck(
+                    requirement="relocating_production",
+                    description="Relocating production from another jurisdiction",
+                    status="met",
+                    required=True,
+                    userValue=request.isRelocating,
+                    requiredValue=requirements_data["relocatingProject"],
+                    notes="Relocation status matches requirement"
+                ))
+                requirements_met += 1
+            else:
+                requirement_checks.append(RequirementCheck(
+                    requirement="relocating_production",
+                    description="Relocating production from another jurisdiction",
+                    status="not_met",
+                    required=True,
+                    userValue=request.isRelocating,
+                    requiredValue=requirements_data["relocatingProject"],
+                    notes="This program requires relocating production"
+                ))
+                requirements_not_met += 1
+                warnings.append("❌ This program is only for relocating productions")
+        else:
+            requirement_checks.append(RequirementCheck(
+                requirement="relocating_production",
+                description="Relocating production from another jurisdiction",
+                status="unknown",
+                required=True,
+                requiredValue=requirements_data["relocatingProject"],
+                notes="Relocation status not specified"
+            ))
+            requirements_unknown += 1
+    
+    # Calculate estimated credit if compliant
+    estimated_credit = None
+    if requirements_not_met == 0 and qualifying_budget:
+        if rule.percentage:
+            estimated_credit = qualifying_budget * (rule.percentage / 100)
+            if rule.maxCredit and estimated_credit > rule.maxCredit:
+                estimated_credit = rule.maxCredit
+    
+    # Determine overall compliance status
+    total_requirements = len(requirement_checks)
+    
+    if total_requirements == 0:
+        overall_status = "insufficient_data"
+        next_steps.append("📋 Provide production details for full compliance check")
+    elif requirements_not_met > 0:
+        overall_status = "non_compliant"
+        next_steps.append("❌ Address all failed requirements before applying")
+        next_steps.append(f"📧 Contact {jurisdiction.name} Film Office for guidance")
+    elif requirements_unknown > 0:
+        overall_status = "partial"
+        next_steps.append("⚠️ Confirm all unknown requirements")
+        next_steps.append("📝 Gather missing documentation")
+    else:
+        overall_status = "compliant"
+        next_steps.append(f"✅ Production qualifies for {rule.ruleName}")
+        next_steps.append(f"💰 Estimated credit: ${estimated_credit:,.0f}" if estimated_credit else "")
+        next_steps.append(f"📋 Submit application to {jurisdiction.name} Film Office")
+        next_steps.append("📄 Prepare required documentation")
+    
+    # Add warnings for close calls
+    if budget and rule.minSpend and budget < (rule.minSpend * 1.1):
+        warnings.append(f"⚠️ Budget is close to minimum threshold (${rule.minSpend:,.0f})")
+    
+    return ComplianceCheckResponse(
+        overallCompliance=overall_status,
+        jurisdiction=jurisdiction.name,
+        ruleName=rule.ruleName,
+        ruleCode=rule.ruleCode,
+        totalRequirements=total_requirements,
+        requirementsMet=requirements_met,
+        requirementsNotMet=requirements_not_met,
+        requirementsUnknown=requirements_unknown,
+        requirements=requirement_checks,
+        estimatedCredit=estimated_credit,
+        actionItems=action_items,
+        warnings=warnings,
+        nextSteps=next_steps
+    )
+
+
+
+@router.post("/date-based", response_model=DateBasedRulesResponse, summary="Get rules available on specific date")
+async def get_date_based_rules(request: DateBasedRulesRequest):
+    """
+    Get all incentive rules available for a specific production date.
+    
+    Useful for:
+    - Planning productions months/years in advance
+    - Checking if rules have changed
+    - Seeing upcoming rule changes
+    - Understanding expired programs
+    """
+    
+    # Get jurisdiction
+    jurisdiction = await prisma.jurisdiction.find_unique(
+        where={"id": request.jurisdictionId}
+    )
+    
+    if not jurisdiction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Jurisdiction not found"
+        )
+    
+    # Get all rules for jurisdiction
+    all_rules = await prisma.incentiverule.find_many(
+        where={"jurisdictionId": request.jurisdictionId}
+    )
+    
+    active_rules = []
+    upcoming_rules = []
+    expired_rules = []
+    
+    from datetime import datetime, timedelta
+    
+    for rule in all_rules:
+        effective = rule.effectiveDate.date() if isinstance(rule.effectiveDate, datetime) else rule.effectiveDate
+        expiration = rule.expirationDate.date() if rule.expirationDate and isinstance(rule.expirationDate, datetime) else rule.expirationDate
+        
+        rule_data = {
+            "id": rule.id,
+            "ruleName": rule.ruleName,
+            "ruleCode": rule.ruleCode,
+            "percentage": rule.percentage,
+            "incentiveType": rule.incentiveType,
+            "effectiveDate": effective.isoformat(),
+            "expirationDate": expiration.isoformat() if expiration else None
+        }
+        
+        # Check if active on query date
+        if effective <= request.productionDate:
+            if expiration is None or expiration >= request.productionDate:
+                # Active on query date
+                active_rules.append(rule_data)
+            elif request.includeExpired and (request.productionDate - expiration).days <= 365:
+                # Expired within last year
+                expired_rules.append(rule_data)
+        elif (effective - request.productionDate).days <= 180:
+            # Becoming active within 6 months
+            upcoming_rules.append(rule_data)
+    
+    # Generate notes
+    notes = []
+    if len(active_rules) > 0:
+        notes.append(f"✅ {len(active_rules)} program(s) available on {request.productionDate}")
+    else:
+        notes.append(f"⚠️ No programs available on {request.productionDate}")
+    
+    if len(upcoming_rules) > 0:
+        notes.append(f"📅 {len(upcoming_rules)} program(s) launching soon")
+    
+    if len(expired_rules) > 0:
+        notes.append(f"⏱️ {len(expired_rules)} program(s) recently expired")
+    
+    return DateBasedRulesResponse(
+        jurisdiction=jurisdiction.name,
+        queryDate=request.productionDate,
+        activeRules=active_rules,
+        upcomingRules=upcoming_rules,
+        expiredRules=expired_rules,
+        totalActive=len(active_rules),
+        totalUpcoming=len(upcoming_rules),
+        totalExpired=len(expired_rules),
+        notes=notes
+    )
+
+
+@router.post("/scenario", response_model=ScenarioCalculateResponse, summary="Model multiple scenarios")
+async def calculate_scenarios(request: ScenarioCalculateRequest):
+    """
+    Model multiple "what if" scenarios for production planning.
+    
+    Examples:
+    - What if we increase budget from $5M to $7M?
+    - What if we film in Q1 vs Q4?
+    - What if we hire 60% vs 80% local crew?
+    - What if we split production between two dates?
+    
+    Returns comparison of all scenarios with recommendations.
+    """
+    
+    # Get jurisdiction
+    jurisdiction = await prisma.jurisdiction.find_unique(
+        where={"id": request.jurisdictionId}
+    )
+    
+    if not jurisdiction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Jurisdiction not found"
+        )
+    
+    # Get all rules for jurisdiction
+    all_rules = await prisma.incentiverule.find_many(
+        where={"jurisdictionId": request.jurisdictionId}
+    )
+    
+    from datetime import datetime
+    
+    # Filter rules by date if provided
+    available_rules = []
+    expired_count = 0
+    
+    for rule in all_rules:
+        if request.productionStartDate:
+            effective = rule.effectiveDate.date() if isinstance(rule.effectiveDate, datetime) else rule.effectiveDate
+            expiration = rule.expirationDate.date() if rule.expirationDate and isinstance(rule.expirationDate, datetime) else rule.expirationDate
+            
+            # Check if rule is active on production date
+            if effective <= request.productionStartDate:
+                if expiration is None or expiration >= request.productionStartDate:
+                    available_rules.append(rule)
+                else:
+                    expired_count += 1
+            # Include expired if requested
+            elif request.includeExpiredRules:
+                available_rules.append(rule)
+                expired_count += 1
+        else:
+            # No date filtering
+            if rule.active:
+                available_rules.append(rule)
+    
+    if not available_rules:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No applicable rules found for the specified date"
+        )
+    
+    # Default scenarios if none provided
+    scenarios_to_test = request.scenarios if request.scenarios else [
+        {"name": "Base Budget", "budget": request.productionBudget},
+        {"name": "+20% Budget", "budget": request.productionBudget * 1.2},
+        {"name": "-20% Budget", "budget": request.productionBudget * 0.8}
+    ]
+    
+    # Calculate each scenario
+    scenario_results = []
+    
+    for scenario in scenarios_to_test:
+        scenario_name = scenario.get("name", "Unnamed Scenario")
+        scenario_budget = scenario.get("budget", request.productionBudget)
+        scenario_qualifying = scenario.get("qualifyingBudget", scenario_budget)
+        
+        # Find best rule for this scenario
+        best_credit = 0
+        best_rule = None
+        meets_reqs = False
+        
+        for rule in available_rules:
+            # Calculate credit
+            if rule.percentage:
+                credit = scenario_qualifying * (rule.percentage / 100)
+            elif rule.fixedAmount:
+                credit = rule.fixedAmount
+            else:
+                credit = 0
+            
+            # Check minimum
+            meets_min = True
+            if rule.minSpend and scenario_qualifying < rule.minSpend:
+                credit = 0
+                meets_min = False
+            
+            # Apply cap
+            if rule.maxCredit and credit > rule.maxCredit:
+                credit = rule.maxCredit
+            
+            # Track best
+            if credit > best_credit:
+                best_credit = credit
+                best_rule = rule
+                meets_reqs = meets_min
+        
+        if best_rule:
+            effective = best_rule.effectiveDate.date() if isinstance(best_rule.effectiveDate, datetime) else best_rule.effectiveDate
+            expiration = best_rule.expirationDate.date() if best_rule.expirationDate and isinstance(best_rule.expirationDate, datetime) else best_rule.expirationDate
+            
+            is_expired = False
+            if expiration and request.productionStartDate:
+                is_expired = expiration < request.productionStartDate
+            
+            effective_rate = (best_credit / scenario_budget * 100) if scenario_budget > 0 else 0
+            
+            notes = []
+            if best_rule.percentage:
+                notes.append(f"💰 {best_rule.percentage}% rate")
+            if best_credit > 0:
+                notes.append(f"💵 ${best_credit:,.0f} estimated credit")
+            if not meets_reqs:
+                notes.append("⚠️ Does not meet minimum requirements")
+            if is_expired:
+                notes.append("⏱️ Rule expired - included for comparison")
+            
+            scenario_results.append(ScenarioResult(
+                scenarioName=scenario_name,
+                scenarioParams=scenario,
+                bestRuleName=best_rule.ruleName,
+                bestRuleCode=best_rule.ruleCode,
+                ruleId=best_rule.id,
+                estimatedCredit=best_credit,
+                effectiveRate=effective_rate,
+                meetsRequirements=meets_reqs,
+                isActive=best_rule.active,
+                isExpired=is_expired,
+                effectiveDate=effective,
+                expirationDate=expiration,
+                notes=notes
+            ))
+    
+    # Sort by credit amount
+    scenario_results.sort(key=lambda x: x.estimatedCredit, reverse=True)
+    
+    best = scenario_results[0]
+    worst = scenario_results[-1]
+    savings_diff = best.estimatedCredit - worst.estimatedCredit
+    
+    # Generate recommendations
+    recommendations = []
+    recommendations.append(f"🏆 Best scenario: {best.scenarioName} with ${best.estimatedCredit:,.0f}")
+    
+    if savings_diff > 0:
+        recommendations.append(f"💰 Optimization potential: ${savings_diff:,.0f} between best and worst scenario")
+    
+    if best.estimatedCredit > request.productionBudget * 0.25:
+        recommendations.append(f"✨ Excellent credit rate: {best.effectiveRate:.1f}% effective rate")
+    
+    # Check for date-based opportunities
+    if expired_count > 0:
+        recommendations.append(f"⏱️ {expired_count} expired program(s) - check if renewal is planned")
+    
+    return ScenarioCalculateResponse(
+        jurisdiction=jurisdiction.name,
+        baseProductionBudget=request.productionBudget,
+        productionDate=request.productionStartDate,
+        scenarios=scenario_results,
+        bestScenario=best,
+        worstScenario=worst,
+        savingsDifference=savings_diff,
+        recommendations=recommendations,
+        availableRules=len(available_rules),
+        expiredRules=expired_count
+    )
+
+
