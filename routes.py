@@ -6,8 +6,7 @@ from src.api.jurisdictions import router as jurisdictions_router
 from src.api.incentive_rules import router as incentive_rules_router
 from src.api.productions import router as productions_router
 from src.api.calculator import router as calculator_router
-from src.api.reports import router as reports_router
-from src.api.excel import router as excel_router
+from src.api.expenses import router as expenses_router
 
 router = APIRouter()
 
@@ -16,8 +15,7 @@ router.include_router(jurisdictions_router)
 router.include_router(incentive_rules_router)
 router.include_router(productions_router)
 router.include_router(calculator_router)
-router.include_router(reports_router)
-router.include_router(excel_router)
+router.include_router(expenses_router)
 
 
 @router.get("/")
@@ -31,7 +29,6 @@ async def api_root():
             "incentive_rules": "/api/v1/incentive-rules",
             "productions": "/api/v1/productions",
             "calculator": "/api/v1/calculate",
-            "reports": "/api/v1/reports",
-            "excel": "/api/v1/excel"
+            "expenses": "/api/v1/expenses"
         }
     }
