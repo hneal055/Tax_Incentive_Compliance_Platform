@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider             = "prisma-client-py"
   interface            = "asyncio"
@@ -20,8 +23,10 @@ model Jurisdiction {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   incentiveRules IncentiveRule[]
   productions    Production[]
+
   @@map("jurisdictions")
 }
 
@@ -29,6 +34,7 @@ model IncentiveRule {
   id              String    @id @default(uuid())
   jurisdictionId  String
   jurisdiction    Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  
   ruleName        String
   ruleCode        String    @unique
   incentiveType   String
@@ -36,14 +42,18 @@ model IncentiveRule {
   fixedAmount     Float?
   minSpend        Float?
   maxCredit       Float?
+  
   eligibleExpenses String[]
   excludedExpenses String[]
+  
   effectiveDate   DateTime
   expirationDate  DateTime?
   requirements    String?
+  
   active          Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
   @@index([jurisdictionId])
   @@map("incentive_rules")
 }
@@ -54,17 +64,24 @@ model Production {
   productionType     String
   jurisdictionId     String
   jurisdiction       Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  
   budgetTotal        Float
   budgetQualifying   Float?
+  
   startDate          DateTime
   endDate            DateTime?
+  
   productionCompany  String
   status             String
+  
   contact            String?
   metadata           String?
+  
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  
   expenses           Expense[]
+
   @@index([jurisdictionId])
   @@index([status])
   @@map("productions")
@@ -74,20 +91,25 @@ model Expense {
   id              String   @id @default(uuid())
   productionId    String
   production      Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  
   category        String
   subcategory     String?
   description     String
   amount          Float
   expenseDate     DateTime
   paymentDate     DateTime?
+  
   isQualifying    Boolean  @default(true)
   qualifyingNote  String?
+  
   vendorName      String?
   vendorLocation  String?
   receiptNumber   String?
   invoiceNumber   String?
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
   @@index([productionId])
   @@index([expenseDate])
   @@map("expenses")
