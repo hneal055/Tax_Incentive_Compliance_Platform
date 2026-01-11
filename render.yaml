@@ -2,8 +2,12 @@ services:
   - type: web
     name: pilotforge
     env: python
+    runtime: python-3.12.0
     plan: free
-    buildCommand: buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python -m prisma generate
     startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -12,6 +16,8 @@ services:
         fromDatabase:
           name: pilotforge-db
           property: connectionString
+      - key: ENVIRONMENT
+        value: production
 
 databases:
   - name: pilotforge-db
