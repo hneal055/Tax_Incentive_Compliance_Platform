@@ -2,12 +2,8 @@ services:
   - type: web
     name: pilotforge
     env: python
-    runtime: python-3.12.0
     plan: free
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements.txt
-      python -m prisma generate
+    buildCommand: pip install -r requirements.txt
     startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
