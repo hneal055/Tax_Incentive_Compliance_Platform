@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: pilotforge
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python -m prisma generate
+    startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pilotforge-db
+          property: connectionString
+
+databases:
+  - name: pilotforge-db
+    databaseName: pilotforge
+    plan: free
+    user: pilotforge_user
