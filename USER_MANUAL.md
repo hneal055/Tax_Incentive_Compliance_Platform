@@ -1,4 +1,6 @@
-# Tax-Incentive Compliance Platform
+# PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 ## User Manual v1.0
 
 **Platform Version:** 0.1.0  
@@ -23,9 +25,9 @@
 
 ## 🎯 Overview
 
-### What is the Tax-Incentive Compliance Platform?
+### What is the PilotForge?
 
-The Tax-Incentive Compliance Platform is a **jurisdictional rule engine** designed to help film and television production companies:
+The PilotForge is a **jurisdictional rule engine** designed to help film and television production companies:
 
 - **Discover** available tax incentives across global jurisdictions
 - **Compare** incentive programs side-by-side
@@ -812,13 +814,17 @@ GET /incentive-rules/?jurisdiction_id={ga-id}
 - Technical Specs: WORKING_STATE.md
 
 **GitHub:**
-- Repository: https://github.com/hneal055/Tax_Incentive_Compliance_Platform
+- Repository: https://github.com/hneal055/PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 - Issues: Report bugs and request features
 - Discussions: Ask questions, share ideas
 
 **Contact:**
 - Developer: Howard Neal
-- Project: Tax-Incentive Compliance Platform
+- Project: PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 - Version: 0.1.0 (Beta)
 
 ---
@@ -899,4 +905,4 @@ Incentive rule data sourced from:
 
 **End of User Manual**
 
-For the latest version of this manual, visit: https://github.com/hneal055/Tax_Incentive_Compliance_Platform/blob/main/USER_MANUAL.md
+For the latest version of this manual, visit: https://github.com/hneal055/PilotForge/blob/main/USER_MANUAL.md

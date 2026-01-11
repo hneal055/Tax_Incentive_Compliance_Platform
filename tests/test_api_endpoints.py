@@ -1,5 +1,7 @@
 """
-Test API endpoints for Tax-Incentive Compliance Platform
+Test API endpoints for PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 """
 import pytest
 from httpx import AsyncClient, ASGITransport
@@ -18,7 +20,7 @@ class TestHealthEndpoints:
             
             assert response.status_code == 200
             data = response.json()
-            assert data["message"] == "Tax-Incentive Compliance Platform API"
+            assert data["message"] == "PilotForge API"
             assert "version" in data
             assert "endpoints" in data
     @pytest.mark.skip(reason="Health endpoint not implemented")

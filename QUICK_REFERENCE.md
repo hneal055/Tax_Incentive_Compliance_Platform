@@ -1,4 +1,4 @@
-﻿# 🚀 Tax-Incentive Compliance Platform - Quick Reference
+﻿# 🚀 PilotForge - Quick Reference
 
 ## Daily Startup (ONE COMMAND!)
 ```powershell
@@ -9,7 +9,9 @@
 ```powershell
 # 1. Start Docker Desktop (GUI)
 # 2. Run these commands:
-cd C:\Projects\Tax_Incentive_Compliance_Platform
+cd C:\Projects\PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 docker-compose up -d
 .\venv\Scripts\Activate.ps1
 python -m uvicorn src.main:app --reload
@@ -47,7 +49,7 @@ python -m prisma generate
 ```
 
 ## File Locations
-- **Project:** `C:\Projects\Tax_Incentive_Compliance_Platform`
+- **Project:** `C:\Projects\PilotForge`
 - **Virtual Env:** `.\venv`
 - **Database:** Docker container `tax-incentive-db`
 - **Config:** `.env` file

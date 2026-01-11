@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO")
 
     # API metadata (referenced by src.main)
-    API_TITLE: str = Field(default="Tax Incentive Compliance Platform API")
+    API_TITLE: str = Field(default="PilotForge API")
     API_DESCRIPTION: str = Field(default="Phase 1 spine: rule registry + rule engine + core API endpoints.")
     API_VERSION: str = Field(default="0.1.0")
     API_PREFIX: str = Field(default="/api/v1")

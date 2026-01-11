@@ -1,10 +1,13 @@
-# Tax-Incentive Compliance Platform
-
+# PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 Jurisdictional rule engine for managing tax incentives for the film & television industry.
 
 ## Quick Start
 ```powershell
-cd C:\Projects\Tax_Incentive_Compliance_Platform
+cd C:\Projects\PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 .\scripts\setup\setup.ps1
 .\venv\Scripts\Activate.ps1
 python -m uvicorn src.main:app --reload

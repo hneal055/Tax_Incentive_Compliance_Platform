@@ -1,4 +1,4 @@
-# Tax-Incentive Compliance Platform - Progress Report
+# PilotForge - Progress Report
 Date: January 3, 2026
 
 ## 🎯 Project Vision (ON TRACK ✅)
@@ -9,7 +9,9 @@ claims and ensure compliance in the film & television industry.
 ## ✅ Phase 1: Core Infrastructure - COMPLETE
 
 ### 1. Project Structure ✅
-- Folder: C:\Projects\Tax_Incentive_Compliance_Platform
+- Folder: C:\Projects\PilotForge
+> Tax Incentive Intelligence for Film & TV
+> Tax Incentive Intelligence for Film & TV
 - Source code organized (src/, tests/, prisma/, scripts/)
 - Configuration files in place
 

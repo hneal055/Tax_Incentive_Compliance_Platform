@@ -1,20 +1,23 @@
 """
-Tax-Incentive Compliance Platform
-Main application entry point
+PilotForge - Tax Incentive Intelligence for Film & TV
+Copyright (c) 2025-2026 Howard Neal - PilotForge
+
+Main FastAPI application for tax incentive calculation and compliance verification.
 """
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
 from contextlib import asynccontextmanager
 import logging
-from typing import Dict
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from src.api.routes import router
-from src.utils.database import prisma
 from src.utils.config import settings
+from src.utils.database import prisma
+from src.api.routes import router
 
+
+# Configure logging
 logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -22,61 +25,156 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup and shutdown events"""
+    """
+    Lifespan context manager for startup and shutdown events
+    """
     # Startup
-    logger.info("Starting Tax-Incentive Compliance Platform")
-    await prisma.connect()
-    logger.info("Database connected")
+    logger.info("🎬 Starting PilotForge")
+    logger.info("   Tax Incentive Intelligence for Film & TV")
+    try:
+        await prisma.connect()
+        logger.info("✅ Database connected")
+    except Exception as e:
+        logger.error(f"❌ Database connection failed: {e}")
+        raise
     
     yield
     
     # Shutdown
-    logger.info("Shutting down Tax-Incentive Compliance Platform")
-    await prisma.disconnect()
-    logger.info("Database disconnected")
+    logger.info("🛑 Shutting down PilotForge")
+    try:
+        await prisma.disconnect()
+        logger.info("✅ Database disconnected")
+    except Exception as e:
+        logger.error(f"❌ Database disconnection failed: {e}")
 
 
+# Create FastAPI app
 app = FastAPI(
-    title=settings.API_TITLE,
-    description="Jurisdictional Rule Engine for Film & Television Tax Incentives",
-    version=settings.API_VERSION,
+    title="PilotForge API",
+    description="Tax Incentive Intelligence for Film & TV Productions",
+    version="v1",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:3000",
+        "*"
+    ],
     allow_credentials=True,
-    allow_methods=settings.ALLOWED_METHODS,
-    allow_headers=settings.ALLOWED_HEADERS,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Include API routes
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
-@app.get("/")
-async def root() -> Dict[str, str]:
+# Root endpoint
+@app.get("/", tags=["Root"])
+async def root():
+    """
+    Root endpoint - API information
+    """
     return {
-        "message": "Tax-Incentive Compliance Platform",
+        "message": "Welcome to PilotForge",
+        "tagline": "Tax Incentive Intelligence for Film & TV",
         "version": settings.API_VERSION,
-        "status": "running"
+        "status": "running",
+        "docs": "/docs",
+        "api": f"/api/{settings.API_VERSION}"
     }
 
 
-@app.get("/health")
-async def health_check() -> Dict[str, str]:
+# Health check endpoint
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """
+    Health check endpoint
+    """
     try:
-        await prisma.execute_raw("SELECT 1")
-        db_status = "healthy"
+        # Check database connection
+        await prisma.query_raw("SELECT 1")
+        db_status = "connected"
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        db_status = "unhealthy"
+        logger.error(f"Health check failed: {e}")
+        db_status = "disconnected"
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "database": db_status,
+                "error": str(e)
+            }
+        )
     
     return {
-        "status": "healthy" if db_status == "healthy" else "unhealthy",
+        "status": "healthy",
         "database": db_status,
-        "api_version": settings.API_VERSION
+        "version": settings.API_VERSION,
+        "environment": settings.ENVIRONMENT
     }
+
+
+# Error handlers
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    """Handle 404 errors"""
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Resource not found",
+            "path": str(request.url.path)
+        }
+    )
+
+
+@app.exception_handler(500)
+async def internal_error_handler(request, exc):
+    """Handle 500 errors"""
+    logger.error(f"Internal error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "message": "An unexpected error occurred"
+        }
+    )
+
+
+# Startup banner
+@app.on_event("startup")
+async def startup_banner():
+    """Display startup banner"""
+    print("\n" + "=" * 70)
+    print("🎬  PilotForge")
+    print("   Tax Incentive Intelligence for Film & TV")
+    print("=" * 70)
+    print(f"📊 API Version: {settings.API_VERSION}")
+    print(f"🌍 Environment: {settings.ENVIRONMENT}")
+    print(f"🔗 Docs: http://{settings.HOST}:{settings.PORT}/docs")
+    print(f"🚀 API: http://{settings.HOST}:{settings.PORT}/api/{settings.API_VERSION}")
+    print("=" * 70 + "\n")
+
+
+# Development server (optional - for direct python execution)
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        "src.main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.RELOAD,
+        log_level=settings.LOG_LEVEL.lower()
+    )
