@@ -32,4 +32,8 @@ Visit: http://localhost:8000/docs
 
 ## Documentation
 
-See `docs/QUICK_START.md` for detailed setup instructions.
+- **Quick Start:** `docs/QUICK_START.md` - Detailed setup instructions
+- **User Manual:** `USER_MANUAL.md` - Platform capabilities and API reference
+- **API Examples:** `docs/API_EXAMPLES.md` - Common use cases
+- **Testing:** `docs/END_TO_END_TESTING_PROCESS.md` - Comprehensive testing process
+- **Brand Guidelines:** `BRAND_GUIDELINES.md` - Branding standards
