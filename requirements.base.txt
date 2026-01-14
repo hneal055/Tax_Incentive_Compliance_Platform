@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+httpx
+
+prisma
+
+python-dotenv
+
+reportlab
+openpyxl
+
+pytest
+pytest-asyncio
