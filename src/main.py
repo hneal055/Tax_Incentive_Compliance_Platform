@@ -122,7 +122,8 @@ async def health_check():
         "status": "healthy",
         "database": db_status,
         "version": settings.API_VERSION,
-        "environment": settings.ENVIRONMENT
+        "environment": getattr(settings, "ENVIRONMENT", getattr(settings, "environment", "development"))
+
     }
 
 

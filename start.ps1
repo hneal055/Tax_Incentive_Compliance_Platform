@@ -1,109 +1,155 @@
-# Tax-Incentive Compliance Platform - Daily Startup Script
-# Run this script every day to start your development environment
+# ========================================
+# Tax-Incentive Compliance Platform
+# Daily Startup Script - Updated for Python 3.12
+# ========================================
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Tax-Incentive Compliance Platform" -ForegroundColor Cyan
-Write-Host "Daily Startup Script" -ForegroundColor Cyan
+Write-Host "Tax-Incentive Compliance Platform" -ForegroundColor White
+Write-Host "Daily Startup Script" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
 
-# Step 1: Check if in correct directory
-$projectPath = "C:\Projects\Tax_Incentive_Compliance_Platform"
-if ((Get-Location).Path -ne $projectPath) {
-    Write-Host "Navigating to project directory..." -ForegroundColor Yellow
-    Set-Location $projectPath
+# Check if we're in the project directory
+$projectDir = "C:\Projects\Tax_Incentive_Compliance_Platform"
+if ((Get-Location).Path -ne $projectDir) {
+    Write-Host "⚠ Not in project directory, changing..." -ForegroundColor Yellow
+    Set-Location $projectDir
 }
 
-Write-Host "✓ In project directory" -ForegroundColor Green
-Write-Host ""
+Write-Host "✓ In project directory: $(Get-Location)" -ForegroundColor Green
 
-# Step 2: Check Docker Desktop
-Write-Host "Checking Docker Desktop..." -ForegroundColor Yellow
+# Check Docker Desktop - FIXED VERSION
+Write-Host "`nChecking Docker Desktop..." -ForegroundColor Yellow
 try {
-    $dockerRunning = docker ps 2>&1
+    # Try to run a simple docker command
+    docker version 2>$null 1>$null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Docker Desktop is running" -ForegroundColor Green
+    } else {
+        throw "Docker command failed"
     }
 } catch {
-    Write-Host "✗ Docker Desktop is not running" -ForegroundColor Red
-    Write-Host "  Please start Docker Desktop and run this script again" -ForegroundColor Yellow
-    pause
-    exit
-}
-Write-Host ""
-
-# Step 3: Start PostgreSQL
-Write-Host "Starting PostgreSQL..." -ForegroundColor Yellow
-$containerExists = docker ps -a --filter "name=tax-incentive-db" --format "{{.Names}}"
-if ($containerExists -eq "tax-incentive-db") {
-    docker start tax-incentive-db | Out-Null
-    Write-Host "✓ PostgreSQL container started" -ForegroundColor Green
-} else {
-    docker-compose up -d | Out-Null
-    Write-Host "✓ PostgreSQL created and started" -ForegroundColor Green
+    Write-Host "❌ Docker Desktop is not running or not accessible" -ForegroundColor Red
+    Write-Host "   Please start Docker Desktop and try again." -ForegroundColor Yellow
+    Write-Host "   If Docker is running, check: docker version" -ForegroundColor Yellow
+    exit 1
 }
 
-# Wait for PostgreSQL to be ready
-Write-Host "  Waiting for PostgreSQL to be ready..." -ForegroundColor Yellow
-Start-Sleep -Seconds 3
-
-$ready = docker exec tax-incentive-db pg_isready -U postgres 2>&1
-if ($ready -like "*accepting connections*") {
-    Write-Host "✓ PostgreSQL is ready" -ForegroundColor Green
-} else {
-    Write-Host "✗ PostgreSQL connection failed" -ForegroundColor Red
-    Write-Host "  Check Docker logs: docker logs tax-incentive-db" -ForegroundColor Yellow
+# Start PostgreSQL if not running
+Write-Host "`nStarting PostgreSQL..." -ForegroundColor Yellow
+try {
+    $postgresContainer = docker ps --filter "name=tax-incentive-db" --format "{{.Names}}" 2>$null
+    if (-not $postgresContainer) {
+        Write-Host "Starting PostgreSQL container..." -ForegroundColor Yellow
+        docker start tax-incentive-db 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Creating new PostgreSQL container..." -ForegroundColor Yellow
+            docker run -d --name tax-incentive-db -p 5432:5432 `
+              -e POSTGRES_PASSWORD=postgres `
+              -e POSTGRES_DB=tax_incentive_db `
+              -v postgres-tax-data:/var/lib/postgresql/data `
+              postgres:16-alpine 2>$null
+        }
+        
+        # Wait for PostgreSQL to be ready
+        Write-Host "  Waiting for PostgreSQL to be ready..." -ForegroundColor Gray
+        $maxAttempts = 30
+        $attempt = 0
+        do {
+            $attempt++
+            $isReady = docker exec tax-incentive-db pg_isready -U postgres 2>$null
+            if ($isReady -match "accepting connections") {
+                Write-Host "✓ PostgreSQL is ready" -ForegroundColor Green
+                break
+            }
+            Write-Host "." -NoNewline
+            Start-Sleep -Seconds 2
+        } while ($attempt -lt $maxAttempts)
+        
+        if ($attempt -ge $maxAttempts) {
+            Write-Host "`n❌ PostgreSQL failed to start in time" -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host "✓ PostgreSQL container already running" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "❌ Error managing PostgreSQL: $_" -ForegroundColor Red
+    exit 1
 }
-Write-Host ""
 
-# Step 4: Activate Virtual Environment
-Write-Host "Activating Python virtual environment..." -ForegroundColor Yellow
-if (Test-Path ".\venv\Scripts\Activate.ps1") {
-    & .\venv\Scripts\Activate.ps1
+# Activate Python virtual environment with Python 3.12
+Write-Host "`nActivating Python virtual environment..." -ForegroundColor Yellow
+if (-not (Test-Path ".venv")) {
+    Write-Host "Creating new virtual environment with Python 3.12..." -ForegroundColor Yellow
+    py -3.12 -m venv .venv
+}
+
+# Activate the virtual environment
+try {
+    .\.venv\Scripts\activate
     Write-Host "✓ Virtual environment activated" -ForegroundColor Green
-} else {
-    Write-Host "✗ Virtual environment not found" -ForegroundColor Red
-    Write-Host "  Run: python -m venv venv" -ForegroundColor Yellow
-    pause
-    exit
+} catch {
+    Write-Host "❌ Failed to activate virtual environment: $_" -ForegroundColor Red
+    exit 1
 }
-Write-Host ""
 
-# Step 5: Check Python version
-Write-Host "Checking Python version..." -ForegroundColor Yellow
-$pythonVersion = python --version
-Write-Host "  $pythonVersion" -ForegroundColor Cyan
-if ($pythonVersion -like "*3.12*") {
-    Write-Host "✓ Python 3.12 confirmed" -ForegroundColor Green
-} else {
-    Write-Host "⚠ Warning: Python 3.12 recommended" -ForegroundColor Yellow
+# Check Python version
+Write-Host "`nChecking Python version..." -ForegroundColor Yellow
+try {
+    $pythonVersion = python --version 2>&1
+    Write-Host "  $pythonVersion" -ForegroundColor White
+    if ($pythonVersion -notmatch "3\.12") {
+        Write-Host "⚠ Warning: Python 3.12 recommended, but found $pythonVersion" -ForegroundColor Yellow
+        Write-Host "  Attempting to use Python 3.12 anyway..." -ForegroundColor Yellow
+    } else {
+        Write-Host "✓ Python 3.12 confirmed" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "❌ Could not determine Python version: $_" -ForegroundColor Red
 }
-Write-Host ""
 
-# Step 6: Quick dependency check
-Write-Host "Checking key dependencies..." -ForegroundColor Yellow
-$hasUvicorn = pip list 2>&1 | Select-String "uvicorn"
-$hasPrisma = pip list 2>&1 | Select-String "prisma"
-if ($hasUvicorn -and $hasPrisma) {
-    Write-Host "✓ Key dependencies installed" -ForegroundColor Green
-} else {
-    Write-Host "⚠ Some dependencies missing - installing..." -ForegroundColor Yellow
-    pip install -r requirements.txt -q
-    Write-Host "✓ Dependencies installed" -ForegroundColor Green
+# Check key dependencies
+Write-Host "`nChecking key dependencies..." -ForegroundColor Yellow
+$requiredPackages = @(
+    "fastapi",
+    "uvicorn",
+    "psycopg2-binary",
+    "python-multipart"
+)
+
+foreach ($package in $requiredPackages) {
+    try {
+        $installed = pip show $package 2>$null
+        if ($installed) {
+            Write-Host "✓ $package is installed" -ForegroundColor Green
+        } else {
+            Write-Host "Installing $package..." -ForegroundColor Yellow
+            pip install $package --quiet 2>$null
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✓ $package installed" -ForegroundColor Green
+            } else {
+                Write-Host "⚠ Could not install $package" -ForegroundColor Yellow
+            }
+        }
+    } catch {
+        Write-Host "⚠ Error checking $package: $_" -ForegroundColor Yellow
+    }
 }
-Write-Host ""
 
-# Step 7: Start API Server
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "Starting API Server..." -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Starting API Server..." -ForegroundColor Cyan
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Server will start at: http://localhost:8000" -ForegroundColor Green
-Write-Host "API Documentation: http://localhost:8000/docs" -ForegroundColor Green
-Write-Host "Health Check: http://localhost:8000/health" -ForegroundColor Green
-Write-Host ""
-Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Yellow
-Write-Host ""
 
-# Start server
-python -m uvicorn src.main:app --reload
+Write-Host "`nServer will start at: http://localhost:8000" -ForegroundColor Cyan
+Write-Host "API Documentation: http://localhost:8000/docs" -ForegroundColor Cyan
+Write-Host "Health Check: http://localhost:8000/health" -ForegroundColor Cyan
+
+Write-Host "`nPress Ctrl+C to stop the server`n" -ForegroundColor Yellow
+
+# Start the server
+try {
+    python main.py
+} catch {
+    Write-Host "❌ Failed to start server: $_" -ForegroundColor Red
+    exit 1
+}
