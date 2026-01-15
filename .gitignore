@@ -29,3 +29,9 @@ temp/
 *.key
 *.pem
 secrets/
+# Backups / artifacts
+backup_*/
+htmlcov/
+.coverage
+coverage.xml
+*.log
