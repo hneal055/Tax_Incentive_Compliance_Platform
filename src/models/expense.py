@@ -24,10 +24,12 @@ async def api_root():
         "message": "PilotForge API",
         "version": "v1",
         "endpoints": {
-            "jurisdictions": "/api/v1/jurisdictions",
-            "incentive_rules": "/api/v1/incentive-rules",
-            "productions": "/api/v1/productions",
-            "calculator": "/api/v1/calculate",
-            "expenses": "/api/v1/expenses"
+           "jurisdictions": "/api/0.1.0/jurisdictions",
+"incentive_rules": "/api/0.1.0/incentive-rules",
+"productions": "/api/0.1.0/productions",
+"calculator": "/api/0.1.0/calculate",
+"expenses": "/api/0.1.0/expenses",
+
         }
     }
+
