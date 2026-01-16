@@ -16,7 +16,7 @@ class TestHealthEndpoints:
         """Test API root returns correct info"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/")
+            response = await client.get("/api/0.1.0/")
             
             assert response.status_code == 200
             data = response.json()
@@ -28,7 +28,7 @@ class TestHealthEndpoints:
         """Test health check endpoint"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/calculate/health")
+            response = await client.get("/api/0.1.0/calculate/health")
             
             assert response.status_code == 200
             data = response.json()
@@ -43,7 +43,7 @@ class TestCalculatorEndpoints:
         """Test calculator options endpoint"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/calculate/options")
+            response = await client.get("/api/0.1.0/calculate/options")
             
             assert response.status_code == 200
             data = response.json()
@@ -61,7 +61,7 @@ class TestCalculatorEndpoints:
                 "ruleId": "test-rule"
             }
             
-            response = await client.post("/api/v1/calculate/simple", json=invalid_request)
+            response = await client.post("/api/0.1.0/calculate/simple", json=invalid_request)
             
             # Should return 422 for validation error
             assert response.status_code == 422
@@ -76,7 +76,7 @@ class TestCalculatorEndpoints:
                 "jurisdictionIds": ["only-one-id"]
             }
             
-            response = await client.post("/api/v1/calculate/compare", json=invalid_request)
+            response = await client.post("/api/0.1.0/calculate/compare", json=invalid_request)
             
             # Should return 422 for validation error
             assert response.status_code == 422
@@ -96,7 +96,7 @@ class TestReportEndpoints:
                 "jurisdictionIds": ["id1", "id2"]
             }
             
-            response = await client.post("/api/v1/reports/comparison", json=invalid_request)
+            response = await client.post("/api/0.1.0/reports/comparison", json=invalid_request)
             
             assert response.status_code == 422
 
@@ -115,7 +115,7 @@ class TestExcelEndpoints:
                 "jurisdictionIds": ["id1", "id2"]
             }
             
-            response = await client.post("/api/v1/excel/comparison", json=invalid_request)
+            response = await client.post("/api/0.1.0/excel/comparison", json=invalid_request)
             
             # Should validate budget > 0
             assert response.status_code in [422, 404]
@@ -129,7 +129,7 @@ class TestJurisdictionEndpoints:
         """Test listing all jurisdictions"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/jurisdictions/")
+            response = await client.get("/api/0.1.0/jurisdictions/")
             
             assert response.status_code == 200
             data = response.json()
@@ -141,14 +141,14 @@ class TestJurisdictionEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Get list first
-            list_response = await client.get("/api/v1/jurisdictions/")
+            list_response = await client.get("/api/0.1.0/jurisdictions/")
             jurisdictions = list_response.json()["jurisdictions"]
             
             if len(jurisdictions) > 0:
                 jurisdiction_id = jurisdictions[0]["id"]
                 
                 # Get specific jurisdiction
-                response = await client.get(f"/api/v1/jurisdictions/{jurisdiction_id}")
+                response = await client.get(f"/api/0.1.0/jurisdictions/{jurisdiction_id}")
                 
                 assert response.status_code == 200
                 data = response.json()
@@ -163,7 +163,7 @@ class TestIncentiveRuleEndpoints:
         """Test listing all incentive rules"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/incentive-rules/")
+            response = await client.get("/api/0.1.0/incentive-rules/")
             
             assert response.status_code == 200
             data = response.json()
@@ -175,7 +175,7 @@ class TestIncentiveRuleEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Get a jurisdiction first
-            juris_response = await client.get("/api/v1/jurisdictions/")
+            juris_response = await client.get("/api/0.1.0/jurisdictions/")
             jurisdictions = juris_response.json()["jurisdictions"]
             
             if len(jurisdictions) > 0:
@@ -183,7 +183,7 @@ class TestIncentiveRuleEndpoints:
                 
                 # Filter rules
                 response = await client.get(
-                    "/api/v1/incentive-rules/",
+                    "/api/0.1.0/incentive-rules/",
                     params={"jurisdiction_id": jurisdiction_id}
                 )
                 
@@ -203,7 +203,7 @@ class TestProductionEndpoints:
         """Test listing all productions"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/productions/")
+            response = await client.get("/api/0.1.0/productions/")
             
             assert response.status_code == 200
             data = response.json()
