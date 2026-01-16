@@ -4,7 +4,8 @@ Test API endpoints for PilotForge
 > Tax Incentive Intelligence for Film & TV
 """
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import AsyncClient
+from asgi_lifespan import LifespanManager
 from src.main import app
 
 
@@ -16,7 +17,7 @@ class TestHealthEndpoints:
         """Test API root returns correct info"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/")
+            response = await client.get("/api/0.1.0/")
             
             assert response.status_code == 200
             data = response.json()
@@ -28,7 +29,7 @@ class TestHealthEndpoints:
         """Test health check endpoint"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/calculate/health")
+            response = await client.get("/api/0.1.0/calculate/health")
             
             assert response.status_code == 200
             data = response.json()
@@ -43,7 +44,7 @@ class TestCalculatorEndpoints:
         """Test calculator options endpoint"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/calculate/options")
+            response = await client.get("/api/0.1.0/calculate/options")
             
             assert response.status_code == 200
             data = response.json()
@@ -61,7 +62,7 @@ class TestCalculatorEndpoints:
                 "ruleId": "test-rule"
             }
             
-            response = await client.post("/api/v1/calculate/simple", json=invalid_request)
+            response = await client.post("/api/0.1.0/calculate/simple", json=invalid_request)
             
             # Should return 422 for validation error
             assert response.status_code == 422
@@ -76,7 +77,7 @@ class TestCalculatorEndpoints:
                 "jurisdictionIds": ["only-one-id"]
             }
             
-            response = await client.post("/api/v1/calculate/compare", json=invalid_request)
+            response = await client.post("/api/0.1.0/calculate/compare", json=invalid_request)
             
             # Should return 422 for validation error
             assert response.status_code == 422
@@ -96,29 +97,30 @@ class TestReportEndpoints:
                 "jurisdictionIds": ["id1", "id2"]
             }
             
-            response = await client.post("/api/v1/reports/comparison", json=invalid_request)
+            response = await client.post("/api/0.1.0/reports/comparison", json=invalid_request)
             
             assert response.status_code == 422
 
 
+@pytest.mark.asyncio
 @pytest.mark.asyncio
 class TestExcelEndpoints:
     """Test Excel export endpoints"""
     
     async def test_excel_comparison_validation(self):
         """Test Excel comparison endpoint validation"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            invalid_request = {
-                "productionTitle": "Test Film",
-                "budget": 0,  # Zero budget
-                "jurisdictionIds": ["id1", "id2"]
-            }
-            
-            response = await client.post("/api/v1/excel/comparison", json=invalid_request)
-            
-            # Should validate budget > 0
-            assert response.status_code in [422, 404]
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                invalid_request = {
+                    "productionTitle": "Test Film",
+                    "budget": 0,  # Zero budget
+                    "jurisdictionIds": ["id1", "id2"]
+                }
+                
+                response = await client.post("/api/0.1.0/excel/comparison", json=invalid_request)
+                
+                # Should validate budget > 0
+                assert response.status_code in [422, 404]
 
 
 @pytest.mark.asyncio
@@ -127,32 +129,32 @@ class TestJurisdictionEndpoints:
     
     async def test_list_jurisdictions(self):
         """Test listing all jurisdictions"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/jurisdictions/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "jurisdictions" in data
-    
-    async def test_get_jurisdiction_by_id(self):
-        """Test getting specific jurisdiction"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # Get list first
-            list_response = await client.get("/api/v1/jurisdictions/")
-            jurisdictions = list_response.json()["jurisdictions"]
-            
-            if len(jurisdictions) > 0:
-                jurisdiction_id = jurisdictions[0]["id"]
-                
-                # Get specific jurisdiction
-                response = await client.get(f"/api/v1/jurisdictions/{jurisdiction_id}")
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                response = await client.get("/api/0.1.0/jurisdictions/")
                 
                 assert response.status_code == 200
                 data = response.json()
-                assert data["id"] == jurisdiction_id
+                assert "total" in data
+                assert "jurisdictions" in data
+    
+    async def test_get_jurisdiction_by_id(self):
+        """Test getting specific jurisdiction"""
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                # Get list first
+                list_response = await client.get("/api/0.1.0/jurisdictions/")
+                jurisdictions = list_response.json()["jurisdictions"]
+                
+                if len(jurisdictions) > 0:
+                    jurisdiction_id = jurisdictions[0]["id"]
+                    
+                    # Get specific jurisdiction
+                    response = await client.get(f"/api/0.1.0/jurisdictions/{jurisdiction_id}")
+                    
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert data["id"] == jurisdiction_id
 
 
 @pytest.mark.asyncio
@@ -161,38 +163,38 @@ class TestIncentiveRuleEndpoints:
     
     async def test_list_incentive_rules(self):
         """Test listing all incentive rules"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/incentive-rules/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "rules" in data
-    
-    async def test_filter_rules_by_jurisdiction(self):
-        """Test filtering rules by jurisdiction"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # Get a jurisdiction first
-            juris_response = await client.get("/api/v1/jurisdictions/")
-            jurisdictions = juris_response.json()["jurisdictions"]
-            
-            if len(jurisdictions) > 0:
-                jurisdiction_id = jurisdictions[0]["id"]
-                
-                # Filter rules
-                response = await client.get(
-                    "/api/v1/incentive-rules/",
-                    params={"jurisdiction_id": jurisdiction_id}
-                )
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                response = await client.get("/api/0.1.0/incentive-rules/")
                 
                 assert response.status_code == 200
                 data = response.json()
+                assert "total" in data
+                assert "rules" in data
+    
+    async def test_filter_rules_by_jurisdiction(self):
+        """Test filtering rules by jurisdiction"""
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                # Get a jurisdiction first
+                juris_response = await client.get("/api/0.1.0/jurisdictions/")
+                jurisdictions = juris_response.json()["jurisdictions"]
                 
-                # All returned rules should be for this jurisdiction
-                for rule in data["rules"]:
-                    assert rule["jurisdictionId"] == jurisdiction_id
+                if len(jurisdictions) > 0:
+                    jurisdiction_id = jurisdictions[0]["id"]
+                    
+                    # Filter rules
+                    response = await client.get(
+                        "/api/0.1.0/incentive-rules/",
+                        params={"jurisdiction_id": jurisdiction_id}
+                    )
+                    
+                    assert response.status_code == 200
+                    data = response.json()
+                    
+                    # All returned rules should be for this jurisdiction
+                    for rule in data["rules"]:
+                        assert rule["jurisdictionId"] == jurisdiction_id
 
 
 @pytest.mark.asyncio
@@ -201,14 +203,14 @@ class TestProductionEndpoints:
     
     async def test_list_productions(self):
         """Test listing all productions"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/productions/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "productions" in data
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                response = await client.get("/api/0.1.0/productions/")
+                
+                assert response.status_code == 200
+                data = response.json()
+                assert "total" in data
+                assert "productions" in data
 
 
 class TestModelValidation:
