@@ -139,21 +139,21 @@ class TestJurisdictionEndpoints:
     
     async def test_get_jurisdiction_by_id(self):
         """Test getting specific jurisdiction"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # Get list first
-            list_response = await client.get("/api/0.1.0/jurisdictions/")
-            jurisdictions = list_response.json()["jurisdictions"]
-            
-            if len(jurisdictions) > 0:
-                jurisdiction_id = jurisdictions[0]["id"]
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                # Get list first
+                list_response = await client.get("/api/0.1.0/jurisdictions/")
+                jurisdictions = list_response.json()["jurisdictions"]
                 
-                # Get specific jurisdiction
-                response = await client.get(f"/api/0.1.0/jurisdictions/{jurisdiction_id}")
-                
-                assert response.status_code == 200
-                data = response.json()
-                assert data["id"] == jurisdiction_id
+                if len(jurisdictions) > 0:
+                    jurisdiction_id = jurisdictions[0]["id"]
+                    
+                    # Get specific jurisdiction
+                    response = await client.get(f"/api/0.1.0/jurisdictions/{jurisdiction_id}")
+                    
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert data["id"] == jurisdiction_id
 
 
 @pytest.mark.asyncio
@@ -162,38 +162,38 @@ class TestIncentiveRuleEndpoints:
     
     async def test_list_incentive_rules(self):
         """Test listing all incentive rules"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/0.1.0/incentive-rules/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "rules" in data
-    
-    async def test_filter_rules_by_jurisdiction(self):
-        """Test filtering rules by jurisdiction"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # Get a jurisdiction first
-            juris_response = await client.get("/api/0.1.0/jurisdictions/")
-            jurisdictions = juris_response.json()["jurisdictions"]
-            
-            if len(jurisdictions) > 0:
-                jurisdiction_id = jurisdictions[0]["id"]
-                
-                # Filter rules
-                response = await client.get(
-                    "/api/0.1.0/incentive-rules/",
-                    params={"jurisdiction_id": jurisdiction_id}
-                )
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                response = await client.get("/api/0.1.0/incentive-rules/")
                 
                 assert response.status_code == 200
                 data = response.json()
+                assert "total" in data
+                assert "rules" in data
+    
+    async def test_filter_rules_by_jurisdiction(self):
+        """Test filtering rules by jurisdiction"""
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                # Get a jurisdiction first
+                juris_response = await client.get("/api/0.1.0/jurisdictions/")
+                jurisdictions = juris_response.json()["jurisdictions"]
                 
-                # All returned rules should be for this jurisdiction
-                for rule in data["rules"]:
-                    assert rule["jurisdictionId"] == jurisdiction_id
+                if len(jurisdictions) > 0:
+                    jurisdiction_id = jurisdictions[0]["id"]
+                    
+                    # Filter rules
+                    response = await client.get(
+                        "/api/0.1.0/incentive-rules/",
+                        params={"jurisdiction_id": jurisdiction_id}
+                    )
+                    
+                    assert response.status_code == 200
+                    data = response.json()
+                    
+                    # All returned rules should be for this jurisdiction
+                    for rule in data["rules"]:
+                        assert rule["jurisdictionId"] == jurisdiction_id
 
 
 @pytest.mark.asyncio
