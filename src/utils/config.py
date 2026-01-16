@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     API_TITLE: str = Field(default="PilotForge API")
     API_DESCRIPTION: str = Field(default="Phase 1 spine: rule registry + rule engine + core API endpoints.")
     API_VERSION: str = Field(default="0.1.0")
-    API_PREFIX: str = Field(default="/api/v1")
+    API_PREFIX: str = Field(default="/api/0.1.0")
 
     # CORS (src.main expects these)
     # Defaults keep Phase 1 bootable everywhere; tighten in prod via .env.
@@ -87,3 +87,4 @@ def require_database_url() -> str:
             "Set it in .env (see .env.example)."
         )
     return settings.DATABASE_URL
+

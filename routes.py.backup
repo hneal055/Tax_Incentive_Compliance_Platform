@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import os
 from datetime import datetime
 
 router = APIRouter()
@@ -110,6 +111,27 @@ async def get_incentive(incentive_id: int):
         cur.close()
         conn.close()
 
+# ========== EXPENSES ENDPOINTS ==========
+
+@router.get("/expenses", response_model=List[dict])
+async def get_expenses(skip: int = 0, limit: int = 100):
+    """Get all expenses"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT e.*, c.name as client_name, i.incentive_name
+            FROM expenses e
+            LEFT JOIN clients c ON e.client_id = c.id
+            LEFT JOIN incentives i ON e.incentive_id = i.id
+            ORDER BY e.date_incurred DESC OFFSET %s LIMIT %s
+        """, (skip, limit))
+        expenses = cur.fetchall()
+        return expenses
+    finally:
+        cur.close()
+        conn.close()
+
 # ========== REPORTS ENDPOINTS ==========
 
 @router.get("/reports", response_model=List[dict])
@@ -126,30 +148,6 @@ async def get_reports(skip: int = 0, limit: int = 100):
         """, (skip, limit))
         reports = cur.fetchall()
         return reports
-    except Exception as e:
-        print(f"Error fetching reports: {e}")
-        # Return empty list if table doesn't exist or has issues
-        return []
-    finally:
-        cur.close()
-        conn.close()
-
-@router.get("/reports/{report_id}", response_model=dict)
-async def get_report(report_id: int):
-    """Get a specific compliance report by ID"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("""
-            SELECT r.*, c.name as client_name 
-            FROM compliance_reports r
-            LEFT JOIN clients c ON r.client_id = c.id
-            WHERE r.id = %s
-        """, (report_id,))
-        report = cur.fetchone()
-        if not report:
-            raise HTTPException(status_code=404, detail="Report not found")
-        return report
     finally:
         cur.close()
         conn.close()
@@ -158,77 +156,43 @@ async def get_report(report_id: int):
 
 @router.get("/stats")
 async def get_statistics():
-    """Get platform statistics (excluding expenses for now)"""
+    """Get platform statistics"""
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Initialize counts
-        total_clients = 0
-        total_incentives = 0
-        total_reports = 0
+        # Get counts
+        cur.execute("SELECT COUNT(*) as total FROM clients")
+        total_clients = cur.fetchone()['total']
         
-        # Get counts with error handling for each table
-        try:
-            cur.execute("SELECT COUNT(*) as total FROM clients")
-            total_clients = cur.fetchone()['total']
-        except Exception as e:
-            print(f"Error counting clients: {e}")
-            
-        try:
-            cur.execute("SELECT COUNT(*) as total FROM incentives")
-            total_incentives = cur.fetchone()['total']
-        except Exception as e:
-            print(f"Error counting incentives: {e}")
-            
-        try:
-            cur.execute("SELECT COUNT(*) as total FROM compliance_reports")
-            total_reports = cur.fetchone()['total']
-        except Exception as e:
-            print(f"Error counting reports: {e}")
+        cur.execute("SELECT COUNT(*) as total FROM incentives")
+        total_incentives = cur.fetchone()['total']
+        
+        cur.execute("SELECT COUNT(*) as total FROM expenses")
+        total_expenses = cur.fetchone()['total']
+        
+        cur.execute("SELECT COUNT(*) as total FROM compliance_reports")
+        total_reports = cur.fetchone()['total']
         
         # Get incentive amounts
-        total_amount = 0
-        total_claimed = 0
-        avg_score = 0
-        
-        try:
-            cur.execute("""
-                SELECT 
-                    COALESCE(SUM(amount), 0) as total_amount,
-                    COALESCE(SUM(claimed_amount), 0) as total_claimed
-                FROM incentives
-            """)
-            stats = cur.fetchone()
-            total_amount = float(stats['total_amount'])
-            total_claimed = float(stats['total_claimed'])
-        except Exception as e:
-            print(f"Error fetching incentive stats: {e}")
-        
-        # Get average compliance score if reports exist
-        try:
-            cur.execute("SELECT COALESCE(AVG(compliance_score), 0) as avg_score FROM compliance_reports")
-            avg_result = cur.fetchone()
-            avg_score = float(avg_result['avg_score'])
-        except Exception as e:
-            print(f"Error fetching average score: {e}")
+        cur.execute("""
+            SELECT 
+                SUM(amount) as total_amount,
+                SUM(claimed_amount) as total_claimed,
+                AVG(compliance_score) as avg_score
+            FROM incentives i
+            LEFT JOIN compliance_reports r ON i.client_id = r.client_id
+        """)
+        stats = cur.fetchone()
         
         return {
-            "platform": "Tax Incentive Compliance Platform",
-            "version": "1.0.0",
-            "timestamp": datetime.now().isoformat(),
-            "statistics": {
-                "clients": total_clients,
-                "incentives": total_incentives,
-                "compliance_reports": total_reports,
-                "financials": {
-                    "total_incentive_amount": total_amount,
-                    "total_claimed_amount": total_claimed,
-                    "remaining_amount": total_amount - total_claimed
-                },
-                "compliance": {
-                    "average_score": avg_score
-                }
-            }
+            "clients": total_clients,
+            "incentives": total_incentives,
+            "expenses": total_expenses,
+            "reports": total_reports,
+            "total_incentive_amount": float(stats['total_amount'] or 0),
+            "total_claimed_amount": float(stats['total_claimed'] or 0),
+            "average_compliance_score": float(stats['avg_score'] or 0),
+            "timestamp": datetime.now().isoformat()
         }
     finally:
         cur.close()
@@ -249,28 +213,7 @@ async def health_check():
             "status": "healthy",
             "database": "connected",
             "api": "operational",
-            "timestamp": datetime.now().isoformat(),
-            "endpoints_available": ["/clients", "/incentives", "/reports", "/stats"]
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
-
-# ========== ROOT ENDPOINT ==========
-
-@router.get("/")
-async def api_root():
-    """Root endpoint for the API"""
-    return {
-        "name": "Tax Incentive Compliance Platform API",
-        "version": "1.0.0",
-        "description": "API for managing tax incentive compliance for film and TV productions",
-        "endpoints": {
-            "clients": "/api/v1/clients",
-            "incentives": "/api/v1/incentives",
-            "reports": "/api/v1/reports",
-            "stats": "/api/v1/stats",
-            "health": "/api/v1/health",
-            "documentation": "/docs"
-        },
-        "note": "Expenses endpoint is temporarily on hold"
-    }
