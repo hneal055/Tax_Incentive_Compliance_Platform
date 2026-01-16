@@ -19,7 +19,7 @@ class IncentiveRuleBase(BaseModel):
     excludedExpenses: List[str] = Field(default_factory=list, description="Excluded expense categories")
     effectiveDate: datetime = Field(..., description="When rule becomes effective")
     expirationDate: Optional[datetime] = Field(None, description="When rule expires")
-    requirements: Dict[str, Any] = Field(default_factory=dict, description="Additional requirements")
+    requirements: Optional[Dict[str, Any]] = Field(None, description="Additional requirements")
     active: bool = Field(default=True, description="Whether rule is active")
 
 
