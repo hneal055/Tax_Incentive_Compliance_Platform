@@ -8,20 +8,36 @@ A complete tax incentive calculation platform for film & TV productions
 - 32 global jurisdictions, 33 tax programs
 - 30+ REST API endpoints
 - PDF & Excel report generation
-- 100% test coverage (31/31 passing)
+- **100% test coverage (37/37 comprehensive tests passing)**
 - Professional automation suite
 - Complete documentation
+
+## Testing Coverage
+**37 Comprehensive Tests Across All Endpoints:**
+- **Jurisdictions**: 7 tests (creation, validation, CRUD operations)
+- **Incentive Rules**: 9 tests (creation, validation, filtering)
+- **Productions**: 6 tests (creation, types, budget validation)
+- **Calculator**: 7 tests (simple calc, comparison, compliance)
+- **Reports**: 8 tests (PDF generation, validation)
+
+**Test Infrastructure:**
+- pytest with async support (pytest-asyncio)
+- ASGI lifespan management for proper DB connections
+- UUID-based unique identifiers to prevent test collisions
+- Comprehensive error validation (201, 404, 422, 400 status codes)
 
 ## Tech Stack
 - Python 3.12, FastAPI, PostgreSQL
 - Prisma ORM, Pydantic
 - ReportLab, openpyxl
-- pytest, GitHub Actions ready
+- pytest, pytest-asyncio, asgi-lifespan
+- GitHub Actions ready
 
 ## Status
 ✅ Fully functional locally
 ✅ Production-ready code
 ✅ Enterprise-grade quality
+✅ **Comprehensive test suite with 100% endpoint coverage**
 ⏳ Cloud deployment planned
 
 ## Business Value
