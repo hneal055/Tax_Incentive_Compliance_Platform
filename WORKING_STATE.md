@@ -47,8 +47,14 @@ Jurisdictional Rule Engine for managing film & television tax incentives across 
    - PDF scenario analysis
    - **8 comprehensive tests created**
 
+6. **Excel Exports API** - 100% Complete ✅
+   - Excel comparison workbooks
+   - Excel compliance workbooks
+   - Excel scenario analysis
+   - **9 comprehensive tests created**
+
 ### Testing Infrastructure ✅
-- **37 comprehensive tests across all endpoints**
+- **46 comprehensive tests across all endpoints**
 - pytest with async support (pytest-asyncio)
 - ASGI lifespan management (asgi-lifespan)
 - UUID-based unique identifiers
@@ -59,6 +65,7 @@ Jurisdictional Rule Engine for managing film & television tax incentives across 
   - `test_production_create.py` (6 tests)
   - `test_calculator.py` (7 tests)
   - `test_reports.py` (8 tests)
+  - `test_excel_exports.py` (9 tests)
   - `test_api_endpoints.py` (updated with LifespanManager)
 
 ### Database
@@ -133,10 +140,10 @@ Jurisdictional Rule Engine for managing film & television tax incentives across 
 - POST /scenario - Scenario analysis
 - POST /date-based - Date-based rules
 
-**Reports** (`/api/0.1.0/reports`)
-- POST /comparison - Generate comparison PDF
-- POST /compliance - Generate compliance PDF
-- POST /scenario - Generate scenario PDF
+**Excel Exports** (`/api/0.1.0/excel`)
+- POST /comparison - Generate comparison Excel
+- POST /compliance - Generate compliance Excel
+- POST /scenario - Generate scenario Excel
 
 **System**
 - GET / - API root info

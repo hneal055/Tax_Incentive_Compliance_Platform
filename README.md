@@ -20,13 +20,13 @@ Visit: http://localhost:8000/docs
 - Automated incentive calculations
 - Compliance verification
 - Audit trail
-- **Comprehensive test suite (37 tests)**
+- **Comprehensive test suite (46 tests)**
 
 ## Testing
 
 Run the comprehensive test suite:
 ```bash
-# All tests (37 total)
+# All tests (46 total)
 pytest tests/ -v
 
 # By endpoint category
@@ -35,6 +35,7 @@ pytest tests/test_incentive_rule_create.py   # 9 tests
 pytest tests/test_production_create.py       # 6 tests
 pytest tests/test_calculator.py              # 7 tests
 pytest tests/test_reports.py                 # 8 tests
+pytest tests/test_excel_exports.py           # 9 tests
 ```
 
 **Test Coverage:**

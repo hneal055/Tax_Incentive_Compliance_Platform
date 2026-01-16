@@ -6,7 +6,7 @@
 
 Comprehensive test suite covering all API endpoints with 100% endpoint coverage.
 
-**Total Tests:** 37 comprehensive tests
+**Total Tests:** 46 comprehensive tests
 **Status:** All tests following consistent patterns with proper async handling
 
 ---
@@ -119,6 +119,31 @@ Tests cover:
 
 ---
 
+### 6. Excel Export Tests (9 tests)
+**File:** `tests/test_excel_exports.py`
+
+Tests cover:
+- ✅ `test_export_comparison_excel_success` - Comparison Excel (200)
+- ✅ `test_export_comparison_excel_missing_jurisdictions` - Validation (404)
+- ✅ `test_export_compliance_excel_success` - Compliance Excel (200)
+- ✅ `test_export_compliance_excel_invalid_rule` - Rule validation (404)
+- ✅ `test_export_scenario_excel_success` - Scenario Excel (200)
+- ✅ `test_export_scenario_excel_invalid_jurisdiction` - Validation (404)
+- ✅ `test_export_comparison_excel_with_multiple_jurisdictions` - Multi-jurisdiction (200)
+- ✅ `test_export_scenario_excel_with_multiple_scenarios` - Multi-scenario (200)
+- ✅ `test_export_compliance_excel_with_requirements` - Complex requirements (200)
+
+**Coverage:**
+- Excel workbook generation (comparison, compliance, scenario)
+- Content-Type validation (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+- Content-Disposition headers with .xlsx extension
+- Missing resource validation (404)
+- Multi-jurisdiction comparisons
+- Multi-scenario analysis
+- Complex requirements validation
+
+---
+
 ## Test Infrastructure
 
 ### Technologies
@@ -191,6 +216,9 @@ pytest tests/test_calculator.py -v
 
 # Reports (8 tests)
 pytest tests/test_reports.py -v
+
+# Excel Exports (9 tests)
+pytest tests/test_excel_exports.py -v
 ```
 
 ### Specific Test

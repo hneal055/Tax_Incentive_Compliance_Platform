@@ -103,23 +103,24 @@ class TestReportEndpoints:
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
 class TestExcelEndpoints:
     """Test Excel export endpoints"""
     
     async def test_excel_comparison_validation(self):
         """Test Excel comparison endpoint validation"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            invalid_request = {
-                "productionTitle": "Test Film",
-                "budget": 0,  # Zero budget
-                "jurisdictionIds": ["id1", "id2"]
-            }
-            
-            response = await client.post("/api/0.1.0/excel/comparison", json=invalid_request)
-            
-            # Should validate budget > 0
-            assert response.status_code in [422, 404]
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                invalid_request = {
+                    "productionTitle": "Test Film",
+                    "budget": 0,  # Zero budget
+                    "jurisdictionIds": ["id1", "id2"]
+                }
+                
+                response = await client.post("/api/0.1.0/excel/comparison", json=invalid_request)
+                
+                # Should validate budget > 0
+                assert response.status_code in [422, 404]
 
 
 @pytest.mark.asyncio
