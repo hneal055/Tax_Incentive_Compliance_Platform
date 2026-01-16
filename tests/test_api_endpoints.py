@@ -4,7 +4,8 @@ Test API endpoints for PilotForge
 > Tax Incentive Intelligence for Film & TV
 """
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import AsyncClient
+from asgi_lifespan import LifespanManager
 from src.main import app
 
 
@@ -127,14 +128,14 @@ class TestJurisdictionEndpoints:
     
     async def test_list_jurisdictions(self):
         """Test listing all jurisdictions"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/0.1.0/jurisdictions/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "jurisdictions" in data
+        async with LifespanManager(app):
+            async with AsyncClient(app=app, base_url="http://test") as client:
+                response = await client.get("/api/0.1.0/jurisdictions/")
+                
+                assert response.status_code == 200
+                data = response.json()
+                assert "total" in data
+                assert "jurisdictions" in data
     
     async def test_get_jurisdiction_by_id(self):
         """Test getting specific jurisdiction"""
