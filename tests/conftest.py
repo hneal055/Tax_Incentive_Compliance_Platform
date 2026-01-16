@@ -222,3 +222,36 @@ def calculator_test_cases() -> list[Dict[str, Any]]:
             "expected_credit": 1750000
         }
     ]
+
+
+# Async test fixtures for database and event loop
+import asyncio
+from typing import Generator
+
+
+@pytest.fixture(scope="function")
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
+    """Create an event loop for each test function."""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="function", autouse=True)
+async def setup_database():
+    """
+    Set up database connection for tests.
+    This fixture runs before each test function that needs database access.
+    """
+    from src.utils.database import prisma
+    
+    # Connect to database
+    if not prisma.is_connected():
+        await prisma.connect()
+    
+    yield
+    
+    # Cleanup is handled by the app lifespan, but we can disconnect if needed
+    # Note: We don't disconnect here to allow connection pooling across tests
