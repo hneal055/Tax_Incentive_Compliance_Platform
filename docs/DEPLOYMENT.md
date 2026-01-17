@@ -528,13 +528,42 @@ The build command in `render.yaml` handles everything:
 buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python -m prisma generate
 ```
 
-This command:
-1. Navigates to frontend directory
-2. Installs npm dependencies
-3. Builds production bundle
-4. Returns to root
-5. Installs Python dependencies
-6. Generates Prisma client
+**This command executes the following steps:**
+1. Navigates to frontend directory (`cd frontend`)
+2. Installs npm dependencies (`npm install`)
+3. Builds production bundle (`npm run build`)
+4. Returns to root directory (`cd ..`)
+5. Installs Python dependencies (`pip install -r requirements.txt`)
+6. Generates Prisma client (`python -m prisma generate`)
+
+**Alternative: Using a Build Script**
+
+For better maintainability, you can create a `build.sh` script:
+
+```bash
+#!/bin/bash
+# build.sh
+set -e  # Exit on error
+
+echo "Building frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
+
+echo "Installing backend dependencies..."
+pip install -r requirements.txt
+
+echo "Generating Prisma client..."
+python -m prisma generate
+
+echo "Build complete!"
+```
+
+Then update `render.yaml`:
+```yaml
+buildCommand: chmod +x build.sh && ./build.sh
+```
 
 ### **Verifying Frontend Build**
 

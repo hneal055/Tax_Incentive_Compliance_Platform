@@ -978,7 +978,7 @@ function ProductionListWithErrors() {
 
 **Scenario:** Using React Query for advanced caching and synchronization.
 
-**Note:** This example requires installing React Query first:
+**Note:** This example requires installing TanStack Query (React Query) first:
 ```bash
 npm install @tanstack/react-query
 ```

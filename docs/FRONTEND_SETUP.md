@@ -924,7 +924,7 @@ cd frontend && npm run dev
 ```
 
 #### **Wrong Node.js version**
-Use Node.js 18+ for compatibility:
+Use Node.js 18.0.0+ for compatibility:
 ```bash
 node --version  # Should be v18.0.0 or higher
 ```
