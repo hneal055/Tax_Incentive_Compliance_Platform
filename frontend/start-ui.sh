@@ -23,8 +23,8 @@ if ! command -v node &> /dev/null; then
 fi
 
 # Check Node.js version
-NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
-if [ "$NODE_VERSION" -lt 20 ]; then
+NODE_VERSION=$(node --version 2>/dev/null | sed 's/v//' | cut -d'.' -f1)
+if [ -n "$NODE_VERSION" ] && [ "$NODE_VERSION" -lt 20 ] 2>/dev/null; then
     echo "⚠️  Warning: Node.js 20+ recommended, found version $(node --version)"
 else
     echo "✓ Node.js $(node --version) detected"

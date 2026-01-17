@@ -19,10 +19,16 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ Node.js $nodeVersion detected" -ForegroundColor Green
         
-        # Extract major version number
-        $majorVersion = [int]($nodeVersion -replace 'v(\d+)\..*', '$1')
-        if ($majorVersion -lt 20) {
-            Write-Host "⚠️  Warning: Node.js 20+ recommended, found $nodeVersion" -ForegroundColor Yellow
+        # Extract major version number - handle both with and without 'v' prefix
+        try {
+            $versionString = $nodeVersion -replace '^v', ''
+            $majorVersion = [int]($versionString -split '\.')[0]
+            if ($majorVersion -lt 20) {
+                Write-Host "⚠️  Warning: Node.js 20+ recommended, found $nodeVersion" -ForegroundColor Yellow
+            }
+        } catch {
+            # If version parsing fails, just show a generic message
+            Write-Host "  Version check skipped" -ForegroundColor Gray
         }
     } else {
         throw "Node.js not found"
