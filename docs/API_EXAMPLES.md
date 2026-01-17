@@ -867,6 +867,8 @@ export const useProductionStore = create<ProductionStore>((set, get) => ({
 }))
 
 // Usage in component
+import { useEffect } from 'react'
+
 function ProductionManager() {
   const { 
     productions, 
@@ -975,6 +977,11 @@ function ProductionListWithErrors() {
 ### **Example 16: React Query Integration (Future)**
 
 **Scenario:** Using React Query for advanced caching and synchronization.
+
+**Note:** This example requires installing React Query first:
+```bash
+npm install @tanstack/react-query
+```
 
 ```typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
