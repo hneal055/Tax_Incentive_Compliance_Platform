@@ -831,6 +831,315 @@ GET /api/v1/jurisdictions/  // Returns all 32
 
 ---
 
+## 🎨 Frontend UI Guide
+
+### **Overview**
+
+The PilotForge React frontend provides an intuitive interface for managing productions, browsing jurisdictions, and calculating tax incentives.
+
+**Access:** http://localhost:3000 (development) or your deployed URL
+
+---
+
+### **Dashboard Page**
+
+**Route:** `/`
+
+**Features:**
+- **Production Metrics**: View total productions and recent activity
+- **Jurisdiction Count**: See number of available jurisdictions
+- **Quick Actions**: Create new production or calculate incentives
+- **Jurisdiction Grid**: Browse top jurisdictions at a glance
+
+**What You'll See:**
+```
+┌─────────────────────────────────────────┐
+│  Dashboard                               │
+├─────────────────────────────────────────┤
+│  📊 Productions: 12    🌍 Jurisdictions: 32 │
+│                                          │
+│  [New Production]  [Calculate Incentive] │
+│                                          │
+│  Recent Jurisdictions:                   │
+│  ┌──────┐ ┌──────┐ ┌──────┐             │
+│  │ CA   │ │ GA   │ │ LA   │             │
+│  │ USA  │ │ USA  │ │ USA  │             │
+│  └──────┘ └──────┘ └──────┘             │
+└─────────────────────────────────────────┘
+```
+
+**Usage:**
+1. View production and jurisdiction counts at the top
+2. Click **"New Production"** to create a production
+3. Click **"Calculate Incentive"** to go to the calculator
+4. Browse jurisdiction cards to see available locations
+
+---
+
+### **Productions Page**
+
+**Route:** `/productions`
+
+**Features:**
+- **Production List**: View all productions in a grid
+- **Create Production**: Form with validation
+- **Production Details**: Title, type, budget, dates, jurisdiction
+- **Status Tracking**: Pre-production, production, post-production, completed
+
+**Creating a Production:**
+
+1. Click **"Create New Production"** button
+2. Fill out the form:
+   - **Title**: Production name (e.g., "My Feature Film")
+   - **Type**: Feature, TV Series, Documentary, Commercial
+   - **Budget**: Total production budget
+   - **Jurisdiction**: Select from dropdown
+   - **Start Date**: Production start date
+   - **End Date**: Production end date (optional)
+   - **Status**: Current production phase
+
+3. Click **"Save Production"**
+4. Production appears in the list
+
+**Form Validation:**
+- Title is required
+- Budget must be a positive number
+- Start date must be a valid date
+- Jurisdiction must be selected
+
+**Example Form:**
+```
+┌──────────────────────────────────────┐
+│  Create New Production                │
+├──────────────────────────────────────┤
+│  Title: ___________________________  │
+│                                       │
+│  Type: [Feature ▼]                   │
+│                                       │
+│  Budget: $________                   │
+│                                       │
+│  Jurisdiction: [California ▼]        │
+│                                       │
+│  Start Date: [2026-06-01]            │
+│                                       │
+│  End Date: [2026-09-30]              │
+│                                       │
+│  Status: [Production ▼]              │
+│                                       │
+│  [Cancel]  [Save Production]         │
+└──────────────────────────────────────┘
+```
+
+**Viewing Productions:**
+
+Productions are displayed as cards showing:
+- Title in bold
+- Production type badge
+- Budget amount
+- Start date
+- Jurisdiction name
+
+---
+
+### **Jurisdictions Page**
+
+**Route:** `/jurisdictions`
+
+**Features:**
+- **Jurisdiction Grid**: All 32 jurisdictions displayed as cards
+- **Type Badges**: Visual indicators for state/province/country/territory
+- **Country Grouping**: Jurisdictions organized by country
+- **Quick Reference**: See key information at a glance
+
+**What You'll See:**
+
+```
+┌─────────────────────────────────────────┐
+│  Jurisdictions (32)                      │
+├─────────────────────────────────────────┤
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐│
+│  │California│ │ Georgia  │ │Louisiana ││
+│  │   CA     │ │    GA    │ │   LA     ││
+│  │  [State] │ │  [State] │ │ [State]  ││
+│  │   USA    │ │   USA    │ │   USA    ││
+│  └──────────┘ └──────────┘ └──────────┘│
+│                                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐│
+│  │  Ontario │ │  B.C.    │ │ Quebec   ││
+│  │   ON     │ │    BC    │ │   QC     ││
+│  │[Province]│ │[Province]│ │[Province]││
+│  │  Canada  │ │  Canada  │ │  Canada  ││
+│  └──────────┘ └──────────┘ └──────────┘│
+└─────────────────────────────────────────┘
+```
+
+**Badge Colors:**
+- **Blue**: State
+- **Green**: Province
+- **Purple**: Country
+- **Yellow**: Territory
+
+**Usage:**
+1. Browse all available jurisdictions
+2. See jurisdiction code (e.g., CA, GA, ON)
+3. Identify jurisdiction type (state, province, etc.)
+4. Note country for international jurisdictions
+
+---
+
+### **Calculator Page**
+
+**Route:** `/calculator`
+
+**Features:**
+- **Production Selection**: Choose from your productions
+- **Jurisdiction Selection**: Select location for calculation
+- **Instant Calculation**: Click to calculate tax incentive
+- **Results Display**: View estimated credits and details
+
+**Step-by-Step Usage:**
+
+**Step 1: Select Production**
+```
+Production: [My Feature Film ▼]
+```
+Choose from your saved productions or the dropdown will show "No productions available" if none exist.
+
+**Step 2: Select Jurisdiction**
+```
+Jurisdiction: [California ▼]
+```
+Choose the location where you want to film.
+
+**Step 3: Calculate**
+```
+[Calculate Tax Incentive]
+```
+Click the button to run the calculation.
+
+**Step 4: View Results**
+```
+┌──────────────────────────────────────┐
+│  Calculation Results                  │
+├──────────────────────────────────────┤
+│  🎬 Production: My Feature Film       │
+│  📍 Jurisdiction: California          │
+│  💰 Budget: $5,000,000               │
+│                                       │
+│  ✅ Estimated Tax Credit:            │
+│     $1,000,000                       │
+│                                       │
+│  📊 Rate: 20%                        │
+│  📋 Program: CA Film & TV Credit 3.0 │
+│                                       │
+│  Requirements:                        │
+│  ✓ Minimum spend met                 │
+│  ✓ Under maximum cap                 │
+└──────────────────────────────────────┘
+```
+
+**What the Results Show:**
+- Production name and budget
+- Jurisdiction and program name
+- **Estimated Tax Credit** (most important!)
+- Effective rate (percentage)
+- Compliance status (requirements met/not met)
+
+---
+
+### **Navigation**
+
+**Navbar:**
+
+The top navigation bar provides access to all pages:
+
+```
+┌────────────────────────────────────────┐
+│ 🎬 PilotForge  [Dashboard] [Productions]│
+│               [Jurisdictions] [Calculator]│
+└────────────────────────────────────────┘
+```
+
+**Active Route Highlighting:**
+- Current page is highlighted with blue text and bold font
+- Other pages are gray
+- Hover effect shows interactivity
+
+**Keyboard Navigation:**
+- Tab through navigation links
+- Enter to activate
+- Accessible for screen readers
+
+---
+
+### **Loading States**
+
+When data is being fetched, you'll see:
+
+```
+┌──────────────────────────────────────┐
+│           ⚪ Loading...               │
+└──────────────────────────────────────┘
+```
+
+**Spinner appears when:**
+- Loading productions on Dashboard/Productions page
+- Loading jurisdictions on Jurisdictions page
+- Performing calculations on Calculator page
+
+---
+
+### **Error Handling**
+
+**No Data Available:**
+```
+No productions found. Create your first production!
+```
+
+**API Connection Error:**
+```
+Failed to load data. Please check your connection.
+```
+
+**Form Validation Errors:**
+```
+⚠️ Title is required
+⚠️ Budget must be greater than 0
+```
+
+---
+
+### **Mobile Responsive Design**
+
+The UI adapts to different screen sizes:
+
+**Desktop (1200px+):**
+- 3-column grid for jurisdictions
+- Side-by-side layout for forms
+- Full navigation bar
+
+**Tablet (768px - 1199px):**
+- 2-column grid
+- Stacked form fields
+- Compact navigation
+
+**Mobile (< 768px):**
+- Single column layout
+- Full-width cards
+- Hamburger menu (if implemented)
+
+---
+
+### **Tips for Best Experience**
+
+1. **Start with Dashboard**: Get an overview before diving into specific pages
+2. **Create Productions First**: Calculator requires existing productions
+3. **Use Calculator for Quick Estimates**: Fast way to compare locations
+4. **Check All Jurisdictions**: Don't miss better incentive opportunities
+5. **Note Compliance Requirements**: Some jurisdictions have specific rules
+
+---
+
 ## 📞 Support
 
 - **Documentation Issues**: Open GitHub issue
