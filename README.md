@@ -5,19 +5,59 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 
 ## Quick Start
 
-### Backend
+### 🚀 Full Stack (Recommended)
+
+Start both backend and frontend together:
+
+**Linux/Mac:**
+```bash
+./start-fullstack.sh
+```
+
+**Windows:**
 ```powershell
-cd C:\Projects\PilotForge
-> Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
-.\scripts\setup\setup.ps1
-.\venv\Scripts\Activate.ps1
+.\start-fullstack.ps1
+```
+
+This starts:
+- Backend API: http://localhost:8000
+- Frontend UI: http://localhost:3000
+
+### 🔧 Backend Only
+
+**Linux/Mac:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m uvicorn src.main:app --reload
+```
+
+**Windows:**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 python -m uvicorn src.main:app --reload
 ```
 
 Visit: http://localhost:8000/docs
 
-### Frontend
+### 🎨 Frontend Only
+
+**Linux/Mac:**
+```bash
+cd frontend
+./start-ui.sh
+```
+
+**Windows:**
+```powershell
+cd frontend
+.\start-ui.ps1
+```
+
+**Or manually:**
 ```bash
 cd frontend
 npm install
@@ -25,6 +65,8 @@ npm run dev
 ```
 
 Visit: http://localhost:3000
+
+> 📖 **Detailed Setup Guide**: See [UI_SETUP.md](./UI_SETUP.md) for comprehensive UI setup instructions
 
 ## Features
 
@@ -52,5 +94,7 @@ Visit: http://localhost:3000
 
 ## Documentation
 
-See `docs/QUICK_START.md` for detailed setup instructions.
-See `frontend/FRONTEND_README.md` for frontend-specific documentation.
+- **[UI_SETUP.md](./UI_SETUP.md)** - Comprehensive frontend setup and troubleshooting guide
+- **[frontend/FRONTEND_README.md](./frontend/FRONTEND_README.md)** - Frontend technology stack details
+- **[docs/USER_MANUAL.md](./docs/USER_MANUAL.md)** - User guide for the application
+- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment instructions
