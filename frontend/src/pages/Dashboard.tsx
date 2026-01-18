@@ -19,6 +19,19 @@ const Dashboard: React.FC = () => {
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [responseTime, setResponseTime] = useState<number | undefined>(undefined);
 
+  // Calculate sample chart data for metrics (deterministic for purity)
+  const productionChartData = React.useMemo(() => 
+    Array.from({ length: 10 }, (_, i) => ({
+      value: Math.max(0, productions.length + ((i % 3) * 2 - 3)),
+    }))
+  , [productions.length]);
+
+  const jurisdictionChartData = React.useMemo(() =>
+    Array.from({ length: 10 }, (_, i) => ({
+      value: Math.max(0, jurisdictions.length + ((i % 4) * 3 - 5)),
+    }))
+  , [jurisdictions.length]);
+
   const checkHealth = async () => {
     const startTime = Date.now();
     setHealthStatus('checking');
@@ -51,7 +64,8 @@ const Dashboard: React.FC = () => {
     };
 
     loadData();
-  }, [fetchProductions, fetchJurisdictions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
@@ -60,15 +74,6 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-
-  // Calculate sample chart data for metrics
-  const productionChartData = Array.from({ length: 10 }, () => ({
-    value: Math.max(0, productions.length + Math.random() * 5 - 2.5),
-  }));
-
-  const jurisdictionChartData = Array.from({ length: 10 }, () => ({
-    value: Math.max(0, jurisdictions.length + Math.random() * 10 - 5),
-  }));
 
   return (
     <div className="space-y-8">

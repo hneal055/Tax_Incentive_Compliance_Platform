@@ -52,10 +52,13 @@ const MetricCard: React.FC<MetricCardProps> = ({
     neutral: 'text-gray-500 dark:text-gray-400',
   };
 
-  // Generate sample chart data if none provided
-  const defaultChartData = chartData || Array.from({ length: 10 }, () => ({
-    value: Math.random() * 100 + 50,
-  }));
+  // Generate sample chart data if none provided (using memoization to avoid purity issues)
+  const defaultChartData = React.useMemo(() => {
+    if (chartData) return chartData;
+    return Array.from({ length: 10 }, (_, i) => ({
+      value: 50 + (i * 5) + ((i % 3) * 10), // Deterministic pattern instead of random
+    }));
+  }, [chartData]);
 
   return (
     <motion.div

@@ -14,7 +14,14 @@ const Calculator: React.FC = () => {
   const { productions, jurisdictions, fetchProductions, fetchJurisdictions, isLoading } = useAppStore();
   const [selectedProduction, setSelectedProduction] = useState('');
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('');
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{
+    production: string;
+    jurisdiction: string;
+    totalExpenses: number;
+    qualifiedExpenses: number;
+    incentiveAmount: number;
+    effectiveRate: number;
+  } | null>(null);
   const [calculating, setCalculating] = useState(false);
 
   useEffect(() => {
@@ -31,10 +38,11 @@ const Calculator: React.FC = () => {
     // Simulate calculation - in real app would call API
     setTimeout(() => {
       const production = productions.find(p => p.id === selectedProduction);
-      if (production) {
+      const jurisdiction = jurisdictions.find(j => j.id === selectedJurisdiction);
+      if (production && jurisdiction) {
         setResults({
           production: production.title,
-          jurisdiction: jurisdictions.find(j => j.id === selectedJurisdiction)?.name,
+          jurisdiction: jurisdiction.name,
           totalExpenses: production.budget,
           qualifiedExpenses: production.budget * 0.85,
           incentiveAmount: production.budget * 0.85 * 0.25,
