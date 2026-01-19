@@ -68,6 +68,22 @@ class TestExpenseModelValidation:
         update = ExpenseUpdate(amount=2000)
         assert update.amount == 2000
     
+    def test_expense_update_validates_positive_amount(self):
+        """Test that ExpenseUpdate validates amount is positive"""
+        from src.models.expense import ExpenseUpdate
+        
+        # Valid positive amount
+        update = ExpenseUpdate(amount=1000)
+        assert update.amount == 1000
+        
+        # Invalid negative amount should raise error
+        with pytest.raises(Exception):
+            ExpenseUpdate(amount=-100)
+        
+        # Invalid zero amount should raise error
+        with pytest.raises(Exception):
+            ExpenseUpdate(amount=0)
+    
     def test_expense_response_has_required_fields(self):
         """Test ExpenseResponse model structure"""
         from src.models.expense import ExpenseResponse

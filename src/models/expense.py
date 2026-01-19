@@ -33,7 +33,7 @@ class ExpenseUpdate(BaseModel):
     category: Optional[str] = None
     subcategory: Optional[str] = None
     description: Optional[str] = None
-    amount: Optional[float] = None
+    amount: Optional[float] = Field(None, gt=0)
     expenseDate: Optional[date] = None
     paymentDate: Optional[date] = None
     isQualifying: Optional[bool] = None
