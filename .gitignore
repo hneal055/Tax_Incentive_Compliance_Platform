@@ -35,3 +35,6 @@ htmlcov/
 .coverage
 coverage.xml
 *.log
+# Frontend build
+frontend/dist/
+frontend/.env

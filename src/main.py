@@ -6,9 +6,11 @@ Main FastAPI application for tax incentive calculation and compliance verificati
 """
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.utils.config import settings
 from src.utils.database import prisma
@@ -78,6 +80,19 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
+
+
+# Mount frontend static files if build exists
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+else:
+    # Fallback to old static directory
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+        logger.info(f"✅ Static files mounted from {static_dir}")
 
 
 # Root endpoint
