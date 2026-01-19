@@ -1,0 +1,14 @@
+@pytest_asyncio.fixture(scope='function')  # Changed from session to function
+async def db():
+    '''Database connection for tests'''
+    if not prisma.is_connected():
+        await prisma.connect()
+    yield prisma
+    # Don't disconnect - keep connection for session
+
+@pytest_asyncio.fixture(scope='session')
+async def db_session():
+    '''Session-level database connection'''
+    await prisma.connect()
+    yield prisma
+    await prisma.disconnect()

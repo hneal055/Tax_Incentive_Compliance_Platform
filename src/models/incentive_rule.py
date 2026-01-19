@@ -1,9 +1,9 @@
 """
 Pydantic models for Incentive Rules
 
-Key fix:
-- Postgres column `requirements` is TEXT, so Prisma/DB may return it as a JSON string.
-- FastAPI response models expect a dict => ResponseValidationError unless we coerce.
+Key fix: 
+- Postgres column `requirements` is TEXT, so Prisma/DB may return it as a JSON string. 
+- FastAPI response models expect a dict => ResponseValidationError unless we coerce. 
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ RequirementsInput = Union[RequirementsValue, str, None]
 
 def _coerce_requirements(value: RequirementsInput) -> RequirementsValue:
     """
-    Coerce requirements into a dict.
+    Coerce requirements into a dict. 
 
     Accepts:
       - dict -> dict
@@ -38,7 +38,7 @@ def _coerce_requirements(value: RequirementsInput) -> RequirementsValue:
       - None / "" -> {}
       - anything else -> {}
     """
-    if value is None:
+    if value is None: 
         return {}
     if isinstance(value, dict):
         return value
@@ -56,7 +56,7 @@ def _coerce_requirements(value: RequirementsInput) -> RequirementsValue:
 
 def _coerce_string_list(value: Any) -> List[str]:
     """
-    Coerce list-like fields to a list of strings.
+    Coerce list-like fields to a list of strings. 
     - None -> []
     - list[str] -> list[str]
     - list[Any] -> list[str] (stringified)
@@ -70,7 +70,7 @@ def _coerce_string_list(value: Any) -> List[str]:
 
 class IncentiveRuleBase(BaseModel):
     """
-    Base incentive rule fields.
+    Base incentive rule fields. 
 
     Note: DB schema includes a `fixedAmount` column; included here for completeness.
     """
@@ -79,8 +79,8 @@ class IncentiveRuleBase(BaseModel):
     ruleCode: str = Field(..., description="Internal reference code (unique)")
     incentiveType: str = Field(..., description="Type: tax_credit, rebate, grant, exemption")
 
-    # Numeric fields
-    percentage: Optional[float] = Field(None, description="Percentage rate (e.g., 25.0 for 25%)")
+    # Numeric fields - percentage stored as whole number (25.0 = 25%)
+    percentage: Optional[float] = Field(None, description="Percentage rate (e. g., 25.0 for 25%)")
     fixedAmount: Optional[float] = Field(None, description="Fixed amount incentive (if applicable)")
     minSpend: Optional[float] = Field(None, description="Minimum spend required")
     maxCredit: Optional[float] = Field(None, description="Maximum credit cap")
@@ -92,14 +92,9 @@ class IncentiveRuleBase(BaseModel):
     # Dates
     effectiveDate: datetime = Field(..., description="When rule becomes effective")
     expirationDate: Optional[datetime] = Field(None, description="When rule expires")
-<<<<<<< HEAD
-    requirements: Optional[Dict[str, Any]] = Field(None, description="Additional requirements")
-=======
 
     # Requirements (stored as TEXT in DB; may arrive as JSON string)
     requirements: RequirementsValue = Field(default_factory=dict, description="Additional requirements")
-
->>>>>>> cb72101ae005fbfafb3b2dc5c9a6c86f70a65097
     active: bool = Field(default=True, description="Whether rule is active")
 
     # --- Validators (Pydantic v2) ---
@@ -153,7 +148,7 @@ class IncentiveRuleUpdate(BaseModel):
 
         @field_validator("requirements", mode="before")
         @classmethod
-        def _validate_requirements(cls, v: Any) -> Optional[RequirementsValue]:
+        def _validate_requirements(cls, v: Any) -> Optional[RequirementsValue]: 
             if v is None:
                 return None
             return _coerce_requirements(v)
@@ -176,7 +171,7 @@ class IncentiveRuleUpdate(BaseModel):
 class IncentiveRuleResponse(IncentiveRuleBase):
     """Model for incentive rule responses."""
     id: str
-    createdAt: datetime
+    createdAt:  datetime
     updatedAt: datetime
 
     # Pydantic v2 config
@@ -190,4 +185,7 @@ class IncentiveRuleResponse(IncentiveRuleBase):
 class IncentiveRuleList(BaseModel):
     """Model for list of incentive rules."""
     total: int = Field(..., description="Total number of rules available")
+    page: int = Field(1, description="Current page number")
+    pageSize: int = Field(... , description="Number of items per page")
+    totalPages: int = Field(... , description="Total number of pages")
     rules: List[IncentiveRuleResponse] = Field(default_factory=list, description="Rules returned")
