@@ -95,25 +95,5 @@ model Expense {
   @@index([productionId])
   @@index([expenseDate])
   @@map("expenses")
-}model Expense {
-  id           String   @id @default(cuid())
-
-  // SAFE for existing rows (prevents Prisma reset prompt)
-  productionId String?
-  category     String   @default("uncategorized")
-  expenseDate  DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
-
-  // keep/adjust other fields to match your app
-  description  String?
-  vendor       String?
-  amount       Float
-  currency     String   @default("USD")
-  createdAt    DateTime @default(now())
-
-  production   Production? @relation(fields: [productionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-
-  @@index([productionId])
-  @@map("expenses")
 }
 

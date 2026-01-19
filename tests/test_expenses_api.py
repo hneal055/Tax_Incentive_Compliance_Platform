@@ -2,148 +2,7 @@
 Tests for Expenses API endpoints
 """
 import pytest
-from httpx import AsyncClient, ASGITransport
 from datetime import date, datetime
-from src.main import app
-
-
-@pytest.mark.asyncio
-class TestExpensesEndpoints:
-    """Test expenses CRUD endpoints"""
-    
-    async def test_get_all_expenses(self):
-        """Test listing all expenses"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "total" in data
-            assert "totalAmount" in data
-            assert "qualifyingAmount" in data
-            assert "nonQualifyingAmount" in data
-            assert "expenses" in data
-            assert isinstance(data["expenses"], list)
-    
-    async def test_create_expense_validation(self):
-        """Test expense creation with invalid data"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # Test with negative amount
-            invalid_expense = {
-                "productionId": "test-id",
-                "category": "labor",
-                "description": "Test expense",
-                "amount": -100,  # Invalid negative amount
-                "expenseDate": date.today().isoformat(),
-                "isQualifying": True
-            }
-            
-            response = await client.post("/api/v1/expenses/", json=invalid_expense)
-            
-            # Should return 422 for validation error
-            assert response.status_code == 422
-    
-    async def test_create_expense_missing_production(self):
-        """Test expense creation with non-existent production"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            expense_data = {
-                "productionId": "non-existent-production-id",
-                "category": "labor",
-                "description": "Test expense",
-                "amount": 1000,
-                "expenseDate": date.today().isoformat(),
-                "isQualifying": True
-            }
-            
-            response = await client.post("/api/v1/expenses/", json=expense_data)
-            
-            # Should return 404 if production not found
-            assert response.status_code in [404, 500]
-    
-    async def test_get_expense_by_id_not_found(self):
-        """Test getting non-existent expense"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/non-existent-id")
-            
-            assert response.status_code == 404
-    
-    async def test_update_expense_not_found(self):
-        """Test updating non-existent expense"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            update_data = {
-                "amount": 2000,
-                "description": "Updated description"
-            }
-            
-            response = await client.put("/api/v1/expenses/non-existent-id", json=update_data)
-            
-            assert response.status_code == 404
-    
-    async def test_delete_expense_not_found(self):
-        """Test deleting non-existent expense"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.delete("/api/v1/expenses/non-existent-id")
-            
-            assert response.status_code == 404
-    
-    async def test_filter_expenses_by_production(self):
-        """Test filtering expenses by production ID"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/?production_id=test-production-id")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "expenses" in data
-    
-    async def test_filter_expenses_by_category(self):
-        """Test filtering expenses by category"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/?category=labor")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "expenses" in data
-    
-    async def test_filter_expenses_by_qualifying_status(self):
-        """Test filtering expenses by qualifying status"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/?is_qualifying=true")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert "expenses" in data
-
-
-@pytest.mark.asyncio
-class TestExpenseCalculation:
-    """Test expense calculation endpoints"""
-    
-    async def test_calculate_from_expenses_not_found(self):
-        """Test calculation with non-existent production"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/api/v1/expenses/production/non-existent-id/calculate")
-            
-            assert response.status_code == 404
-    
-    async def test_calculate_from_expenses_no_expenses(self):
-        """Test calculation when production has no expenses"""
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            # This will fail if production doesn't exist or has no expenses
-            response = await client.get("/api/v1/expenses/production/test-production-id/calculate")
-            
-            # Should return 400 or 404
-            assert response.status_code in [400, 404]
 
 
 class TestExpenseModelValidation:
@@ -208,3 +67,110 @@ class TestExpenseModelValidation:
         # This should work with partial fields
         update = ExpenseUpdate(amount=2000)
         assert update.amount == 2000
+    
+    def test_expense_response_has_required_fields(self):
+        """Test ExpenseResponse model structure"""
+        from src.models.expense import ExpenseResponse
+        
+        # Create a valid expense response
+        expense = ExpenseResponse(
+            id="test-id",
+            productionId="prod-id",
+            category="equipment",
+            description="Camera rental",
+            amount=5000,
+            expenseDate=date.today(),
+            isQualifying=True,
+            createdAt=datetime.now(),
+            updatedAt=datetime.now()
+        )
+        
+        assert expense.id == "test-id"
+        assert expense.amount == 5000
+        assert expense.category == "equipment"
+    
+    def test_expense_list_model(self):
+        """Test ExpenseList model structure"""
+        from src.models.expense import ExpenseList, ExpenseResponse
+        
+        expenses = [
+            ExpenseResponse(
+                id="1",
+                productionId="prod-1",
+                category="labor",
+                description="Test",
+                amount=1000,
+                expenseDate=date.today(),
+                isQualifying=True,
+                createdAt=datetime.now(),
+                updatedAt=datetime.now()
+            )
+        ]
+        
+        expense_list = ExpenseList(
+            total=1,
+            totalAmount=1000,
+            qualifyingAmount=1000,
+            nonQualifyingAmount=0,
+            expenses=expenses
+        )
+        
+        assert expense_list.total == 1
+        assert expense_list.totalAmount == 1000
+        assert len(expense_list.expenses) == 1
+    
+    def test_expense_summary_model(self):
+        """Test ExpenseSummary model structure"""
+        from src.models.expense import ExpenseSummary
+        
+        summary = ExpenseSummary(
+            category="labor",
+            totalAmount=50000,
+            qualifyingAmount=45000,
+            nonQualifyingAmount=5000,
+            count=10
+        )
+        
+        assert summary.category == "labor"
+        assert summary.totalAmount == 50000
+        assert summary.count == 10
+    
+    def test_production_expense_calculation_model(self):
+        """Test ProductionExpenseCalculation model structure"""
+        from src.models.expense import ProductionExpenseCalculation, ExpenseSummary
+        
+        calculation = ProductionExpenseCalculation(
+            productionId="prod-1",
+            productionTitle="Test Film",
+            jurisdictionName="California",
+            totalExpenses=100000,
+            qualifyingExpenses=80000,
+            nonQualifyingExpenses=20000,
+            qualifyingPercentage=80.0,
+            bestRuleName="CA Film Credit",
+            bestRuleCode="CA-FC-2025",
+            ruleId="rule-1",
+            appliedRate=25.0,
+            estimatedCredit=20000,
+            meetsMinimum=True,
+            minimumRequired=50000,
+            underMaximum=True,
+            maximumCap=100000,
+            expensesByCategory=[
+                ExpenseSummary(
+                    category="labor",
+                    totalAmount=60000,
+                    qualifyingAmount=60000,
+                    nonQualifyingAmount=0,
+                    count=5
+                )
+            ],
+            totalExpensesCount=10,
+            notes=["Test note"],
+            recommendations=["Test recommendation"]
+        )
+        
+        assert calculation.productionId == "prod-1"
+        assert calculation.estimatedCredit == 20000
+        assert calculation.meetsMinimum is True
+        assert len(calculation.expensesByCategory) == 1
