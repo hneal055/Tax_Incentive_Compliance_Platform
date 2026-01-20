@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from routes import router
 
-# Create FastAPI app
 app = FastAPI(
     title="Tax Incentive Compliance Platform API",
     description="API for managing tax incentive compliance for film and TV productions",
@@ -12,26 +11,16 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Import and include routes
-try:
-    from routes import router
-    # Include all routes under /api/v1 prefix
-    app.include_router(router, prefix="/api/v1")
-    print("✅ Successfully loaded API routes from routes.py")
-except ImportError as e:
-    print(f"❌ Error importing routes: {e}")
-    print("   Please check that routes.py exists and has no syntax errors")
+app.include_router(router, prefix="/api/v1")
 
-# Root endpoint (separate from the router)
 @app.get("/")
 async def root():
     return {
@@ -49,20 +38,6 @@ async def root():
         "note": "Expenses endpoint is temporarily on hold"
     }
 
-@app.get("/health")
+@app.get("/api/v1/health")
 async def health_check():
     return {"status": "healthy"}
-
-if __name__ == "__main__":
-    print("🚀 Starting Tax Incentive Compliance Platform API...")
-    print("📚 API Documentation: http://localhost:8000/docs")
-    print("🔗 Health Check: http://localhost:8000/api/v1/health")
-    print("=" * 60)
-    
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )

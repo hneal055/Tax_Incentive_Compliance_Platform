@@ -8,10 +8,12 @@ const Spinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
   };
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="flex justify-center items-center" role="status" aria-label="Loading">
       <div
-        className={`${sizeClasses[size]} border-pilotforge-blue border-t-transparent rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-accent-blue dark:border-accent-teal border-t-transparent rounded-full animate-spin`}
+        aria-hidden="true"
       />
+      <span className="sr-only">Loading...</span>
     </div>
   );
 };

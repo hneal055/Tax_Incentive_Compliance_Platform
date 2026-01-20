@@ -11,7 +11,10 @@
     "frontend:install": "cd frontend && npm install"
   },
   "devDependencies": {
-    "prisma": "^5.8.0"
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "prisma": "^5.8.0",
+    "tailwindcss": "^4.1.18"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0"
