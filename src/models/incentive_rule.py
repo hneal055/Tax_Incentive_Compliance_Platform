@@ -92,14 +92,13 @@ class IncentiveRuleBase(BaseModel):
     # Dates
     effectiveDate: datetime = Field(..., description="When rule becomes effective")
     expirationDate: Optional[datetime] = Field(None, description="When rule expires")
-<<<<<<< HEAD
-    requirements: Optional[Dict[str, Any]] = Field(None, description="Additional requirements")
-=======
+    # Dates
+    effectiveDate: datetime = Field(..., description="When rule becomes effective")
+    expirationDate: Optional[datetime] = Field(None, description="When rule expires")
 
     # Requirements (stored as TEXT in DB; may arrive as JSON string)
     requirements: RequirementsValue = Field(default_factory=dict, description="Additional requirements")
 
->>>>>>> cb72101ae005fbfafb3b2dc5c9a6c86f70a65097
     active: bool = Field(default=True, description="Whether rule is active")
 
     # --- Validators (Pydantic v2) ---
