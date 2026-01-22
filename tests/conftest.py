@@ -6,6 +6,7 @@ This module provides test fixtures and configuration for the test suite,
 including database connection management and async support.
 """
 import pytest
+import pytest_asyncio
 import asyncio
 import os
 from typing import Generator, AsyncGenerator
@@ -23,7 +24,7 @@ from src.utils.database import prisma
 # Event Loop Configuration
 # ============================================================================
 
-@pytest.fixture(scope="function")  # Changed from "session" to "function"
+@pytest.fixture(scope="function")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
     Create an event loop for each test function.
@@ -42,63 +43,41 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # Database Connection Management
 # ============================================================================
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_database_session():
+# Connect to database before each test function
+@pytest.fixture(scope="function", autouse=True)
+def setup_database_for_test(event_loop):
     """
-    Ensure database connection for the entire test session.
-    This runs once at the start and cleanup happens at the end.
-    
-    If database connection fails, it will be mocked for tests.
+    Setup database for each test using the test's event loop.
+    Connects before test and disconnects after.
     """
-    # Setup: Connect to database at start of test session
-    import asyncio
-    import os
-    
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    # Try to connect, but don't fail if no database is available
-    database_available = False
-    try:
-        if not prisma.is_connected():
-            loop.run_until_complete(prisma.connect())
-            database_available = True
-            print("✅ Test database connected")
-    except Exception as e:
-        print(f"⚠️  Database connection failed: {e}")
-        print("   Tests will run with mocked database")
-        
-        # Use patch to mock database operations since Prisma attributes are read-only
-        patcher1 = patch.object(prisma.jurisdiction, 'find_many', new=AsyncMock(return_value=[]))
-        patcher2 = patch.object(prisma.jurisdiction, 'find_unique', new=AsyncMock(return_value=None))
-        patcher3 = patch.object(prisma.jurisdiction, 'create', new=AsyncMock(return_value={
-            "id": "test-id",
-            "name": "Washington",
-            "code": "WA",
-            "country": "USA",
-            "type": "state",
-            "description": "Washington State Film Incentive Program",
-            "website": "https://www.filmseattle.com",
-            "active": True,
-            "createdAt": "2024-01-01T00:00:00Z",
-            "updatedAt": "2024-01-01T00:00:00Z"
-        }))
-        
-        patcher1.start()
-        patcher2.start()
-        patcher3.start()
+    # Connect to database in the test's event loop
+    if not prisma.is_connected():
+        event_loop.run_until_complete(prisma.connect())
     
     yield
     
-    # Cleanup: disconnect from database after all tests
-    if database_available:
-        try:
-            if prisma.is_connected():
-                loop.run_until_complete(prisma.disconnect())
-        finally:
-            loop.close()
-    else:
+    # Disconnect after test
+    if prisma.is_connected():
+        event_loop.run_until_complete(prisma.disconnect())
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_database():
+    """
+    Final cleanup of database at end of test session.
+    """
+    yield
+    
+    # Final cleanup
+    import asyncio
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        if prisma.is_connected():
+            loop.run_until_complete(prisma.disconnect())
         loop.close()
+    except:
+        pass
 
 
 

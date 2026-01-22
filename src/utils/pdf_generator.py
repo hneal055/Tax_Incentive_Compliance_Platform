@@ -112,18 +112,27 @@ class PDFReportGenerator:
         
         # Executive Summary
         story.append(Paragraph("Executive Summary", self.styles['SectionHeader']))
-        story.append(Paragraph(
-            f"<b>Recommended Location:</b> {best_option['jurisdiction']}",
-            self.styles['HighlightBox']
-        ))
-        story.append(Paragraph(
-            f"<b>Estimated Tax Credit:</b> ${best_option['estimatedCredit']:,.0f}",
-            self.styles['HighlightBox']
-        ))
-        story.append(Paragraph(
-            f"<b>Effective Rate:</b> {best_option['percentage']}%",
-            self.styles['HighlightBox']
-        ))
+        
+        # Only show summary if best_option has data
+        if best_option and best_option.get('jurisdiction'):
+            story.append(Paragraph(
+                f"<b>Recommended Location:</b> {best_option['jurisdiction']}",
+                self.styles['HighlightBox']
+            ))
+            story.append(Paragraph(
+                f"<b>Estimated Tax Credit:</b> ${best_option.get('estimatedCredit', 0):,.0f}",
+                self.styles['HighlightBox']
+            ))
+            story.append(Paragraph(
+                f"<b>Effective Rate:</b> {best_option.get('percentage', 0)}%",
+                self.styles['HighlightBox']
+            ))
+        else:
+            story.append(Paragraph(
+                "<b>No jurisdiction data available for comparison.</b>",
+                self.styles['Normal']
+            ))
+        
         story.append(Spacer(1, 0.3 * inch))
         
         # Comparison Table
