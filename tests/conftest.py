@@ -43,22 +43,35 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # Database Connection Management
 # ============================================================================
 
-# Connect to database before each test function
+# Connect to database before each test function using the test's event loop
 @pytest.fixture(scope="function", autouse=True)
 def setup_database_for_test(event_loop):
     """
     Setup database for each test using the test's event loop.
-    Connects before test and disconnects after.
+    Ensures the Prisma client can work with the test's async context.
     """
-    # Connect to database in the test's event loop
-    if not prisma.is_connected():
-        event_loop.run_until_complete(prisma.connect())
+    # Force disconnect if connected to clear old event loop binding
+    if prisma.is_connected():
+        try:
+            # Try to disconnect in a new loop
+            import asyncio
+            old_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(old_loop)
+            old_loop.run_until_complete(prisma.disconnect())
+            old_loop.close()
+        except:
+            pass
+    
+    # Connect in the test's event loop
+    event_loop.run_until_complete(prisma.connect())
     
     yield
     
-    # Disconnect after test
-    if prisma.is_connected():
+    # Clean disconnect after test
+    try:
         event_loop.run_until_complete(prisma.disconnect())
+    except:
+        pass
 
 
 @pytest.fixture(scope="session", autouse=True)
