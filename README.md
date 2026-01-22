@@ -1,6 +1,6 @@
 # PilotForge
 > Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
+
 Jurisdictional rule engine for managing tax incentives for the film & television industry.
 
 ## Quick Start
@@ -8,8 +8,6 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 ### Backend
 ```powershell
 cd C:\Projects\PilotForge
-> Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
 .\scripts\setup\setup.ps1
 .\venv\Scripts\Activate.ps1
 python -m uvicorn src.main:app --reload
@@ -38,7 +36,7 @@ Visit: http://localhost:3000
 ## Technology
 
 ### Backend
-- Python 3.11+ (FastAPI)
+- **Python 3.12** (FastAPI)
 - PostgreSQL 16
 - Prisma ORM
 - Pytest
