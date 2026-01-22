@@ -9,6 +9,7 @@ from src.api.productions import router as productions_router
 from src.api.calculator import router as calculator_router
 from src.api.reports import router as reports_router
 from src.api.excel import router as excel_router
+from src.api.rule_engine import router as rule_engine_router
 
 API_PREFIX = "/api/0.1.0"
 
@@ -21,6 +22,7 @@ router.include_router(productions_router)
 router.include_router(calculator_router)
 router.include_router(reports_router)
 router.include_router(excel_router)
+router.include_router(rule_engine_router)
 
 
 @router.get("/", tags=["Meta"])
