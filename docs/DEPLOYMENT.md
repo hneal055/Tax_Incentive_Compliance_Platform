@@ -54,7 +54,7 @@ services:
     name: tax-incentive-platform
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python -m prisma generate
+    buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python -m prisma generate
     startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
@@ -63,6 +63,8 @@ services:
         fromDatabase:
           name: tax-incentive-db
           property: connectionString
+      - key: VITE_API_URL
+        value: https://pilotforge.onrender.com
 
 databases:
   - name: tax-incentive-db
@@ -364,9 +366,13 @@ sudo systemctl start tax-incentive
 #### **Required:**
 
 ```bash
+# Backend
 DATABASE_URL=postgresql://user:password@host:5432/database
 PORT=8000
 PYTHON_VERSION=3.12.0
+
+# Frontend
+VITE_API_URL=https://your-app.onrender.com
 ```
 
 #### **Optional:**
@@ -383,8 +389,31 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
+
+# Frontend Debug Mode
+VITE_DEBUG=false
 ```
 
+### **Frontend Environment Variables**
+
+The frontend uses Vite environment variables (prefixed with `VITE_`):
+
+**Development:**
+```bash
+VITE_API_URL=http://localhost:8000
+VITE_DEBUG=true
+```
+
+**Production:**
+```bash
+VITE_API_URL=https://pilotforge.onrender.com
+VITE_DEBUG=false
+```
+
+**Setting Frontend Variables:**
+- Create `.env` file in `frontend/` directory
+- Variables must start with `VITE_` prefix
+- Access in code: `import.meta.env.VITE_API_URL`
 ### **Frontend Variables**
 
 #### **Required:**
@@ -433,6 +462,149 @@ heroku config:set DATABASE_URL="postgresql://..."
 
 ---
 
+## 🎨 Frontend Build Process
+
+### **Building the Frontend**
+
+The React frontend must be built before deployment. The build process:
+
+1. **Install Dependencies**
+```bash
+cd frontend
+npm install
+```
+
+2. **Build Production Bundle**
+```bash
+npm run build
+```
+
+**Build Output:**
+- Location: `frontend/dist/`
+- JavaScript: 283KB (92KB gzipped)
+- CSS: 3.6KB
+- Static assets and HTML
+
+3. **Preview Build Locally**
+```bash
+npm run preview
+# Access at http://localhost:4173
+```
+
+### **Build Output Location**
+
+```
+frontend/dist/
+├── assets/
+│   ├── index-[hash].js      # Bundled JavaScript
+│   ├── index-[hash].css     # Compiled CSS
+│   └── [other-assets]
+└── index.html               # Entry point
+```
+
+### **Static File Serving Configuration**
+
+The FastAPI backend serves the frontend from `frontend/dist/`:
+
+```python
+# In main.py
+from fastapi.staticfiles import StaticFiles
+
+# API routes first
+app.include_router(api_router, prefix="/api/v1")
+
+# Serve frontend (catch-all for non-API routes)
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
+```
+
+**Route Handling:**
+- `/api/v1/*` → FastAPI backend
+- `/*` → Frontend static files
+
+### **Deployment Build Steps**
+
+#### **Full Stack Deployment**
+
+```bash
+# 1. Build frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# 2. Install backend dependencies
+pip install -r requirements.txt
+
+# 3. Generate Prisma client
+python -m prisma generate
+
+# 4. Run migrations (if needed)
+python -m prisma migrate deploy
+
+# 5. Start server (serves both API and frontend)
+python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+```
+
+#### **Render.com Build Command**
+
+The build command in `render.yaml` handles everything:
+
+```yaml
+buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python -m prisma generate
+```
+
+**This command executes the following steps:**
+1. Navigates to frontend directory (`cd frontend`)
+2. Installs npm dependencies (`npm install`)
+3. Builds production bundle (`npm run build`)
+4. Returns to root directory (`cd ..`)
+5. Installs Python dependencies (`pip install -r requirements.txt`)
+6. Generates Prisma client (`python -m prisma generate`)
+
+**Alternative: Using a Build Script**
+
+For better maintainability, you can create a `build.sh` script:
+
+```bash
+#!/bin/bash
+# build.sh
+set -e  # Exit on error
+
+echo "Building frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
+
+echo "Installing backend dependencies..."
+pip install -r requirements.txt
+
+echo "Generating Prisma client..."
+python -m prisma generate
+
+echo "Build complete!"
+```
+
+Then update `render.yaml`:
+```yaml
+buildCommand: chmod +x build.sh && ./build.sh
+```
+
+### **Verifying Frontend Build**
+
+After deployment, verify the frontend is accessible:
+
+```bash
+# Check frontend loads
+curl https://your-app.onrender.com/
+
+# Check API still works
+curl https://your-app.onrender.com/api/v1/
+```
+
+**Expected:**
+- `/` returns React app HTML
+- `/api/v1/` returns API JSON response
 ## 🎨 Frontend Deployment
 
 ### **Frontend Build Process**
@@ -705,7 +877,22 @@ psql $DATABASE_URL < backup_20260110.sql
 
 ## ✅ Post-Deployment
 
-### **1. Verify API is Running**
+### **1. Verify Frontend is Running**
+
+```bash
+# Check frontend loads
+curl https://your-app.onrender.com/
+
+# Or visit in browser
+https://pilotforge.onrender.com
+```
+
+**Expected Response:**
+- HTML page with React app
+- No 404 errors
+- Page loads successfully
+
+### **2. Verify API is Running**
 
 ```bash
 curl https://your-app.onrender.com/api/v1/
@@ -719,7 +906,18 @@ curl https://your-app.onrender.com/api/v1/
 }
 ```
 
-### **2. Test Endpoints**
+### **3. Test Frontend Features**
+
+Visit the deployed application and verify:
+
+- ✅ Dashboard loads with production count
+- ✅ Jurisdictions page displays all jurisdictions
+- ✅ Productions page allows creating new productions
+- ✅ Calculator page works for tax calculations
+- ✅ Navigation between pages works
+- ✅ API calls succeed (check browser Network tab)
+
+### **4. Test Backend Endpoints**
 
 ```bash
 # Test jurisdictions
@@ -729,19 +927,20 @@ curl https://your-app.onrender.com/api/v1/jurisdictions/
 curl -X POST https://your-app.onrender.com/api/v1/calculate/options
 ```
 
-### **3. Access Swagger UI**
+### **5. Access Swagger UI**
 
 ```
 https://your-app.onrender.com/docs
 ```
 
-### **4. Update README**
+### **6. Update README**
 
 Add your live URL:
 ```markdown
 ## 🌐 Live Demo
 
-Try it now: https://tax-incentive-platform.onrender.com/docs
+**Frontend UI**: https://pilotforge.onrender.com
+**API Docs**: https://pilotforge.onrender.com/docs
 ```
 
 ---

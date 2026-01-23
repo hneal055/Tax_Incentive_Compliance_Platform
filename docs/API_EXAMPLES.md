@@ -11,8 +11,9 @@
 3. [Report Generation Examples](#report-generation-examples)
 4. [Data Management Examples](#data-management-examples)
 5. [Advanced Workflows](#advanced-workflows)
-6. [Client Libraries](#client-libraries)
-7. [Common Patterns](#common-patterns)
+6. [Frontend React Examples](#frontend-react-examples)
+7. [Client Libraries](#client-libraries)
+8. [Common Patterns](#common-patterns)
 
 ---
 
@@ -559,6 +560,480 @@ print(f"   Potential Savings: ${result['savings']:,}")
    Film in Georgia
    Estimated Credit: $3,000,000
    Potential Savings: $1,000,000
+```
+
+---
+
+## 🎨 Frontend React Examples
+
+The PilotForge frontend provides a typed API client built with Axios for seamless integration.
+
+### **Example 11: Using the React API Client**
+
+**Scenario:** Fetch and display productions in a React component.
+
+```typescript
+import { useEffect, useState } from 'react'
+import { api } from '../api'
+import type { Production } from '../types'
+
+function ProductionList() {
+  const [productions, setProductions] = useState<Production[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchProductions = async () => {
+      try {
+        setLoading(true)
+        const data = await api.productions.list()
+        setProductions(data)
+      } catch (err) {
+        setError('Failed to fetch productions')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProductions()
+  }, [])
+
+  if (loading) return <div>Loading productions...</div>
+  if (error) return <div>Error: {error}</div>
+
+  return (
+    <div>
+      <h2>Productions ({productions.length})</h2>
+      {productions.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <p>Budget: ${production.budget?.toLocaleString()}</p>
+          <p>Status: {production.status}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 12: Create Production with Form**
+
+**Scenario:** Create a new production using a form with React hooks.
+
+```typescript
+import { useState } from 'react'
+import { api } from '../api'
+import type { Production } from '../types'
+
+function CreateProductionForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    budget: 0,
+    status: 'ACTIVE',
+    production_type: 'FEATURE'
+  })
+  const [creating, setCreating] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      setCreating(true)
+      const newProduction = await api.productions.create({
+        title: formData.title,
+        budget: formData.budget,
+        status: formData.status,
+        production_type: formData.production_type
+      })
+      
+      console.log('Created production:', newProduction)
+      alert(`Production "${newProduction.title}" created successfully!`)
+      
+      // Reset form
+      setFormData({ title: '', budget: 0, status: 'ACTIVE', production_type: 'FEATURE' })
+    } catch (error) {
+      console.error('Failed to create production:', error)
+      alert('Failed to create production')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Production Title"
+        value={formData.title}
+        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+        required
+      />
+      
+      <input
+        type="number"
+        placeholder="Budget"
+        value={formData.budget}
+        onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+        required
+      />
+      
+      <select
+        value={formData.status}
+        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+      >
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+        <option value="COMPLETED">Completed</option>
+      </select>
+      
+      <button type="submit" disabled={creating}>
+        {creating ? 'Creating...' : 'Create Production'}
+      </button>
+    </form>
+  )
+}
+```
+
+---
+
+### **Example 13: Calculate Tax Incentive**
+
+**Scenario:** Calculate tax incentive for a selected production and jurisdiction.
+
+```typescript
+import { useState } from 'react'
+import { api } from '../api'
+import type { CalculationResult } from '../types'
+
+function TaxCalculator() {
+  const [productionId, setProductionId] = useState('')
+  const [jurisdictionId, setJurisdictionId] = useState('')
+  const [result, setResult] = useState<CalculationResult | null>(null)
+  const [calculating, setCalculating] = useState(false)
+
+  const handleCalculate = async () => {
+    if (!productionId || !jurisdictionId) {
+      alert('Please select both production and jurisdiction')
+      return
+    }
+
+    try {
+      setCalculating(true)
+      const calculationResult = await api.calculations.calculate(
+        productionId,
+        jurisdictionId
+      )
+      setResult(calculationResult)
+    } catch (error) {
+      console.error('Calculation failed:', error)
+      alert('Failed to calculate tax incentive')
+    } finally {
+      setCalculating(false)
+    }
+  }
+
+  return (
+    <div>
+      <h2>Tax Incentive Calculator</h2>
+      
+      {/* Production Selection */}
+      <select 
+        value={productionId}
+        onChange={(e) => setProductionId(e.target.value)}
+      >
+        <option value="">Select Production</option>
+        {/* Populate with productions */}
+      </select>
+      
+      {/* Jurisdiction Selection */}
+      <select
+        value={jurisdictionId}
+        onChange={(e) => setJurisdictionId(e.target.value)}
+      >
+        <option value="">Select Jurisdiction</option>
+        {/* Populate with jurisdictions */}
+      </select>
+      
+      <button onClick={handleCalculate} disabled={calculating}>
+        {calculating ? 'Calculating...' : 'Calculate Incentive'}
+      </button>
+      
+      {/* Display Results */}
+      {result && (
+        <div>
+          <h3>Calculation Results</h3>
+          <p>Total Incentive: ${result.total_incentive?.toLocaleString()}</p>
+          <p>Effective Rate: {result.effective_rate}%</p>
+          
+          {result.breakdown && (
+            <div>
+              <h4>Breakdown:</h4>
+              {result.breakdown.map((item, index) => (
+                <div key={index}>
+                  <p>{item.category}: ${item.amount?.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 14: Zustand Store Integration**
+
+**Scenario:** Use Zustand for global state management of productions.
+
+```typescript
+// store/productionStore.ts
+import { create } from 'zustand'
+import { api } from '../api'
+import type { Production } from '../types'
+
+interface ProductionStore {
+  productions: Production[]
+  loading: boolean
+  error: string | null
+  
+  // Actions
+  fetchProductions: () => Promise<void>
+  createProduction: (data: Partial<Production>) => Promise<void>
+  updateProduction: (id: string, data: Partial<Production>) => Promise<void>
+  deleteProduction: (id: string) => Promise<void>
+}
+
+export const useProductionStore = create<ProductionStore>((set, get) => ({
+  productions: [],
+  loading: false,
+  error: null,
+  
+  fetchProductions: async () => {
+    set({ loading: true, error: null })
+    try {
+      const productions = await api.productions.list()
+      set({ productions, loading: false })
+    } catch (error) {
+      set({ error: 'Failed to fetch productions', loading: false })
+    }
+  },
+  
+  createProduction: async (data) => {
+    set({ loading: true, error: null })
+    try {
+      const newProduction = await api.productions.create(data)
+      set({ 
+        productions: [...get().productions, newProduction],
+        loading: false 
+      })
+    } catch (error) {
+      set({ error: 'Failed to create production', loading: false })
+    }
+  },
+  
+  updateProduction: async (id, data) => {
+    set({ loading: true, error: null })
+    try {
+      const updated = await api.productions.update(id, data)
+      set({
+        productions: get().productions.map(p => 
+          p.id === id ? updated : p
+        ),
+        loading: false
+      })
+    } catch (error) {
+      set({ error: 'Failed to update production', loading: false })
+    }
+  },
+  
+  deleteProduction: async (id) => {
+    set({ loading: true, error: null })
+    try {
+      await api.productions.delete(id)
+      set({
+        productions: get().productions.filter(p => p.id !== id),
+        loading: false
+      })
+    } catch (error) {
+      set({ error: 'Failed to delete production', loading: false })
+    }
+  }
+}))
+
+// Usage in component
+import { useEffect } from 'react'
+
+function ProductionManager() {
+  const { 
+    productions, 
+    loading, 
+    error, 
+    fetchProductions, 
+    deleteProduction 
+  } = useProductionStore()
+  
+  useEffect(() => {
+    fetchProductions()
+  }, [fetchProductions])
+  
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+  
+  return (
+    <div>
+      {productions.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <button onClick={() => deleteProduction(production.id)}>
+            Delete
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 15: Error Handling Pattern**
+
+**Scenario:** Robust error handling for API calls.
+
+```typescript
+import axios from 'axios'
+import { api } from '../api'
+
+async function fetchWithErrorHandling() {
+  try {
+    const productions = await api.productions.list()
+    return { data: productions, error: null }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status
+        const message = error.response.data?.detail || error.message
+        
+        if (status === 404) {
+          return { data: null, error: 'Resource not found' }
+        } else if (status === 500) {
+          return { data: null, error: 'Server error. Please try again later.' }
+        } else if (status === 422) {
+          return { data: null, error: 'Validation error: ' + message }
+        } else {
+          return { data: null, error: message }
+        }
+      } else if (error.request) {
+        // Request made but no response
+        return { data: null, error: 'No response from server. Check your connection.' }
+      }
+    }
+    
+    return { data: null, error: 'An unexpected error occurred' }
+  }
+}
+
+// Usage in component
+function ProductionListWithErrors() {
+  const [productions, setProductions] = useState([])
+  const [error, setError] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const loadData = async () => {
+      const { data, error } = await fetchWithErrorHandling()
+      if (error) {
+        setError(error)
+      } else {
+        setProductions(data || [])
+      }
+    }
+    loadData()
+  }, [])
+  
+  if (error) {
+    return (
+      <div className="error">
+        <p>⚠️ {error}</p>
+        <button onClick={() => window.location.reload()}>
+          Retry
+        </button>
+      </div>
+    )
+  }
+  
+  return <div>{/* Render productions */}</div>
+}
+```
+
+---
+
+### **Example 16: React Query Integration (Future)**
+
+**Scenario:** Using React Query for advanced caching and synchronization.
+
+**Note:** This example requires installing TanStack Query (React Query) first:
+```bash
+npm install @tanstack/react-query
+```
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '../api'
+
+function ProductionsWithReactQuery() {
+  const queryClient = useQueryClient()
+  
+  // Fetch productions with caching
+  const { data: productions, isLoading, error } = useQuery({
+    queryKey: ['productions'],
+    queryFn: () => api.productions.list(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+  
+  // Create production mutation
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Production>) => api.productions.create(data),
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['productions'] })
+    }
+  })
+  
+  // Delete production mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.productions.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['productions'] })
+    }
+  })
+  
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+  
+  return (
+    <div>
+      <button onClick={() => createMutation.mutate({ title: 'New Film' })}>
+        Create Production
+      </button>
+      
+      {productions?.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <button onClick={() => deleteMutation.mutate(production.id)}>
+            Delete
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
 ```
 
 ---
