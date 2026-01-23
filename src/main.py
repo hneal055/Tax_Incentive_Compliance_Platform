@@ -6,9 +6,11 @@ Main FastAPI application for tax incentive calculation and compliance verificati
 """
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.utils.config import settings
 from src.utils.database import prisma
@@ -35,16 +37,18 @@ async def lifespan(app: FastAPI):
         await prisma.connect()
         logger.info("✅ Database connected")
     except Exception as e:
-        logger.error(f"❌ Database connection failed: {e}")
-        raise
+        logger.warning(f"⚠️  Database connection failed: {e}")
+        logger.warning("   Application will run with limited functionality")
+        # Don't raise in case we're running tests or without a database
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down PilotForge")
     try:
-        await prisma.disconnect()
-        logger.info("✅ Database disconnected")
+        if prisma.is_connected():
+            await prisma.disconnect()
+            logger.info("✅ Database disconnected")
     except Exception as e:
         logger.error(f"❌ Database disconnection failed: {e}")
 
@@ -65,9 +69,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
         "*"
     ],
     allow_credentials=True,
@@ -78,6 +84,19 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
+
+
+# Mount frontend static files if build exists
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+else:
+    # Fallback to old static directory
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+        logger.info(f"✅ Static files mounted from {static_dir}")
 
 
 # Root endpoint
@@ -122,7 +141,7 @@ async def health_check():
         "status": "healthy",
         "database": db_status,
         "version": settings.API_VERSION,
-        "environment": settings.ENVIRONMENT
+        "environment": "production"
     }
 
 

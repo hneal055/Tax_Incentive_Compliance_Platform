@@ -29,3 +29,17 @@ temp/
 *.key
 *.pem
 secrets/
+# Backups / artifacts
+backup_*/
+htmlcov/
+.coverage
+coverage.xml
+*.log
+# Frontend build
+frontend/dist/
+frontend/.env
+.env
+
+.env
+.env.backup
+create-db.py

@@ -11,8 +11,9 @@
 3. [Report Generation Examples](#report-generation-examples)
 4. [Data Management Examples](#data-management-examples)
 5. [Advanced Workflows](#advanced-workflows)
-6. [Client Libraries](#client-libraries)
-7. [Common Patterns](#common-patterns)
+6. [Frontend React Examples](#frontend-react-examples)
+7. [Client Libraries](#client-libraries)
+8. [Common Patterns](#common-patterns)
 
 ---
 
@@ -563,6 +564,480 @@ print(f"   Potential Savings: ${result['savings']:,}")
 
 ---
 
+## 🎨 Frontend React Examples
+
+The PilotForge frontend provides a typed API client built with Axios for seamless integration.
+
+### **Example 11: Using the React API Client**
+
+**Scenario:** Fetch and display productions in a React component.
+
+```typescript
+import { useEffect, useState } from 'react'
+import { api } from '../api'
+import type { Production } from '../types'
+
+function ProductionList() {
+  const [productions, setProductions] = useState<Production[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchProductions = async () => {
+      try {
+        setLoading(true)
+        const data = await api.productions.list()
+        setProductions(data)
+      } catch (err) {
+        setError('Failed to fetch productions')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProductions()
+  }, [])
+
+  if (loading) return <div>Loading productions...</div>
+  if (error) return <div>Error: {error}</div>
+
+  return (
+    <div>
+      <h2>Productions ({productions.length})</h2>
+      {productions.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <p>Budget: ${production.budget?.toLocaleString()}</p>
+          <p>Status: {production.status}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 12: Create Production with Form**
+
+**Scenario:** Create a new production using a form with React hooks.
+
+```typescript
+import { useState } from 'react'
+import { api } from '../api'
+import type { Production } from '../types'
+
+function CreateProductionForm() {
+  const [formData, setFormData] = useState({
+    title: '',
+    budget: 0,
+    status: 'ACTIVE',
+    production_type: 'FEATURE'
+  })
+  const [creating, setCreating] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      setCreating(true)
+      const newProduction = await api.productions.create({
+        title: formData.title,
+        budget: formData.budget,
+        status: formData.status,
+        production_type: formData.production_type
+      })
+      
+      console.log('Created production:', newProduction)
+      alert(`Production "${newProduction.title}" created successfully!`)
+      
+      // Reset form
+      setFormData({ title: '', budget: 0, status: 'ACTIVE', production_type: 'FEATURE' })
+    } catch (error) {
+      console.error('Failed to create production:', error)
+      alert('Failed to create production')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Production Title"
+        value={formData.title}
+        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+        required
+      />
+      
+      <input
+        type="number"
+        placeholder="Budget"
+        value={formData.budget}
+        onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+        required
+      />
+      
+      <select
+        value={formData.status}
+        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+      >
+        <option value="ACTIVE">Active</option>
+        <option value="INACTIVE">Inactive</option>
+        <option value="COMPLETED">Completed</option>
+      </select>
+      
+      <button type="submit" disabled={creating}>
+        {creating ? 'Creating...' : 'Create Production'}
+      </button>
+    </form>
+  )
+}
+```
+
+---
+
+### **Example 13: Calculate Tax Incentive**
+
+**Scenario:** Calculate tax incentive for a selected production and jurisdiction.
+
+```typescript
+import { useState } from 'react'
+import { api } from '../api'
+import type { CalculationResult } from '../types'
+
+function TaxCalculator() {
+  const [productionId, setProductionId] = useState('')
+  const [jurisdictionId, setJurisdictionId] = useState('')
+  const [result, setResult] = useState<CalculationResult | null>(null)
+  const [calculating, setCalculating] = useState(false)
+
+  const handleCalculate = async () => {
+    if (!productionId || !jurisdictionId) {
+      alert('Please select both production and jurisdiction')
+      return
+    }
+
+    try {
+      setCalculating(true)
+      const calculationResult = await api.calculations.calculate(
+        productionId,
+        jurisdictionId
+      )
+      setResult(calculationResult)
+    } catch (error) {
+      console.error('Calculation failed:', error)
+      alert('Failed to calculate tax incentive')
+    } finally {
+      setCalculating(false)
+    }
+  }
+
+  return (
+    <div>
+      <h2>Tax Incentive Calculator</h2>
+      
+      {/* Production Selection */}
+      <select 
+        value={productionId}
+        onChange={(e) => setProductionId(e.target.value)}
+      >
+        <option value="">Select Production</option>
+        {/* Populate with productions */}
+      </select>
+      
+      {/* Jurisdiction Selection */}
+      <select
+        value={jurisdictionId}
+        onChange={(e) => setJurisdictionId(e.target.value)}
+      >
+        <option value="">Select Jurisdiction</option>
+        {/* Populate with jurisdictions */}
+      </select>
+      
+      <button onClick={handleCalculate} disabled={calculating}>
+        {calculating ? 'Calculating...' : 'Calculate Incentive'}
+      </button>
+      
+      {/* Display Results */}
+      {result && (
+        <div>
+          <h3>Calculation Results</h3>
+          <p>Total Incentive: ${result.total_incentive?.toLocaleString()}</p>
+          <p>Effective Rate: {result.effective_rate}%</p>
+          
+          {result.breakdown && (
+            <div>
+              <h4>Breakdown:</h4>
+              {result.breakdown.map((item, index) => (
+                <div key={index}>
+                  <p>{item.category}: ${item.amount?.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 14: Zustand Store Integration**
+
+**Scenario:** Use Zustand for global state management of productions.
+
+```typescript
+// store/productionStore.ts
+import { create } from 'zustand'
+import { api } from '../api'
+import type { Production } from '../types'
+
+interface ProductionStore {
+  productions: Production[]
+  loading: boolean
+  error: string | null
+  
+  // Actions
+  fetchProductions: () => Promise<void>
+  createProduction: (data: Partial<Production>) => Promise<void>
+  updateProduction: (id: string, data: Partial<Production>) => Promise<void>
+  deleteProduction: (id: string) => Promise<void>
+}
+
+export const useProductionStore = create<ProductionStore>((set, get) => ({
+  productions: [],
+  loading: false,
+  error: null,
+  
+  fetchProductions: async () => {
+    set({ loading: true, error: null })
+    try {
+      const productions = await api.productions.list()
+      set({ productions, loading: false })
+    } catch (error) {
+      set({ error: 'Failed to fetch productions', loading: false })
+    }
+  },
+  
+  createProduction: async (data) => {
+    set({ loading: true, error: null })
+    try {
+      const newProduction = await api.productions.create(data)
+      set({ 
+        productions: [...get().productions, newProduction],
+        loading: false 
+      })
+    } catch (error) {
+      set({ error: 'Failed to create production', loading: false })
+    }
+  },
+  
+  updateProduction: async (id, data) => {
+    set({ loading: true, error: null })
+    try {
+      const updated = await api.productions.update(id, data)
+      set({
+        productions: get().productions.map(p => 
+          p.id === id ? updated : p
+        ),
+        loading: false
+      })
+    } catch (error) {
+      set({ error: 'Failed to update production', loading: false })
+    }
+  },
+  
+  deleteProduction: async (id) => {
+    set({ loading: true, error: null })
+    try {
+      await api.productions.delete(id)
+      set({
+        productions: get().productions.filter(p => p.id !== id),
+        loading: false
+      })
+    } catch (error) {
+      set({ error: 'Failed to delete production', loading: false })
+    }
+  }
+}))
+
+// Usage in component
+import { useEffect } from 'react'
+
+function ProductionManager() {
+  const { 
+    productions, 
+    loading, 
+    error, 
+    fetchProductions, 
+    deleteProduction 
+  } = useProductionStore()
+  
+  useEffect(() => {
+    fetchProductions()
+  }, [fetchProductions])
+  
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+  
+  return (
+    <div>
+      {productions.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <button onClick={() => deleteProduction(production.id)}>
+            Delete
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 15: Error Handling Pattern**
+
+**Scenario:** Robust error handling for API calls.
+
+```typescript
+import axios from 'axios'
+import { api } from '../api'
+
+async function fetchWithErrorHandling() {
+  try {
+    const productions = await api.productions.list()
+    return { data: productions, error: null }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status
+        const message = error.response.data?.detail || error.message
+        
+        if (status === 404) {
+          return { data: null, error: 'Resource not found' }
+        } else if (status === 500) {
+          return { data: null, error: 'Server error. Please try again later.' }
+        } else if (status === 422) {
+          return { data: null, error: 'Validation error: ' + message }
+        } else {
+          return { data: null, error: message }
+        }
+      } else if (error.request) {
+        // Request made but no response
+        return { data: null, error: 'No response from server. Check your connection.' }
+      }
+    }
+    
+    return { data: null, error: 'An unexpected error occurred' }
+  }
+}
+
+// Usage in component
+function ProductionListWithErrors() {
+  const [productions, setProductions] = useState([])
+  const [error, setError] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const loadData = async () => {
+      const { data, error } = await fetchWithErrorHandling()
+      if (error) {
+        setError(error)
+      } else {
+        setProductions(data || [])
+      }
+    }
+    loadData()
+  }, [])
+  
+  if (error) {
+    return (
+      <div className="error">
+        <p>⚠️ {error}</p>
+        <button onClick={() => window.location.reload()}>
+          Retry
+        </button>
+      </div>
+    )
+  }
+  
+  return <div>{/* Render productions */}</div>
+}
+```
+
+---
+
+### **Example 16: React Query Integration (Future)**
+
+**Scenario:** Using React Query for advanced caching and synchronization.
+
+**Note:** This example requires installing TanStack Query (React Query) first:
+```bash
+npm install @tanstack/react-query
+```
+
+```typescript
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { api } from '../api'
+
+function ProductionsWithReactQuery() {
+  const queryClient = useQueryClient()
+  
+  // Fetch productions with caching
+  const { data: productions, isLoading, error } = useQuery({
+    queryKey: ['productions'],
+    queryFn: () => api.productions.list(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+  
+  // Create production mutation
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Production>) => api.productions.create(data),
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['productions'] })
+    }
+  })
+  
+  // Delete production mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.productions.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['productions'] })
+    }
+  })
+  
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+  
+  return (
+    <div>
+      <button onClick={() => createMutation.mutate({ title: 'New Film' })}>
+        Create Production
+      </button>
+      
+      {productions?.map(production => (
+        <div key={production.id}>
+          <h3>{production.title}</h3>
+          <button onClick={() => deleteMutation.mutate(production.id)}>
+            Delete
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+---
+
 ## 📚 Client Libraries
 
 ### **Python Client Class**
@@ -678,6 +1153,651 @@ const comparison = await client.compareJurisdictions(
 );
 
 console.log(`Best: ${comparison.bestOption.jurisdiction}`);
+```
+
+---
+
+## 💡 React/TypeScript Integration Examples
+
+### **Example 11: Using the Frontend API Client**
+
+**Scenario:** Use the typed Axios client from the React frontend.
+
+```typescript
+// src/api/client.ts
+import axios from 'axios'
+
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+export default apiClient
+```
+
+```typescript
+// src/api/index.ts
+import apiClient from './client'
+import type { Production, Jurisdiction, CalculationResult } from '../types'
+
+export const productionService = {
+  async getAll(): Promise<Production[]> {
+    const response = await apiClient.get('/productions')
+    return response.data
+  },
+
+  async create(data: Omit<Production, 'id'>): Promise<Production> {
+    const response = await apiClient.post('/productions', data)
+    return response.data
+  },
+
+  async update(id: string, data: Partial<Production>): Promise<Production> {
+    const response = await apiClient.put(`/productions/${id}`, data)
+    return response.data
+  }
+}
+
+export const calculatorService = {
+  async calculate(
+    productionId: string, 
+    jurisdictionId: string
+  ): Promise<CalculationResult> {
+    const response = await apiClient.post('/calculate/simple', {
+      productionId,
+      jurisdictionId
+    })
+    return response.data
+  }
+}
+```
+
+**Usage in Component:**
+
+```typescript
+// src/pages/Productions.tsx
+import { useEffect, useState } from 'react'
+import { productionService } from '../api'
+import type { Production } from '../types'
+
+export default function Productions() {
+  const [productions, setProductions] = useState<Production[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadProductions()
+  }, [])
+
+  async function loadProductions() {
+    try {
+      setLoading(true)
+      const data = await productionService.getAll()
+      setProductions(data)
+    } catch (error) {
+      console.error('Failed to load productions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div>
+      <h1>Productions</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
+          {productions.map(p => (
+            <li key={p.id}>{p.title}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 12: Zustand Store Usage**
+
+**Scenario:** Manage global state with Zustand for productions and jurisdictions.
+
+```typescript
+// src/store/index.ts
+import { create } from 'zustand'
+import type { Production, Jurisdiction } from '../types'
+
+interface AppStore {
+  // Productions
+  productions: Production[]
+  setProductions: (productions: Production[]) => void
+  addProduction: (production: Production) => void
+  updateProduction: (id: string, production: Partial<Production>) => void
+  removeProduction: (id: string) => void
+
+  // Jurisdictions
+  jurisdictions: Jurisdiction[]
+  setJurisdictions: (jurisdictions: Jurisdiction[]) => void
+
+  // Loading state
+  isLoading: boolean
+  setLoading: (loading: boolean) => void
+}
+
+const useStore = create<AppStore>((set) => ({
+  // Productions
+  productions: [],
+  setProductions: (productions) => set({ productions }),
+  addProduction: (production) => set((state) => ({
+    productions: [...state.productions, production]
+  })),
+  updateProduction: (id, updatedProduction) => set((state) => ({
+    productions: state.productions.map(p =>
+      p.id === id ? { ...p, ...updatedProduction } : p
+    )
+  })),
+  removeProduction: (id) => set((state) => ({
+    productions: state.productions.filter(p => p.id !== id)
+  })),
+
+  // Jurisdictions
+  jurisdictions: [],
+  setJurisdictions: (jurisdictions) => set({ jurisdictions }),
+
+  // Loading
+  isLoading: false,
+  setLoading: (loading) => set({ isLoading: loading })
+}))
+
+export default useStore
+```
+
+**Using the Store:**
+
+```typescript
+// In a component
+import useStore from '../store'
+import { productionService } from '../api'
+
+export default function ProductionList() {
+  const productions = useStore((state) => state.productions)
+  const setProductions = useStore((state) => state.setProductions)
+  const addProduction = useStore((state) => state.addProduction)
+  const isLoading = useStore((state) => state.isLoading)
+  const setLoading = useStore((state) => state.setLoading)
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true)
+      const data = await productionService.getAll()
+      setProductions(data)
+      setLoading(false)
+    }
+    loadData()
+  }, [])
+
+  async function handleCreate(newProduction: Omit<Production, 'id'>) {
+    const created = await productionService.create(newProduction)
+    addProduction(created)
+  }
+
+  return (
+    <div>
+      {isLoading ? <Spinner /> : (
+        <div>
+          {productions.map(p => <ProductionCard key={p.id} production={p} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+---
+
+### **Example 13: Using UI Components**
+
+**Scenario:** Build forms with reusable Button, Card, and Input components.
+
+```typescript
+// src/components/Button.tsx
+interface ButtonProps {
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: 'primary' | 'secondary'
+  type?: 'button' | 'submit'
+  disabled?: boolean
+}
+
+export default function Button({
+  children,
+  onClick,
+  variant = 'primary',
+  type = 'button',
+  disabled = false
+}: ButtonProps) {
+  const baseClasses = 'px-4 py-2 rounded font-medium transition'
+  const variantClasses = {
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
+    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+  }
+
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseClasses} ${variantClasses[variant]}`}
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+```typescript
+// src/components/Input.tsx
+interface InputProps {
+  label: string
+  type?: 'text' | 'number' | 'date'
+  value: string | number
+  onChange: (value: string) => void
+  placeholder?: string
+  required?: boolean
+}
+
+export default function Input({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder,
+  required = false
+}: InputProps) {
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+  )
+}
+```
+
+```typescript
+// src/components/Card.tsx
+interface CardProps {
+  children: React.ReactNode
+  className?: string
+}
+
+export default function Card({ children, className = '' }: CardProps) {
+  return (
+    <div className={`bg-white rounded-lg shadow p-6 ${className}`}>
+      {children}
+    </div>
+  )
+}
+```
+
+**Using Components Together:**
+
+```typescript
+// src/pages/CreateProduction.tsx
+import { useState } from 'react'
+import Button from '../components/Button'
+import Input from '../components/Input'
+import Card from '../components/Card'
+
+export default function CreateProduction() {
+  const [title, setTitle] = useState('')
+  const [budget, setBudget] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    // Create production logic
+  }
+
+  return (
+    <Card>
+      <h2 className="text-2xl font-bold mb-4">Create Production</h2>
+      <form onSubmit={handleSubmit}>
+        <Input
+          label="Production Title"
+          value={title}
+          onChange={setTitle}
+          placeholder="My Feature Film"
+          required
+        />
+        <Input
+          label="Budget"
+          type="number"
+          value={budget}
+          onChange={setBudget}
+          placeholder="5000000"
+          required
+        />
+        <div className="flex gap-2">
+          <Button type="submit" variant="primary">
+            Save Production
+          </Button>
+          <Button variant="secondary" onClick={() => history.back()}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
+  )
+}
+```
+
+---
+
+### **Example 14: Form Submission with Validation**
+
+**Scenario:** Create a production with client-side validation.
+
+```typescript
+// src/pages/ProductionForm.tsx
+import { useState } from 'react'
+import { productionService } from '../api'
+import useStore from '../store'
+import type { Production } from '../types'
+
+export default function ProductionForm() {
+  const addProduction = useStore((state) => state.addProduction)
+  
+  const [formData, setFormData] = useState({
+    title: '',
+    productionType: 'feature',
+    budgetTotal: '',
+    startDate: ''
+  })
+  
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function validate() {
+    const newErrors: Record<string, string> = {}
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required'
+    }
+
+    if (!formData.budgetTotal || Number(formData.budgetTotal) <= 0) {
+      newErrors.budgetTotal = 'Budget must be greater than 0'
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = 'Start date is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    if (!validate()) {
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const production = await productionService.create({
+        title: formData.title,
+        productionType: formData.productionType as any,
+        budgetTotal: Number(formData.budgetTotal),
+        startDate: formData.startDate
+      })
+      
+      addProduction(production)
+      alert('Production created successfully!')
+      
+      // Reset form
+      setFormData({
+        title: '',
+        productionType: 'feature',
+        budgetTotal: '',
+        startDate: ''
+      })
+    } catch (error) {
+      console.error('Failed to create production:', error)
+      alert('Failed to create production. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-lg">
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">
+          Title *
+        </label>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="w-full px-3 py-2 border rounded"
+        />
+        {errors.title && (
+          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+        )}
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">
+          Budget *
+        </label>
+        <input
+          type="number"
+          value={formData.budgetTotal}
+          onChange={(e) => setFormData({ ...formData, budgetTotal: e.target.value })}
+          className="w-full px-3 py-2 border rounded"
+        />
+        {errors.budgetTotal && (
+          <p className="text-red-500 text-sm mt-1">{errors.budgetTotal}</p>
+        )}
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">
+          Start Date *
+        </label>
+        <input
+          type="date"
+          value={formData.startDate}
+          onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+          className="w-full px-3 py-2 border rounded"
+        />
+        {errors.startDate && (
+          <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+      >
+        {isSubmitting ? 'Creating...' : 'Create Production'}
+      </button>
+    </form>
+  )
+}
+```
+
+---
+
+### **Example 15: Calculator Integration**
+
+**Scenario:** Use the calculator API from the frontend with proper error handling.
+
+```typescript
+// src/pages/Calculator.tsx
+import { useState, useEffect } from 'react'
+import { calculatorService, productionService, jurisdictionService } from '../api'
+import type { Production, Jurisdiction } from '../types'
+
+export default function Calculator() {
+  const [productions, setProductions] = useState<Production[]>([])
+  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
+  const [selectedProduction, setSelectedProduction] = useState('')
+  const [selectedJurisdiction, setSelectedJurisdiction] = useState('')
+  const [result, setResult] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    try {
+      const [productionsData, jurisdictionsData] = await Promise.all([
+        productionService.getAll(),
+        jurisdictionService.getAll()
+      ])
+      setProductions(productionsData)
+      setJurisdictions(jurisdictionsData)
+    } catch (error) {
+      console.error('Failed to load data:', error)
+      setError('Failed to load data')
+    }
+  }
+
+  async function handleCalculate() {
+    if (!selectedProduction || !selectedJurisdiction) {
+      setError('Please select both production and jurisdiction')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError('')
+      const calculationResult = await calculatorService.calculate(
+        selectedProduction,
+        selectedJurisdiction
+      )
+      setResult(calculationResult)
+    } catch (error: any) {
+      console.error('Calculation failed:', error)
+      setError(error.response?.data?.detail || 'Calculation failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Tax Incentive Calculator</h1>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">
+            Select Production
+          </label>
+          <select
+            value={selectedProduction}
+            onChange={(e) => setSelectedProduction(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+          >
+            <option value="">Choose a production...</option>
+            {productions.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.title} (${p.budgetTotal.toLocaleString()})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">
+            Select Jurisdiction
+          </label>
+          <select
+            value={selectedJurisdiction}
+            onChange={(e) => setSelectedJurisdiction(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+          >
+            <option value="">Choose a jurisdiction...</option>
+            {jurisdictions.map(j => (
+              <option key={j.id} value={j.id}>
+                {j.name} ({j.code})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={handleCalculate}
+          disabled={loading || !selectedProduction || !selectedJurisdiction}
+          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+        >
+          {loading ? 'Calculating...' : 'Calculate Tax Incentive'}
+        </button>
+      </div>
+
+      {result && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-2xl font-bold mb-4">Calculation Results</h2>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-sm text-gray-600">Jurisdiction</p>
+              <p className="text-lg font-semibold">{result.jurisdiction}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Program</p>
+              <p className="text-lg font-semibold">{result.ruleName}</p>
+            </div>
+          </div>
+
+          <div className="bg-green-50 border-2 border-green-500 rounded p-4 mb-4">
+            <p className="text-sm text-gray-600">Estimated Tax Credit</p>
+            <p className="text-3xl font-bold text-green-700">
+              ${result.estimatedCredit.toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              {result.percentage}% effective rate
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-2">Requirements:</h3>
+            <ul className="list-disc list-inside space-y-1">
+              {result.meetsMinimum && (
+                <li className="text-green-600">✓ Meets minimum spend requirement</li>
+              )}
+              {result.underMaximum && (
+                <li className="text-green-600">✓ Under maximum cap</li>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 ```
 
 ---

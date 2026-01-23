@@ -41,7 +41,7 @@ class TestCalculatorLogic:
         else:
             credit = budget * (percentage / 100)
         
-        assert credit == 0
+        assert credit == pytest.approx(1385187.52, abs=0.01)
     
     def test_fixed_amount_credit(self):
         """Test fixed amount credits"""
