@@ -99,6 +99,138 @@ def cleanup_database():
 # ============================================================================
 
 @pytest.fixture
+def sample_production() -> Dict[str, Any]:
+    """Sample production for testing"""
+    return {
+        "id": "test-production-001",
+        "title": "Test Feature Film",
+        "productionType": "feature",
+        "jurisdictionId": "test-jurisdiction-001",
+        "budgetTotal": 5000000,
+        "budgetQualifying": 4500000,
+        "startDate": datetime.now(),
+        "endDate": datetime.now() + timedelta(days=90),
+        "productionCompany": "Test Productions LLC",
+        "status": "production",
+        "contact": "test@testproductions.com"
+    }
+
+
+@pytest.fixture
+def sample_expenses() -> list[Dict[str, Any]]:
+    """Sample expenses for testing"""
+    return [
+        {
+            "id": "expense-001",
+            "productionId": "test-production-001",
+            "category": "labor",
+            "description": "Crew wages - Week 1",
+            "amount": 500000,
+            "expenseDate": datetime.now(),
+            "isQualifying": True,
+            "vendorName": "Payroll Services"
+        },
+        {
+            "id": "expense-002",
+            "productionId": "test-production-001",
+            "category": "equipment",
+            "description": "Camera rental",
+            "amount": 150000,
+            "expenseDate": datetime.now(),
+            "isQualifying": True,
+            "vendorName": "Panavision"
+        },
+        {
+            "id": "expense-003",
+            "productionId": "test-production-001",
+            "category": "marketing",
+            "description": "Advertising",
+            "amount": 200000,
+            "expenseDate": datetime.now(),
+            "isQualifying": False,
+            "vendorName": "Marketing Co"
+        }
+    ]
+
+
+@pytest.fixture
+def sample_comparison_request() -> Dict[str, Any]:
+    """Sample comparison request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "budget": 5000000,
+        "jurisdictionIds": ["test-jurisdiction-001", "test-jurisdiction-002"]
+    }
+
+
+@pytest.fixture
+def sample_compliance_request() -> Dict[str, Any]:
+    """Sample compliance check request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "ruleId": "test-rule-001",
+        "productionBudget": 5000000,
+        "shootDays": 45,
+        "localHirePercentage": 80,
+        "hasPromoLogo": True,
+        "hasCulturalTest": False
+    }
+
+
+@pytest.fixture
+def sample_scenario_request() -> Dict[str, Any]:
+    """Sample scenario analysis request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "jurisdictionId": "test-jurisdiction-001",
+        "baseProductionBudget": 5000000,
+        "scenarios": [
+            {"name": "Conservative", "budget": 4000000},
+            {"name": "Base", "budget": 5000000},
+            {"name": "Premium", "budget": 7500000}
+        ]
+    }
+
+
+# Calculator test data
+@pytest.fixture
+def calculator_test_cases() -> list[Dict[str, Any]]:
+    """Test cases for calculator logic"""
+    return [
+        {
+            "name": "Basic 25% credit",
+            "budget": 5000000,
+            "percentage": 25.0,
+            "expected_credit": 1250000
+        },
+        {
+            "name": "Credit with max cap",
+            "budget": 100000000,
+            "percentage": 25.0,
+            "max_credit": 10000000,
+            "expected_credit": 10000000
+        },
+        {
+            "name": "Below minimum spend",
+            "budget": 500000,
+            "percentage": 25.0,
+            "min_spend": 1000000,
+            "expected_credit": 0
+        },
+        {
+            "name": "Fixed amount credit",
+            "budget": 5000000,
+            "fixed_amount": 500000,
+            "expected_credit": 500000
+        },
+        {
+            "name": "Stackable credits",
+            "budget": 5000000,
+            "base_percentage": 25.0,
+            "bonus_percentage": 10.0,
+            "expected_credit": 1750000
+        }
+    ]
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """
     Provide an async HTTP client for testing API endpoints.

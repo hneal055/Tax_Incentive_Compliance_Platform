@@ -65,6 +65,7 @@ python -m prisma migrate deploy
 ### Backend
 
 ```powershell
+cd C:\Projects\Tax_Incentive_Compliance_Platform
 # Windows PowerShell
 cd C:\Projects\PilotForge
 .\scripts\setup\setup.ps1
@@ -291,6 +292,36 @@ pytest tests/test_api.py # Specific test file
 - CSS: 3.6KB
 - Optimized with Vite code splitting and tree shaking
 
+- Multi-jurisdictional tax incentive rules
+- Production expense tracking
+- Automated incentive calculations
+- Compliance verification
+- Audit trail
+- **Comprehensive test suite (46 tests)**
+
+## Testing
+
+Run the comprehensive test suite:
+```bash
+# All tests (46 total)
+pytest tests/ -v
+
+# By endpoint category
+pytest tests/test_jurisdiction_create.py     # 7 tests
+pytest tests/test_incentive_rule_create.py   # 9 tests  
+pytest tests/test_production_create.py       # 6 tests
+pytest tests/test_calculator.py              # 7 tests
+pytest tests/test_reports.py                 # 8 tests
+pytest tests/test_excel_exports.py           # 9 tests
+```
+
+**Test Coverage:**
+- ✅ 100% endpoint coverage
+- ✅ Creation workflows
+- ✅ Validation scenarios
+- ✅ Error handling (201, 404, 422, 400)
+- ✅ Relationship integrity
+- ✅ Business logic validation
 **Backend:**
 - Python 3.12+ with FastAPI
 - PostgreSQL database
@@ -299,6 +330,7 @@ Visit: **http://localhost:3000**
 
 ---
 
+- Python 3.12+ (FastAPI)
 ## 🛠️ Technology Stack
 
 ### Backend
@@ -310,7 +342,8 @@ Visit: **http://localhost:3000**
 - **Python 3.12** (FastAPI)
 - PostgreSQL 16
 - Prisma ORM
-- Pytest
+- pytest + pytest-asyncio
+- asgi-lifespan
 
 ### Frontend
 - **React 19** - Latest React with concurrent features
