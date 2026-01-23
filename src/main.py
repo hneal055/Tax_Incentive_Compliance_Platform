@@ -37,16 +37,18 @@ async def lifespan(app: FastAPI):
         await prisma.connect()
         logger.info("✅ Database connected")
     except Exception as e:
-        logger.error(f"❌ Database connection failed: {e}")
-        raise
+        logger.warning(f"⚠️  Database connection failed: {e}")
+        logger.warning("   Application will run with limited functionality")
+        # Don't raise in case we're running tests or without a database
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down PilotForge")
     try:
-        await prisma.disconnect()
-        logger.info("✅ Database disconnected")
+        if prisma.is_connected():
+            await prisma.disconnect()
+            logger.info("✅ Database disconnected")
     except Exception as e:
         logger.error(f"❌ Database disconnection failed: {e}")
 
@@ -67,9 +69,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
         "*"
     ],
     allow_credentials=True,

@@ -39,7 +39,7 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const productions = await api.productions.list();
       set({ productions, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to fetch productions', isLoading: false });
     }
   },
@@ -49,7 +49,7 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const jurisdictions = await api.jurisdictions.list();
       set({ jurisdictions, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to fetch jurisdictions', isLoading: false });
     }
   },
@@ -59,7 +59,7 @@ export const useAppStore = create<AppState>((set) => ({
     try {
       const incentiveRules = await api.incentiveRules.list();
       set({ incentiveRules, isLoading: false });
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to fetch incentive rules', isLoading: false });
     }
   },
@@ -76,7 +76,7 @@ export const useAppStore = create<AppState>((set) => ({
         productions: [...state.productions, newProduction],
         isLoading: false,
       }));
-    } catch (error) {
+    } catch {
       set({ error: 'Failed to create production', isLoading: false });
     }
   },
