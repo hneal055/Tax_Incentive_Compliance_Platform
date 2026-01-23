@@ -25,7 +25,7 @@ class TestJurisdictionCreate:
                 "active": True
             }
             
-            response = await client.post("/api/v1/jurisdictions/", json=new_jurisdiction)
+            response = await client.post("/api/0.1.0/jurisdictions/", json=new_jurisdiction)
             
             # Should return 201 Created
             assert response.status_code == 201

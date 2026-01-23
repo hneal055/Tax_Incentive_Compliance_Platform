@@ -4,13 +4,18 @@ Write-Host "Tax-Incentive Compliance Platform - Setup" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check Python
-Write-Host "Checking Python..." -ForegroundColor Yellow
+# Check Python 3.12
+Write-Host "Checking Python 3.12..." -ForegroundColor Yellow
 try {
-    $pythonVersion = python --version 2>&1
+    $python312 = Get-Command py -ErrorAction Stop
+    $pythonVersion = py -3.12 --version 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python 3.12 not found"
+    }
     Write-Host "✓ $pythonVersion" -ForegroundColor Green
 } catch {
-    Write-Host "✗ Python not found" -ForegroundColor Red
+    Write-Host "✗ Python 3.12 not found" -ForegroundColor Red
+    Write-Host "Please install Python 3.12 from https://www.python.org/downloads/" -ForegroundColor Yellow
     exit 1
 }
 
@@ -34,8 +39,8 @@ try {
 }
 
 Write-Host ""
-Write-Host "Creating virtual environment..." -ForegroundColor Yellow
-python -m venv venv
+Write-Host "Creating virtual environment with Python 3.12..." -ForegroundColor Yellow
+py -3.12 -m venv venv
 
 Write-Host "Activating virtual environment..." -ForegroundColor Yellow
 .\venv\Scripts\Activate.ps1

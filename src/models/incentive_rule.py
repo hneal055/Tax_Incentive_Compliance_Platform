@@ -95,6 +95,7 @@ class IncentiveRuleBase(BaseModel):
 
     # Requirements (stored as TEXT in DB; may arrive as JSON string)
     requirements: RequirementsValue = Field(default_factory=dict, description="Additional requirements")
+
     active: bool = Field(default=True, description="Whether rule is active")
 
     # --- Validators (Pydantic v2) ---
