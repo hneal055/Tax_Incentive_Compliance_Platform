@@ -58,6 +58,39 @@ pip install -r requirements.txt
 # Generate Prisma client
 python -m prisma generate
 
+### 🚀 Full Stack (Recommended)
+
+Start both backend and frontend together:
+
+**Linux/Mac:**
+```bash
+./start-fullstack.sh
+```
+
+**Windows:**
+```powershell
+.\start-fullstack.ps1
+```
+
+This starts:
+- Backend API: http://localhost:8000
+- Frontend UI: http://localhost:3000
+
+### 🔧 Backend Only
+
+**Linux/Mac:**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m uvicorn src.main:app --reload
+```
+
+**Windows:**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 # Run migrations
 python -m prisma migrate deploy
 
@@ -85,6 +118,21 @@ python -m uvicorn src.main:app --reload
 
 **Backend API**: http://localhost:8000/docs
 
+### 🎨 Frontend Only
+
+**Linux/Mac:**
+```bash
+cd frontend
+./start-ui.sh
+```
+
+**Windows:**
+```powershell
+cd frontend
+.\start-ui.ps1
+```
+
+**Or manually:**
 ### Frontend
 
 Visit: **http://localhost:8000/docs** (Swagger UI)
@@ -244,6 +292,9 @@ python -m uvicorn src.main:app --reload
 cd frontend && npm run dev
 ```
 
+> 📖 **Detailed Setup Guide**: See [UI_SETUP.md](./UI_SETUP.md) for comprehensive UI setup instructions
+
+## Features
 **Access:**
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
@@ -496,6 +547,10 @@ See [LICENSE](./docs/LICENSE) for details.
 
 ---
 
+- **[UI_SETUP.md](./UI_SETUP.md)** - Comprehensive frontend setup and troubleshooting guide
+- **[frontend/FRONTEND_README.md](./frontend/FRONTEND_README.md)** - Frontend technology stack details
+- **[docs/USER_MANUAL.md](./docs/USER_MANUAL.md)** - User guide for the application
+- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment instructions
 - **User Manual:** `USER_MANUAL.md` - Platform capabilities and API reference
 - **API Examples:** `docs/API_EXAMPLES.md` - Common use cases
 - **Testing:** `docs/END_TO_END_TESTING_PROCESS.md` - Comprehensive testing process
