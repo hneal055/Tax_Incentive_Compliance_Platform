@@ -361,7 +361,9 @@ sudo systemctl start tax-incentive
 
 ## 🔐 Environment Variables
 
-### **Required Variables**
+### **Backend Variables**
+
+#### **Required:**
 
 ```bash
 # Backend
@@ -373,7 +375,7 @@ PYTHON_VERSION=3.12.0
 VITE_API_URL=https://your-app.onrender.com
 ```
 
-### **Optional Variables**
+#### **Optional:**
 
 ```bash
 # Logging
@@ -412,6 +414,29 @@ VITE_DEBUG=false
 - Create `.env` file in `frontend/` directory
 - Variables must start with `VITE_` prefix
 - Access in code: `import.meta.env.VITE_API_URL`
+### **Frontend Variables**
+
+#### **Required:**
+
+```bash
+# API endpoint (must be prefixed with VITE_)
+VITE_API_URL=https://your-api.onrender.com/api/v1
+```
+
+**Development (.env.development):**
+```bash
+VITE_API_URL=http://localhost:8000/api/v1
+```
+
+**Production (.env.production):**
+```bash
+VITE_API_URL=https://pilotforge-api.onrender.com/api/v1
+```
+
+**Important:**
+- All Vite env vars **must** start with `VITE_` prefix
+- Frontend env vars are **public** (visible in browser)
+- Never store secrets in frontend environment variables
 
 ### **Setting Variables**
 
@@ -580,6 +605,239 @@ curl https://your-app.onrender.com/api/v1/
 **Expected:**
 - `/` returns React app HTML
 - `/api/v1/` returns API JSON response
+## 🎨 Frontend Deployment
+
+### **Frontend Build Process**
+
+The React frontend must be built before deployment. There are two deployment strategies:
+
+#### **Strategy 1: Static Files from FastAPI (Single Server)**
+
+Serve the frontend build from the FastAPI backend:
+
+**1. Build Frontend:**
+```bash
+cd frontend
+npm install
+npm run build
+```
+
+**2. Configure FastAPI to Serve Static Files:**
+
+Update `src/main.py`:
+```python
+from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
+from pathlib import Path
+
+app = FastAPI()
+
+# Serve frontend static files
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+```
+
+**3. Update Build Command in `render.yaml`:**
+```yaml
+services:
+  - type: web
+    name: tax-incentive-platform
+    env: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt && 
+      python -m prisma generate &&
+      cd frontend && 
+      npm install && 
+      npm run build && 
+      cd ..
+    startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tax-incentive-db
+          property: connectionString
+```
+
+**Benefits:**
+- Single deployment
+- Simpler architecture
+- One domain for API and UI
+
+---
+
+#### **Strategy 2: Separate Frontend Deployment (Recommended for Production)**
+
+Deploy frontend separately on Vercel, Netlify, or Render Static Site.
+
+**Option A: Vercel Deployment**
+
+**1. Install Vercel CLI:**
+```bash
+npm install -g vercel
+```
+
+**2. Deploy Frontend:**
+```bash
+cd frontend
+vercel
+```
+
+**3. Configure Environment Variable:**
+
+In Vercel dashboard, set:
+```
+VITE_API_URL=https://your-backend.onrender.com/api/v1
+```
+
+**4. Vercel Configuration (`vercel.json`):**
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+**Benefits:**
+- CDN-powered edge delivery
+- Automatic HTTPS
+- Git-based deployments
+- Preview deployments for PRs
+
+---
+
+**Option B: Netlify Deployment**
+
+**1. Create `netlify.toml`:**
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+**2. Deploy via Netlify CLI:**
+```bash
+npm install -g netlify-cli
+cd frontend
+netlify deploy --prod
+```
+
+**3. Set Environment Variables:**
+
+In Netlify dashboard:
+```
+VITE_API_URL=https://your-backend.onrender.com/api/v1
+```
+
+**Benefits:**
+- Free tier with 100GB bandwidth
+- Automatic deployments from GitHub
+- Form handling and serverless functions
+
+---
+
+**Option C: Render Static Site**
+
+**1. Create `render-frontend.yaml`:**
+```yaml
+services:
+  - type: web
+    name: pilotforge-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://your-backend.onrender.com/api/v1
+```
+
+**2. Deploy:**
+- Push to GitHub
+- Connect repository in Render
+- Render will detect the config and deploy
+
+**Benefits:**
+- Free tier available
+- Same platform as backend
+- Automatic SSL
+
+---
+
+### **Frontend Environment Variables**
+
+The frontend requires the following environment variable:
+
+```bash
+# .env.production (in frontend directory)
+VITE_API_URL=https://your-api-domain.com/api/v1
+```
+
+**Important Notes:**
+- ⚠️ All Vite env vars must be prefixed with `VITE_`
+- ⚠️ Frontend env vars are exposed to the browser (no secrets!)
+- ⚠️ Update CORS settings in backend to allow frontend domain
+
+### **Update Backend CORS Settings**
+
+Update `src/main.py` to allow your frontend domain:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",           # Local development
+        "https://your-frontend.vercel.app", # Production frontend
+        "https://pilotforge.com"           # Custom domain
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+---
+
+### **Complete Deployment Checklist**
+
+**Backend:**
+- [ ] Deploy FastAPI to Render/Railway/Fly.io
+- [ ] Set `DATABASE_URL` environment variable
+- [ ] Run database migrations
+- [ ] Configure CORS for frontend domain
+- [ ] Verify API at `/docs` endpoint
+
+**Frontend:**
+- [ ] Build frontend with `npm run build`
+- [ ] Set `VITE_API_URL` to production API
+- [ ] Deploy to Vercel/Netlify/Render
+- [ ] Verify routing works (SPA redirects)
+- [ ] Test API connectivity from deployed frontend
+
+**DNS (Optional):**
+- [ ] Point custom domain to frontend
+- [ ] Point API subdomain to backend (e.g., api.pilotforge.com)
+- [ ] Configure SSL certificates
 
 ---
 
