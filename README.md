@@ -1,6 +1,7 @@
 # PilotForge
 
 > **Tax Incentive Intelligence for Film & TV Productions**
+> Tax Incentive Intelligence for Film & TV
 
 Jurisdictional rule engine for managing tax incentives for the film & television industry.
 
@@ -44,6 +45,11 @@ python -m prisma generate
 python -m prisma migrate deploy
 
 # Start development server
+### Backend
+```powershell
+cd C:\Projects\PilotForge
+.\scripts\setup\setup.ps1
+.\venv\Scripts\Activate.ps1
 python -m uvicorn src.main:app --reload
 ```
 
@@ -73,6 +79,10 @@ Visit: **http://localhost:3000**
 - **PostgreSQL 16** - Robust relational database
 - **Prisma ORM** - Type-safe database client
 - **Pytest** - Comprehensive testing suite
+- **Python 3.12** (FastAPI)
+- PostgreSQL 16
+- Prisma ORM
+- Pytest
 
 ### Frontend
 - **React 19** - Latest React with concurrent features
@@ -209,3 +219,5 @@ See [LICENSE](./docs/LICENSE) for details.
 ---
 
 **Built with ❤️ for the film & TV industry**
+See `docs/QUICK_START.md` for detailed setup instructions.
+See `frontend/FRONTEND_README.md` for frontend-specific documentation.

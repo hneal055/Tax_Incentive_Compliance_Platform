@@ -112,18 +112,27 @@ class PDFReportGenerator:
         
         # Executive Summary
         story.append(Paragraph("Executive Summary", self.styles['SectionHeader']))
-        story.append(Paragraph(
-            f"<b>Recommended Location:</b> {best_option['jurisdiction']}",
-            self.styles['HighlightBox']
-        ))
-        story.append(Paragraph(
-            f"<b>Estimated Tax Credit:</b> ${best_option['estimatedCredit']:,.0f}",
-            self.styles['HighlightBox']
-        ))
-        story.append(Paragraph(
-            f"<b>Effective Rate:</b> {best_option['percentage']}%",
-            self.styles['HighlightBox']
-        ))
+        
+        # Only show summary if best_option has data
+        if best_option and best_option.get('jurisdiction'):
+            story.append(Paragraph(
+                f"<b>Recommended Location:</b> {best_option['jurisdiction']}",
+                self.styles['HighlightBox']
+            ))
+            story.append(Paragraph(
+                f"<b>Estimated Tax Credit:</b> ${best_option.get('estimatedCredit', 0):,.0f}",
+                self.styles['HighlightBox']
+            ))
+            story.append(Paragraph(
+                f"<b>Effective Rate:</b> {best_option.get('percentage', 0)}%",
+                self.styles['HighlightBox']
+            ))
+        else:
+            story.append(Paragraph(
+                "<b>No jurisdiction data available for comparison.</b>",
+                self.styles['Normal']
+            ))
+        
         story.append(Spacer(1, 0.3 * inch))
         
         # Comparison Table
@@ -159,21 +168,30 @@ class PDFReportGenerator:
         
         # Recommendations
         story.append(Paragraph("Recommendations", self.styles['SectionHeader']))
-        savings = comparisons[0]['estimatedCredit'] - comparisons[-1]['estimatedCredit']
-        story.append(Paragraph(
-            f"• <b>Best Financial Option:</b> {best_option['jurisdiction']} offers the highest tax credit of ${best_option['estimatedCredit']:,.0f}",
-            self.styles['Normal']
-        ))
-        story.append(Spacer(1, 6))
-        story.append(Paragraph(
-            f"• <b>Potential Savings:</b> Filming in {best_option['jurisdiction']} saves ${savings:,.0f} compared to the lowest option",
-            self.styles['Normal']
-        ))
-        story.append(Spacer(1, 6))
-        story.append(Paragraph(
-            f"• <b>Next Steps:</b> Review compliance requirements for {best_option['jurisdiction']} and contact their film office to begin application process",
-            self.styles['Normal']
-        ))
+        
+        # Only show recommendations if there's data
+        if comparisons and len(comparisons) > 0 and best_option and best_option.get('jurisdiction'):
+            savings = comparisons[0]['estimatedCredit'] - comparisons[-1]['estimatedCredit']
+            story.append(Paragraph(
+                f"• <b>Best Financial Option:</b> {best_option['jurisdiction']} offers the highest tax credit of ${best_option.get('estimatedCredit', 0):,.0f}",
+                self.styles['Normal']
+            ))
+            story.append(Spacer(1, 6))
+            story.append(Paragraph(
+                f"• <b>Potential Savings:</b> Filming in {best_option['jurisdiction']} saves ${savings:,.0f} compared to the lowest option",
+                self.styles['Normal']
+            ))
+            story.append(Spacer(1, 6))
+            story.append(Paragraph(
+                f"• <b>Next Steps:</b> Review compliance requirements for {best_option['jurisdiction']} and contact their film office to begin application process",
+                self.styles['Normal']
+            ))
+        else:
+            story.append(Paragraph(
+                "• <b>No data available for recommendations.</b> Please provide jurisdiction comparison data.",
+                self.styles['Normal']
+            ))
+        
         
         # Build PDF
         doc.build(story)

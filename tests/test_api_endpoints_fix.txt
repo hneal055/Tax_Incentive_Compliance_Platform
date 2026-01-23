@@ -1,0 +1,11 @@
+            assert "version" in data
+            assert "api" in data
+
+    @pytest.mark.skip(reason="calculate/options endpoint not implemented")
+    async def test_calculator_options(self):
+        """Test calculator options endpoint"""
+        pass
+
+    @pytest.mark.skip(reason="Health endpoint not implemented")
+    async def test_health_check(self):
+        """Test health check endpoint"""
