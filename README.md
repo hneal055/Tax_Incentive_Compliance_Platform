@@ -496,6 +496,11 @@ See [LICENSE](./docs/LICENSE) for details.
 
 ---
 
+- **User Manual:** `USER_MANUAL.md` - Platform capabilities and API reference
+- **API Examples:** `docs/API_EXAMPLES.md` - Common use cases
+- **Testing:** `docs/END_TO_END_TESTING_PROCESS.md` - Comprehensive testing process
+- **Brand Guidelines:** `BRAND_GUIDELINES.md` - Branding standards
+- **Deployment:** `docs/DEPLOYMENT.md` - Deployment guide
 **Built with ❤️ for the film & TV industry**
 See `docs/QUICK_START.md` for detailed setup instructions.
 See `frontend/FRONTEND_README.md` for frontend-specific documentation.

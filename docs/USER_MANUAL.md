@@ -1387,6 +1387,7 @@ The UI adapts to different screen sizes:
 - **Documentation Issues**: Open GitHub issue
 - **API Questions**: Check [API_EXAMPLES.md](./API_EXAMPLES.md)
 - **Bug Reports**: Include request/response details
+- **Testing & QA**: See [END_TO_END_TESTING_PROCESS.md](./END_TO_END_TESTING_PROCESS.md)
 
 ---
 
