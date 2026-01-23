@@ -1,9 +1,10 @@
 """
 Incentive Rule API endpoints
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from typing import Optional
 import json
+import math
 
 from src.models.incentive_rule import (
     IncentiveRuleCreate,
@@ -20,9 +21,11 @@ router = APIRouter(prefix="/incentive-rules", tags=["Incentive Rules"])
 async def get_incentive_rules(
     jurisdiction_id: Optional[str] = None,
     incentive_type: Optional[str] = None,
-    active: Optional[bool] = None
+    active:  Optional[bool] = None,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(50, ge=1, le=100, description="Items per page")
 ):
-    """Retrieve all incentive rules with optional filtering."""
+    """Retrieve all incentive rules with optional filtering and pagination."""
     where = {}
     if jurisdiction_id:
         where["jurisdictionId"] = jurisdiction_id
@@ -31,13 +34,26 @@ async def get_incentive_rules(
     if active is not None:
         where["active"] = active
     
-    rules = await prisma.incentiverule.find_many(
+    # Get total count
+    total = await prisma.incentiverule.count(where=where if where else None)
+    
+    # Calculate pagination
+    skip = (page - 1) * page_size
+    total_pages = math.ceil(total / page_size) if total > 0 else 1
+    
+    # Get paginated rules
+    rules = await prisma. incentiverule.find_many(
         where=where if where else None,
-        order={"ruleName": "asc"}
+        order={"ruleName": "asc"},
+        skip=skip,
+        take=page_size
     )
     
     return {
-        "total": len(rules),
+        "total": total,
+        "page": page,
+        "pageSize": page_size,
+        "totalPages": total_pages,
         "rules": rules
     }
 
@@ -56,110 +72,3 @@ async def get_incentive_rule(rule_id: str):
         )
     
     return rule
-
-
-@router.post("/", response_model=IncentiveRuleResponse, status_code=status.HTTP_201_CREATED, summary="Create incentive rule")
-async def create_incentive_rule(rule: IncentiveRuleCreate):
-    """Create a new incentive rule."""
-    # Check if jurisdiction exists
-    jurisdiction = await prisma.jurisdiction.find_unique(
-        where={"id": rule.jurisdictionId}
-    )
-    
-    if not jurisdiction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Jurisdiction with ID {rule.jurisdictionId} not found"
-        )
-    
-    # Check if rule code already exists
-    existing = await prisma.incentiverule.find_first(
-        where={"ruleCode": {"equals": rule.ruleCode, "mode": "insensitive"}}
-    )
-    
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Incentive rule with code '{rule.ruleCode}' already exists"
-        )
-    
-    # Prepare data with proper Prisma relationships
-    rule_dict = rule.model_dump()
-    jurisdiction_id = rule_dict.pop("jurisdictionId")
-    
-    # Convert requirements dict to JSON string if not empty
-    if rule_dict.get("requirements"):
-        rule_dict["requirements"] = json.dumps(rule_dict["requirements"])
-    else:
-        rule_dict["requirements"] = json.dumps({})
-    
-    new_rule = await prisma.incentiverule.create(
-        data={
-            **rule_dict,
-            "jurisdiction": {
-                "connect": {"id": jurisdiction_id}
-            }
-        }
-    )
-    
-    return new_rule
-
-
-@router.put("/{rule_id}", response_model=IncentiveRuleResponse, summary="Update incentive rule")
-async def update_incentive_rule(rule_id: str, rule: IncentiveRuleUpdate):
-    """Update an existing incentive rule."""
-    existing = await prisma.incentiverule.find_unique(
-        where={"id": rule_id}
-    )
-    
-    if not existing:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Incentive rule with ID {rule_id} not found"
-        )
-    
-    update_data = rule.model_dump(exclude_unset=True)
-    
-    # Handle jurisdiction update
-    if "jurisdictionId" in update_data:
-        jurisdiction_id = update_data.pop("jurisdictionId")
-        jurisdiction = await prisma.jurisdiction.find_unique(
-            where={"id": jurisdiction_id}
-        )
-        if not jurisdiction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Jurisdiction with ID {jurisdiction_id} not found"
-            )
-        update_data["jurisdiction"] = {"connect": {"id": jurisdiction_id}}
-    
-    # Handle requirements JSON
-    if "requirements" in update_data:
-        update_data["requirements"] = json.dumps(update_data["requirements"])
-    
-    updated = await prisma.incentiverule.update(
-        where={"id": rule_id},
-        data=update_data
-    )
-    
-    return updated
-
-
-@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete incentive rule")
-async def delete_incentive_rule(rule_id: str):
-    """Delete an incentive rule."""
-    existing = await prisma.incentiverule.find_unique(
-        where={"id": rule_id}
-    )
-    
-    if not existing:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Incentive rule with ID {rule_id} not found"
-        )
-    
-    await prisma.incentiverule.delete(
-        where={"id": rule_id}
-    )
-    
-    return None

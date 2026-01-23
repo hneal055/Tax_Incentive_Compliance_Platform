@@ -38,3 +38,8 @@ coverage.xml
 # Frontend build
 frontend/dist/
 frontend/.env
+.env
+
+.env
+.env.backup
+create-db.py
