@@ -89,4 +89,8 @@ export const api = {
   },
 };
 
+export const getApiUrl = (path: string): string => {
+  return apiClient.getBaseUrl() + path;
+};
+
 export default api;

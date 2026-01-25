@@ -20,17 +20,17 @@ const Dashboard: React.FC = () => {
   const [responseTime, setResponseTime] = useState<number | undefined>(undefined);
 
   // Calculate sample chart data for metrics (deterministic for purity)
-  const productionChartData = React.useMemo(() => 
+  const productionChartData = React.useMemo(() =>
     Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, productions.length + ((i % 3) * 2 - 3)),
+      value: Math.max(0, (productions?.length ?? 0) + ((i % 3) * 2 - 3)),
     }))
-  , [productions.length]);
+  , [productions?.length]);
 
   const jurisdictionChartData = React.useMemo(() =>
     Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, jurisdictions.length + ((i % 4) * 3 - 5)),
+      value: Math.max(0, (jurisdictions?.length ?? 0) + ((i % 4) * 3 - 5)),
     }))
-  , [jurisdictions.length]);
+  , [jurisdictions?.length]);
 
   const checkHealth = async () => {
     const startTime = Date.now();
@@ -67,6 +67,10 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Defensive: fallback to empty arrays if store returns null/undefined
+  const safeProductions = productions ?? [];
+  const safeJurisdictions = jurisdictions?.jurisdictions ?? [];
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -76,7 +80,8 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-bg-white
+     min-h-screen">
       {/* Header with System Health */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -84,7 +89,7 @@ const Dashboard: React.FC = () => {
             Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Monitoring {productions.length} production{productions.length !== 1 ? 's' : ''} across {jurisdictions.length} jurisdiction{jurisdictions.length !== 1 ? 's' : ''}
+            Monitoring {safeProductions.length} production{safeProductions.length !== 1 ? 's' : ''} across {safeJurisdictions.length} jurisdiction{safeJurisdictions.length !== 1 ? 's' : ''}
           </p>
         </div>
         <SystemHealth
@@ -99,7 +104,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricCard
           title="Active Productions"
-          value={productions.length}
+          value={safeProductions.length}
           icon={Film}
           trend="neutral"
           chartData={productionChartData}
@@ -107,7 +112,7 @@ const Dashboard: React.FC = () => {
 
         <MetricCard
           title="Jurisdictions"
-          value={jurisdictions.length}
+          value={safeJurisdictions.length}
           icon={MapPin}
           trend="neutral"
           chartData={jurisdictionChartData}
@@ -123,7 +128,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* AI Insights */}
-      {productions.length > 0 && (
+      {safeProductions.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InsightCard
             type="suggestion"
@@ -187,10 +192,10 @@ const Dashboard: React.FC = () => {
       {/* Recent Productions */}
       <Card 
         title="Recent Productions" 
-        subtitle={`${productions.length} total production${productions.length !== 1 ? 's' : ''}`}
+        subtitle={`${safeProductions.length} total production${safeProductions.length !== 1 ? 's' : ''}`}
         hoverable
       >
-        {productions.length === 0 ? (
+        {safeProductions.length === 0 ? (
           <EmptyState
             icon={Film}
             title="No productions yet"
@@ -200,7 +205,7 @@ const Dashboard: React.FC = () => {
           />
         ) : (
           <div className="space-y-3">
-            {productions.slice(0, 5).map((production) => (
+            {safeProductions.slice(0, 5).map((production) => (
               <div 
                 key={production.id} 
                 className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
@@ -231,7 +236,7 @@ const Dashboard: React.FC = () => {
         subtitle="Global tax incentive programs"
         hoverable
       >
-        {jurisdictions.length === 0 ? (
+        {safeJurisdictions.length === 0 ? (
           <EmptyState
             icon={MapPin}
             title="No jurisdictions available"
@@ -241,7 +246,7 @@ const Dashboard: React.FC = () => {
           />
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {jurisdictions.slice(0, 8).map((jurisdiction) => (
+            {safeJurisdictions.slice(0, 8).map((jurisdiction) => (
               <div 
                 key={jurisdiction.id} 
                 className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-lg hover:shadow-md transition-all border border-gray-200 dark:border-gray-700"
@@ -250,9 +255,9 @@ const Dashboard: React.FC = () => {
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{jurisdiction.name}</p>
               </div>
             ))}
-            {jurisdictions.length > 8 && (
+            {safeJurisdictions.length > 8 && (
               <div className="text-center p-4 bg-gradient-to-br from-accent-blue to-accent-teal dark:from-accent-blue/80 dark:to-accent-teal/80 text-white rounded-lg flex items-center justify-center hover:shadow-lg transition-all cursor-pointer">
-                <p className="font-bold">+{jurisdictions.length - 8} more</p>
+                <p className="font-bold">+{safeJurisdictions.length - 8} more</p>
               </div>
             )}
           </div>
@@ -263,3 +268,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+

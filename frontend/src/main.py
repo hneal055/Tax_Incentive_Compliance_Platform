@@ -3,42 +3,42 @@ PilotForge - Tax Incentive Intelligence for Film & TV
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
-from contextlib import asynccontextmanager
-import logging
-
-from fastapi import FastAPI
+from fastapi import FastAPIccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
-from src.utils.config import settings
+# Import your API routers here
+try: fastapi.middleware.cors import CORSMiddleware
+    from src.api.routes import router as api_router
+except ImportError:
+    api_router = None import settings
 from src.utils.database import prisma
-from src.api.routes import router
-
-
-# Configure logging
+app = FastAPI(outes import router
+    title="PilotForge - Tax Incentive Intelligence",
+    version="0.1.0"
+) Configure logging
 logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# CORS middleware (adjust origins as needed)L.upper(), logging.INFO),
+app.add_middleware(me)s - %(name)s - %(levelname)s - %(message)s",
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify ["http://localhost:5173", "http://127.0.0.1:5173"]er(__name__)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)sync def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
-    # Startup
-    logger.info("🎬 Starting PilotForge")
-    logger.info("   Tax Incentive Intelligence for Film & TV")
-    try:
+# Health endpoint
+@app.get("/health") Starting PilotForge")
+async def health(): Tax Incentive Intelligence for Film & TV")
+    return {"status": "healthy"}
         await prisma.connect()
-        logger.info("✅ Database connected")
-    except Exception as e:  # noqa: BLE001
-        logger.error(f"❌ Database connection failed: {e}")
+# Include API routers if availablennected")
+if api_router:eption as e:  # noqa: BLE001
+    app.include_router(api_router, prefix="/api/0.1.0")}")
         raise
-
-    yield
-
-    # Shutdown
+# Optionally, add a root endpoint
+@app.get("/")
+async def root():
+    return {"message": "Welcome to PilotForge API"}
     logger.info("🛑 Shutting down PilotForge")
     try:
         await prisma.disconnect()
@@ -69,7 +69,7 @@ app.add_middleware(
 
 
 # Include API routes under the configured prefix (e.g. /api/0.1.0)
-app.include_router(router, prefix=settings.API_PREFIX)
+app.include_router(router, prefix="/api/0.1.0")
 
 
 # Root endpoint
