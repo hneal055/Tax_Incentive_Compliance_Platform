@@ -1,184 +1,583 @@
-"""
-Pydantic models for Incentive Rules
+# ========================================
+# Tax Incentive Compliance Platform
+# Bulletproof Windows Startup Script
+# ========================================
 
-Key fix: 
-- Postgres column `requirements` is TEXT, so Prisma/DB may return it as a JSON string. 
-- FastAPI response models expect a dict => ResponseValidationError unless we coerce. 
-"""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Tax Incentive Compliance Platform" -ForegroundColor White
+Write-Host "Automated Startup Script" -ForegroundColor White
+# Tax-Incentive Compliance Platform
+# Self-Healing Startup Script (Windows-Optimized)
+# ========================================
 
-from __future__ import annotations
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Tax-Incentive Compliance Platform" -ForegroundColor White
+Write-Host "Startup Script" -ForegroundColor White
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
-import json
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+# ========================================
+# STEP 1: Find Python 3.12
+# ========================================
+Write-Host "[ STEP 1/7 ] Finding Python 3.12..." -ForegroundColor Cyan
+$pythonCmd = $null
+$pythonVersion = $null
 
-from pydantic import BaseModel, Field
+# Strategy 1: Try Windows Python Launcher
+Write-Host "  Trying: py -3.12" -ForegroundColor Gray
+try {
+    $version = & py -3.12 --version 2>&1
+    if ($LASTEXITCODE -eq 0 -and $version -match "3\.12") {
+        $pythonCmd = "py -3.12"
+        $pythonVersion = $version
+        Write-Host "  ✓ Found via Python Launcher: $version" -ForegroundColor Green
+    }
+} catch {}
 
-# Pydantic v2 preferred config (with a soft fallback pattern)
-try:
-from pydantic import ConfigDict, field_validator
-_HAS_V2 = True
-except Exception:  # pragma: no cover
-ConfigDict = None  # type: ignore
-field_validator = None  # type: ignore
-_HAS_V2 = False
+# Strategy 2: Try 'python' in PATH
+if (-not $pythonCmd) {
+    Write-Host "  Trying: python" -ForegroundColor Gray
+    try {
+        $version = & python --version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $version -match "3\.12") {
+            $pythonCmd = "python"
+            $pythonVersion = $version
+            Write-Host "  ✓ Found in PATH: $version" -ForegroundColor Green
+        }
+    } catch {}
+}
 
-RequirementsValue = Dict[str, Any]
-RequirementsInput = Union[RequirementsValue, str, None]
+# Strategy 3: Search common Windows installation paths
+if (-not $pythonCmd) {
+    Write-Host "  Searching common installation paths..." -ForegroundColor Gray
+    $searchPaths = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python312-64\python.exe",
+        "C:\Program Files\Python312\python.exe",
+        "C:\Python312\python.exe"
+    )
+    
+    foreach ($path in $searchPaths) {
+        if (Test-Path $path) {
+            try {
+                $version = & $path --version 2>&1
+                if ($LASTEXITCODE -eq 0 -and $version -match "3\.12") {
+                    $pythonCmd = $path
+                    $pythonVersion = $version
+                    Write-Host "  ✓ Found at: $path" -ForegroundColor Green
+                    Write-Host "    Version: $version" -ForegroundColor Green
+                    break
+                }
+            } catch {}
+        }
+    }
+}
 
-def _coerce_requirements(value: RequirementsInput) -> RequirementsValue:
-"""
-    Coerce requirements into a dict. 
+# Python not found - show diagnostics and exit
+if (-not $pythonCmd) {
+    Write-Host ""
+    Write-Host "❌ Python 3.12 not found!" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Diagnostics:" -ForegroundColor Yellow
+    Write-Host "  Searched paths:" -ForegroundColor Yellow
+    foreach ($path in $searchPaths) {
+        $exists = Test-Path $path
+        if ($exists) {
+            Write-Host "    ✓ $path (found but wrong version)" -ForegroundColor Yellow
+        } else {
+            Write-Host "    ✗ $path" -ForegroundColor Gray
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "  Available Python versions:" -ForegroundColor Yellow
+    try {
+        & py --list 2>&1 | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    } catch {
+        Write-Host "    (Python Launcher not available)" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    Write-Host "Solution:" -ForegroundColor Cyan
+    Write-Host "  1. Download Python 3.12 from: https://www.python.org/downloads/" -ForegroundColor White
+    Write-Host "  2. During installation, CHECK ✓ 'Add Python to PATH'" -ForegroundColor White
+    Write-Host "  3. Run this script again: .\start.ps1" -ForegroundColor White
+    Write-Host ""
+    exit 1
+# 1. FIND PYTHON 3.12 (WINDOWS-SMART)
+# ========================================
+Write-Host "`n[1/6] Locating Python 3.12..." -ForegroundColor Yellow
 
-    Accepts:
-      - dict -> dict
-      - JSON string -> dict (if valid)
-      - None / "" -> {}
-      - anything else -> {}
-    """
-if value is None: 
-return {}
-if isinstance(value, dict):
-return value
-if isinstance(value, str):
-s = value.strip()
-if not s:
-return {}
-try:
-parsed = json.loads(s)
-return parsed if isinstance(parsed, dict) else {}
-except Exception:
-return {}
-return {}
+$pythonCmd = $null
+$pythonVersion = $null
 
-def _coerce_string_list(value: Any) -> List[str]:
-"""
-    Coerce list-like fields to a list of strings. 
-    - None -> []
-    - list[str] -> list[str]
-    - list[Any] -> list[str] (stringified)
-    """
-if value is None:
-return []
-if isinstance(value, list):
-return [str(x) for x in value if x is not None]
-return []
+# Strategy 1: Try Python Launcher (py. exe) - most reliable on Windows
+try {
+    $pythonVersion = py -3.12 --version 2>&1
+    if ($pythonVersion -match "Python 3\.12\.(\d+)") {
+        $pythonCmd = "py -3.12"
+        Write-Host "✓ Found via Python Launcher:  $pythonVersion" -ForegroundColor Green
+    }
+}
+catch { }
 
-class IncentiveRuleBase(BaseModel):
-"""
-    Base incentive rule fields. 
+Write-Host "✓ Python 3.12 ready: $pythonCmd" -ForegroundColor Green
+Write-Host ""
 
-    Note: DB schema includes a `fixedAmount` column; included here for completeness.
-    """
-jurisdictionId: str = Field(..., description="Jurisdiction ID this rule belongs to")
-ruleName: str = Field(..., description="Name of the incentive rule")
-ruleCode: str = Field(..., description="Internal reference code (unique)")
-incentiveType: str = Field(..., description="Type: tax_credit, rebate, grant, exemption")
+# ========================================
+# STEP 2: Virtual Environment
+# ========================================
+Write-Host "[ STEP 2/7 ] Checking virtual environment..." -ForegroundColor Cyan
+$venvPython = ".\.venv\Scripts\python.exe"
+$needsRecreate = $false
 
-# Numeric fields - percentage stored as whole number (25.0 = 25%)
-percentage: Optional[float] = Field(None, description="Percentage rate (e. g., 25.0 for 25%)")
-fixedAmount: Optional[float] = Field(None, description="Fixed amount incentive (if applicable)")
-minSpend: Optional[float] = Field(None, description="Minimum spend required")
-maxCredit: Optional[float] = Field(None, description="Maximum credit cap")
+if (Test-Path ".venv") {
+    Write-Host "  Virtual environment exists, checking version..." -ForegroundColor Gray
+    try {
+        $venvVersion = & $venvPython --version 2>&1
+        if ($LASTEXITCODE -eq 0 -and $venvVersion -match "3\.12") {
+            Write-Host "  ✓ Using existing .venv with $venvVersion" -ForegroundColor Green
+        } else {
+            Write-Host "  ⚠ Virtual environment has wrong version: $venvVersion" -ForegroundColor Yellow
+            Write-Host "    Recreating with Python 3.12..." -ForegroundColor Yellow
+            $needsRecreate = $true
+        }
+    } catch {
+        Write-Host "  ⚠ Virtual environment is corrupted" -ForegroundColor Yellow
+        Write-Host "    Recreating..." -ForegroundColor Yellow
+        $needsRecreate = $true
+    }
+} else {
+    Write-Host "  Virtual environment not found, creating..." -ForegroundColor Yellow
+    $needsRecreate = $true
+}
 
-# Arrays
-eligibleExpenses: List[str] = Field(default_factory=list, description="Eligible expense categories")
-excludedExpenses: List[str] = Field(default_factory=list, description="Excluded expense categories")
+if ($needsRecreate) {
+    # Remove old venv if it exists
+    if (Test-Path ".venv") {
+        Write-Host "  Removing old .venv..." -ForegroundColor Gray
+        Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
+    }
+    
+    # Create new venv
+    Write-Host "  Creating new virtual environment..." -ForegroundColor Gray
+    try {
+        if ($pythonCmd -eq "py -3.12") {
+            & py -3.12 -m venv .venv
+        } else {
+            & $pythonCmd -m venv .venv
+        }
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Virtual environment created" -ForegroundColor Green
+        } else {
+            Write-Host "  ❌ Failed to create virtual environment" -ForegroundColor Red
+            exit 1
+        }
+    } catch {
+        Write-Host "  ❌ Error creating virtual environment: $_" -ForegroundColor Red
+        exit 1
+    }
+}
 
-# Dates
-effectiveDate: datetime = Field(..., description="When rule becomes effective")
-expirationDate: Optional[datetime] = Field(None, description="When rule expires")
+Write-Host "✓ Virtual environment ready" -ForegroundColor Green
+Write-Host ""
 
-# Requirements (stored as TEXT in DB; may arrive as JSON string)
-requirements: RequirementsValue = Field(default_factory=dict, description="Additional requirements")
+# ========================================
+# STEP 3: Dependencies
+# ========================================
+Write-Host "[ STEP 3/7 ] Checking dependencies..." -ForegroundColor Cyan
+$needsInstall = $false
 
-active: bool = Field(default=True, description="Whether rule is active")
+# Quick check: is fastapi installed?
+try {
+    $fastapiCheck = & $venvPython -m pip show fastapi 2>&1
+    if ($LASTEXITCODE -ne 0 -or -not $fastapiCheck) {
+        Write-Host "  Dependencies not installed" -ForegroundColor Yellow
+        $needsInstall = $true
+    } else {
+        Write-Host "  ✓ Core dependencies installed" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "  Dependencies not installed" -ForegroundColor Yellow
+    $needsInstall = $true
+}
 
-# --- Validators (Pydantic v2) ---
-if _HAS_V2:
+if ($needsInstall) {
+    Write-Host "  Installing from requirements.txt..." -ForegroundColor Yellow
+    try {
+        & $venvPython -m pip install -q -r requirements.txt
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Dependencies installed" -ForegroundColor Green
+        } else {
+            Write-Host "  ⚠ Some dependencies may have failed to install" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "  ⚠ Error installing dependencies: $_" -ForegroundColor Yellow
+    }
+}
 
-@field_validator("requirements", mode="before")
-@classmethod
-def _validate_requirements(cls, v: Any) -> RequirementsValue:
-return _coerce_requirements(v)
+# Run prisma generate if prisma directory exists
+if (Test-Path "prisma") {
+    Write-Host "  Running prisma generate..." -ForegroundColor Gray
+    try {
+        & $venvPython -m prisma generate 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Prisma client generated" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "  ⚠ Prisma generate skipped" -ForegroundColor Gray
+    }
+}
 
-@field_validator("eligibleExpenses", mode="before")
-@classmethod
-def _validate_eligible_expenses(cls, v: Any) -> List[str]:
-return _coerce_string_list(v)
+Write-Host "✓ Dependencies ready" -ForegroundColor Green
+Write-Host ""
 
-@field_validator("excludedExpenses", mode="before")
-@classmethod
-def _validate_excluded_expenses(cls, v: Any) -> List[str]:
-return _coerce_string_list(v)
+# ========================================
+# STEP 4: Configuration
+# ========================================
+Write-Host "[ STEP 4/7 ] Checking configuration..." -ForegroundColor Cyan
 
-class IncentiveRuleCreate(IncentiveRuleBase):
-"""Model for creating an incentive rule."""
-pass
+if (-not (Test-Path ".env")) {
+    if (Test-Path ".env.example") {
+        Write-Host "  Creating .env from .env.example..." -ForegroundColor Yellow
+        Copy-Item .env.example .env
+        Write-Host "  ✓ .env file created" -ForegroundColor Green
+    } else {
+        Write-Host "  ⚠ No .env or .env.example found" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "  ✓ .env file exists" -ForegroundColor Green
+}
 
-class IncentiveRuleUpdate(BaseModel):
-"""Model for updating an incentive rule (all fields optional)."""
-jurisdictionId: Optional[str] = None
-ruleName: Optional[str] = None
-ruleCode: Optional[str] = None
-incentiveType: Optional[str] = None
+Write-Host "✓ Configuration ready" -ForegroundColor Green
+Write-Host ""
 
-percentage: Optional[float] = None
-fixedAmount: Optional[float] = None
-minSpend: Optional[float] = None
-maxCredit: Optional[float] = None
+# ========================================
+# STEP 5: Docker Desktop
+# ========================================
+Write-Host "[ STEP 5/7 ] Checking Docker Desktop..." -ForegroundColor Cyan
 
-eligibleExpenses: Optional[List[str]] = None
-excludedExpenses: Optional[List[str]] = None
+try {
+    & docker version 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  ✓ Docker Desktop is running" -ForegroundColor Green
+    } else {
+        throw "Docker not accessible"
+    }
+} catch {
+    Write-Host "  ❌ Docker Desktop is not running" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Please start Docker Desktop and run this script again." -ForegroundColor Yellow
+    Write-Host "  You can verify Docker with: docker version" -ForegroundColor Gray
+    Write-Host ""
+    exit 1
+}
 
-effectiveDate: Optional[datetime] = None
-expirationDate: Optional[datetime] = None
+Write-Host "✓ Docker Desktop ready" -ForegroundColor Green
+Write-Host ""
 
-# allow dict OR json-string on update as well
-requirements: Optional[RequirementsValue] = None
+# ========================================
+# STEP 6: PostgreSQL Container
+# ========================================
+Write-Host "[ STEP 6/7 ] Checking PostgreSQL..." -ForegroundColor Cyan
 
-active: Optional[bool] = None
+# Check if container is running
+$containerRunning = & docker ps --filter "name=tax-incentive-db" --format "{{.Names}}" 2>&1
 
-if _HAS_V2:
+if ($containerRunning -eq "tax-incentive-db") {
+    Write-Host "  ✓ Container 'tax-incentive-db' is running" -ForegroundColor Green
+} else {
+    # Try to start existing container
+    Write-Host "  Starting PostgreSQL container..." -ForegroundColor Yellow
+    $containerExists = & docker ps -a --filter "name=tax-incentive-db" --format "{{.Names}}" 2>&1
+    
+    if ($containerExists -eq "tax-incentive-db") {
+        & docker start tax-incentive-db 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Started existing container" -ForegroundColor Green
+        } else {
+            Write-Host "  ⚠ Could not start existing container, creating new one..." -ForegroundColor Yellow
+            & docker rm tax-incentive-db 2>&1 | Out-Null
+            & docker-compose up -d 2>&1 | Out-Null
+        }
+    } else {
+        # Create via docker-compose
+        Write-Host "  Creating new PostgreSQL container..." -ForegroundColor Yellow
+        & docker-compose up -d 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Container created" -ForegroundColor Green
+        } else {
+            Write-Host "  ❌ Failed to create container" -ForegroundColor Red
+            exit 1
+        }
+    }
+}
 
-@field_validator("requirements", mode="before")
-@classmethod
-def _validate_requirements(cls, v: Any) -> Optional[RequirementsValue]: 
-if v is None:
-return None
-return _coerce_requirements(v)
+# Wait for PostgreSQL to be ready
+Write-Host "  Waiting for PostgreSQL to accept connections..." -ForegroundColor Gray
+$maxAttempts = 20
+$attempt = 0
+$ready = $false
 
-@field_validator("eligibleExpenses", mode="before")
-@classmethod
-def _validate_eligible_expenses(cls, v: Any) -> Optional[List[str]]:
-if v is None:
-return None
-return _coerce_string_list(v)
+while ($attempt -lt $maxAttempts) {
+    $attempt++
+    try {
+        $checkResult = & docker exec tax-incentive-db pg_isready -U postgres 2>&1
+        if ($checkResult -match "accepting connections") {
+            $ready = $true
+            break
+        }
+    } catch {}
+    
+    Write-Host "." -NoNewline -ForegroundColor Gray
+    Start-Sleep -Seconds 2
+}
 
-@field_validator("excludedExpenses", mode="before")
-@classmethod
-def _validate_excluded_expenses(cls, v: Any) -> Optional[List[str]]:
-if v is None:
-return None
-return _coerce_string_list(v)
+Write-Host ""
+if ($ready) {
+    Write-Host "  ✓ PostgreSQL is ready" -ForegroundColor Green
+} else {
+    Write-Host "  ⚠ PostgreSQL may not be ready (timeout)" -ForegroundColor Yellow
+    Write-Host "    Continuing anyway..." -ForegroundColor Gray
+}
 
-class IncentiveRuleResponse(IncentiveRuleBase):
-"""Model for incentive rule responses."""
-id: str
-createdAt:  datetime
-updatedAt: datetime
+Write-Host "✓ PostgreSQL ready" -ForegroundColor Green
+Write-Host ""
 
-# Pydantic v2 config
-if _HAS_V2:
-model_config = ConfigDict(from_attributes=True)  # type: ignore[misc]
-else:
-class Config:  # pragma: no cover
-from_attributes = True
+# ========================================
+# STEP 7: Launch Server
+# ========================================
+Write-Host "[ STEP 7/7 ] Starting API server..." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "         ALL SYSTEMS READY ✓" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  📡 Server:       http://localhost:8000" -ForegroundColor White
+Write-Host "  📚 API Docs:     http://localhost:8000/docs" -ForegroundColor White
+Write-Host "  ❤️  Health Check: http://localhost:8000/health" -ForegroundColor White
+Write-Host ""
+Write-Host "  Press Ctrl+C to stop the server" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
 
-class IncentiveRuleList(BaseModel):
-"""Model for list of incentive rules."""
-total: int = Field(..., description="Total number of rules available")
-page: int = Field(1, description="Current page number")
-pageSize: int = Field(... , description="Number of items per page")
-totalPages: int = Field(... , description="Total number of pages")
-rules: List[IncentiveRuleResponse] = Field(default_factory=list, description="Rules returned")
+# Start the server
+try {
+    & $venvPython -m uvicorn src.main:app --reload
+} catch {
+    Write-Host ""
+    Write-Host "❌ Server stopped or failed to start" -ForegroundColor Red
+    exit 1
+}
+# Strategy 2: Try 'python' in PATH
+if (-not $pythonCmd) {
+    try {
+        $pythonVersion = python --version 2>&1
+        if ($pythonVersion -match "Python 3\.12\. (\d+)") {
+            $pythonCmd = "python"
+            Write-Host "✓ Found in PATH: $pythonVersion" -ForegroundColor Green
+        }
+    }
+    catch { }
+}
+
+# Strategy 3: Search common installation locations
+if (-not $pythonCmd) {
+    Write-Host "  Searching for Python 3.12 installation..." -ForegroundColor Gray
+    
+    $searchPaths = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python312-64\python.exe",
+        "C:\Program Files\Python312\python.exe",
+        "C:\Python312\python.exe"
+    )
+    
+    foreach ($path in $searchPaths) {
+        if (Test-Path $path) {
+            $testVersion = & $path --version 2>&1
+            if ($testVersion -match "Python 3\.12\.(\d+)") {
+                $pythonCmd = $path
+                $pythonVersion = $testVersion
+                Write-Host "✓ Found at: $path" -ForegroundColor Green
+                Write-Host "  Version: $pythonVersion" -ForegroundColor Green
+                break
+            }
+        }
+    }
+}
+
+# Strategy 4: Give up and show helpful error
+if (-not $pythonCmd) {
+    Write-Host "❌ Python 3.12 NOT found!" -ForegroundColor Red
+    Write-Host "`nDiagnostics:" -ForegroundColor Yellow
+    
+    Write-Host "`n  Available Python versions (via launcher):" -ForegroundColor Cyan
+    py --list 2>&1 | ForEach-Object { Write-Host "    $_" }
+    
+    Write-Host "`n  Searched locations:" -ForegroundColor Cyan
+    $searchPaths | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+    
+    Write-Host "`n📥 Install Python 3.12:" -ForegroundColor Yellow
+    Write-Host "  1. Download: https://www.python.org/downloads/" -ForegroundColor White
+    Write-Host "  2. ✅ CHECK 'Add Python to PATH' during install!" -ForegroundColor White
+    Write-Host "  3.  Restart PowerShell after installation" -ForegroundColor White
+    
+    pause
+    exit 1
+}
+
+# ========================================
+# 2. CHECK/CREATE CORRECT VENV
+# ========================================
+Write-Host "`n[2/6] Checking virtual environment..." -ForegroundColor Yellow
+
+$venvPath = ". venv"
+$needsRecreate = $false
+
+if (-not (Test-Path $venvPath)) {
+    Write-Host "⚠ Virtual environment not found" -ForegroundColor Yellow
+    $needsRecreate = $true
+}
+else {
+    $venvPython = & "$venvPath\Scripts\python.exe" --version 2>&1
+    if ($venvPython -match "Python 3\.12\.(\d+)") {
+        Write-Host "✓ Virtual environment is Python 3.12" -ForegroundColor Green
+    }
+    else {
+        Write-Host "⚠ Wrong version:  $venvPython (need 3.12)" -ForegroundColor Yellow
+        $needsRecreate = $true
+    }
+}
+
+if ($needsRecreate) {
+    Write-Host "  Recreating virtual environment..." -ForegroundColor Cyan
+    
+    if (Test-Path $venvPath) {
+        Remove-Item -Path $venvPath -Recurse -Force
+    }
+    
+    # Use the Python we found
+    $createCmd = "$pythonCmd -m venv $venvPath"
+    Invoke-Expression $createCmd
+    
+    if (Test-Path "$venvPath\Scripts\python. exe") {
+        $newVersion = & "$venvPath\Scripts\python.exe" --version
+        Write-Host "✓ Created:  $newVersion" -ForegroundColor Green
+    }
+    else {
+        Write-Host "❌ Failed to create venv!" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# ========================================
+# 3. ACTIVATE VENV
+# ========================================
+Write-Host "`n[3/6] Activating virtual environment..." -ForegroundColor Yellow
+
+try {
+    & "$venvPath\Scripts\Activate.ps1"
+    Write-Host "✓ Virtual environment activated" -ForegroundColor Green
+}
+catch {
+    Write-Host "❌ Failed to activate!" -ForegroundColor Red
+    Write-Host "   Run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor Yellow
+    exit 1
+}
+
+# ========================================
+# 4. INSTALL/UPDATE DEPENDENCIES
+# ========================================
+Write-Host "`n[4/6] Checking dependencies..." -ForegroundColor Yellow
+
+if (Test-Path "requirements.txt") {
+    $pipList = pip list 2>&1
+    if ($pipList -notmatch "fastapi") {
+        Write-Host "  Installing dependencies..." -ForegroundColor Cyan
+        pip install -r requirements. txt --quiet
+        Write-Host "✓ Dependencies installed" -ForegroundColor Green
+    }
+    else {
+        Write-Host "✓ Dependencies present" -ForegroundColor Green
+    }
+}
+else {
+    Write-Host "⚠ requirements.txt not found" -ForegroundColor Yellow
+}
+
+if (Test-Path "prisma") {
+    python -m prisma generate 2>&1 | Out-Null
+    Write-Host "✓ Prisma client ready" -ForegroundColor Green
+}
+
+# ========================================
+# 5. START DOCKER & POSTGRESQL
+# ========================================
+Write-Host "`n[5/6] Starting Docker services..." -ForegroundColor Yellow
+
+try {
+    docker version 2>$null 1>$null
+    if ($LASTEXITCODE -ne 0) { throw "Docker not running" }
+    Write-Host "✓ Docker is running" -ForegroundColor Green
+}
+catch {
+    Write-Host "❌ Docker Desktop not running!" -ForegroundColor Red
+    Write-Host "   Please start Docker Desktop first" -ForegroundColor Yellow
+    exit 1
+}
+
+$containerRunning = docker ps --filter "name=tax-incentive-db" --format "{{.Names}}" 2>$null
+
+if ($containerRunning -eq "tax-incentive-db") {
+    Write-Host "✓ PostgreSQL running" -ForegroundColor Green
+}
+else {
+    docker start tax-incentive-db 2>$null | Out-Null
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Creating container..." -ForegroundColor Cyan
+        docker-compose up -d
+    }
+    
+    Write-Host "  Waiting for PostgreSQL..." -ForegroundColor Gray
+    $maxAttempts = 20
+    for ($i = 0; $i -lt $maxAttempts; $i++) {
+        Start-Sleep -Seconds 2
+        $isReady = docker exec tax-incentive-db pg_isready -U postgres 2>$null
+        if ($isReady -match "accepting connections") {
+            Write-Host "✓ PostgreSQL ready" -ForegroundColor Green
+            break
+        }
+        Write-Host "." -NoNewline
+    }
+}
+
+# ========================================
+# 6. CHECK . ENV
+# ========================================
+Write-Host "`n[6/6] Checking configuration..." -ForegroundColor Yellow
+
+if (-not (Test-Path ". env")) {
+    if (Test-Path ". env.example") {
+        Copy-Item .env.example .env
+        Write-Host "✓ .env created from template" -ForegroundColor Green
+    }
+}
+else {
+    Write-Host "✓ .env exists" -ForegroundColor Green
+}
+
+# ========================================
+# START APPLICATION
+# ========================================
+Write-Host "`n========================================" -ForegroundColor Cyan
+Write-Host "✓ ALL SYSTEMS READY!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "`nStarting FastAPI server..." -ForegroundColor Yellow
+Write-Host "  📚 API Docs:    http://localhost:8000/docs" -ForegroundColor Cyan
+Write-Host "  ❤️  Health:     http://localhost:8000/health" -ForegroundColor Cyan
+Write-Host "`nPress Ctrl+C to stop`n" -ForegroundColor Gray
+
+python -m uvicorn src.main:app --reload

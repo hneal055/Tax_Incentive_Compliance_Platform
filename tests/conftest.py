@@ -6,9 +6,15 @@ This module provides test fixtures and configuration for the test suite,
 including database connection management and async support.
 """
 import pytest
+import pytest_asyncio
 import asyncio
+import os
 from typing import Generator, AsyncGenerator
 from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock, MagicMock, patch
+
+# Set test environment variable before importing app
+os.environ.setdefault("TESTING", "true")
 
 from src.main import app
 from src.utils.database import prisma
@@ -18,7 +24,7 @@ from src.utils.database import prisma
 # Event Loop Configuration
 # ============================================================================
 
-@pytest.fixture(scope="function")  # Changed from "session" to "function"
+@pytest.fixture(scope="function")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
     Create an event loop for each test function.
@@ -37,45 +43,55 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # Database Connection Management
 # ============================================================================
 
-@pytest.fixture(scope="function", autouse=False)  # Changed scope and autouse
-async def setup_database() -> AsyncGenerator[None, None]: 
+# Connect to database before each test function using the test's event loop
+@pytest.fixture(scope="function", autouse=True)
+def setup_database_for_test(event_loop):
     """
-    Connect to the database before a test runs.
-    Disconnect after the test completes.
+    Setup database for each test using the test's event loop.
+    Ensures the Prisma client can work with the test's async context.
+    """
+    # Force disconnect if connected to clear old event loop binding
+    if prisma.is_connected():
+        try:
+            # Try to disconnect in a new loop
+            import asyncio
+            old_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(old_loop)
+            old_loop.run_until_complete(prisma.disconnect())
+            old_loop.close()
+        except:
+            pass
     
-    Add this fixture as a parameter to tests that need database access: 
-        async def test_something(setup_database):
-            # Your test code
-    """
-    # Check if already connected
-    if not prisma.is_connected():
-        await prisma.connect()
+    # Connect in the test's event loop
+    event_loop.run_until_complete(prisma.connect())
     
     yield
     
-    # Note: We don't disconnect here because other tests might need it
-    # The connection will be cleaned up when the test session ends
+    # Clean disconnect after test
+    try:
+        event_loop.run_until_complete(prisma.disconnect())
+    except:
+        pass
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_database_session():
+def cleanup_database():
     """
-    Ensure database connection for the entire test session.
-    This runs once at the start and cleanup happens at the end.
+    Final cleanup of database at end of test session.
     """
-    # Connection happens in individual tests via setup_database
     yield
     
-    # Cleanup:  disconnect from database after all tests
-    # This uses sync code because session fixtures can't be async
+    # Final cleanup
     import asyncio
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
     try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         if prisma.is_connected():
             loop.run_until_complete(prisma.disconnect())
-    finally:
         loop.close()
+    except:
+        pass
+
 
 
 # ============================================================================
@@ -83,6 +99,138 @@ def setup_database_session():
 # ============================================================================
 
 @pytest.fixture
+def sample_production() -> Dict[str, Any]:
+    """Sample production for testing"""
+    return {
+        "id": "test-production-001",
+        "title": "Test Feature Film",
+        "productionType": "feature",
+        "jurisdictionId": "test-jurisdiction-001",
+        "budgetTotal": 5000000,
+        "budgetQualifying": 4500000,
+        "startDate": datetime.now(),
+        "endDate": datetime.now() + timedelta(days=90),
+        "productionCompany": "Test Productions LLC",
+        "status": "production",
+        "contact": "test@testproductions.com"
+    }
+
+
+@pytest.fixture
+def sample_expenses() -> list[Dict[str, Any]]:
+    """Sample expenses for testing"""
+    return [
+        {
+            "id": "expense-001",
+            "productionId": "test-production-001",
+            "category": "labor",
+            "description": "Crew wages - Week 1",
+            "amount": 500000,
+            "expenseDate": datetime.now(),
+            "isQualifying": True,
+            "vendorName": "Payroll Services"
+        },
+        {
+            "id": "expense-002",
+            "productionId": "test-production-001",
+            "category": "equipment",
+            "description": "Camera rental",
+            "amount": 150000,
+            "expenseDate": datetime.now(),
+            "isQualifying": True,
+            "vendorName": "Panavision"
+        },
+        {
+            "id": "expense-003",
+            "productionId": "test-production-001",
+            "category": "marketing",
+            "description": "Advertising",
+            "amount": 200000,
+            "expenseDate": datetime.now(),
+            "isQualifying": False,
+            "vendorName": "Marketing Co"
+        }
+    ]
+
+
+@pytest.fixture
+def sample_comparison_request() -> Dict[str, Any]:
+    """Sample comparison request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "budget": 5000000,
+        "jurisdictionIds": ["test-jurisdiction-001", "test-jurisdiction-002"]
+    }
+
+
+@pytest.fixture
+def sample_compliance_request() -> Dict[str, Any]:
+    """Sample compliance check request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "ruleId": "test-rule-001",
+        "productionBudget": 5000000,
+        "shootDays": 45,
+        "localHirePercentage": 80,
+        "hasPromoLogo": True,
+        "hasCulturalTest": False
+    }
+
+
+@pytest.fixture
+def sample_scenario_request() -> Dict[str, Any]:
+    """Sample scenario analysis request"""
+    return {
+        "productionTitle": "Test Feature Film",
+        "jurisdictionId": "test-jurisdiction-001",
+        "baseProductionBudget": 5000000,
+        "scenarios": [
+            {"name": "Conservative", "budget": 4000000},
+            {"name": "Base", "budget": 5000000},
+            {"name": "Premium", "budget": 7500000}
+        ]
+    }
+
+
+# Calculator test data
+@pytest.fixture
+def calculator_test_cases() -> list[Dict[str, Any]]:
+    """Test cases for calculator logic"""
+    return [
+        {
+            "name": "Basic 25% credit",
+            "budget": 5000000,
+            "percentage": 25.0,
+            "expected_credit": 1250000
+        },
+        {
+            "name": "Credit with max cap",
+            "budget": 100000000,
+            "percentage": 25.0,
+            "max_credit": 10000000,
+            "expected_credit": 10000000
+        },
+        {
+            "name": "Below minimum spend",
+            "budget": 500000,
+            "percentage": 25.0,
+            "min_spend": 1000000,
+            "expected_credit": 0
+        },
+        {
+            "name": "Fixed amount credit",
+            "budget": 5000000,
+            "fixed_amount": 500000,
+            "expected_credit": 500000
+        },
+        {
+            "name": "Stackable credits",
+            "budget": 5000000,
+            "base_percentage": 25.0,
+            "bonus_percentage": 10.0,
+            "expected_credit": 1750000
+        }
+    ]
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """
     Provide an async HTTP client for testing API endpoints.
