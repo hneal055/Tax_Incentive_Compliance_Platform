@@ -1,238 +1,184 @@
-# ========================================
-# Tax-Incentive Compliance Platform
-# Self-Healing Startup Script (Windows-Optimized)
-# ========================================
+"""
+Pydantic models for Incentive Rules
 
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Tax-Incentive Compliance Platform" -ForegroundColor White
-Write-Host "Startup Script" -ForegroundColor White
-Write-Host "========================================" -ForegroundColor Cyan
+Key fix: 
+- Postgres column `requirements` is TEXT, so Prisma/DB may return it as a JSON string. 
+- FastAPI response models expect a dict => ResponseValidationError unless we coerce. 
+"""
 
-# ========================================
-# 1. FIND PYTHON 3.12 (WINDOWS-SMART)
-# ========================================
-Write-Host "`n[1/6] Locating Python 3.12..." -ForegroundColor Yellow
+from __future__ import annotations
 
-$pythonCmd = $null
-$pythonVersion = $null
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
-# Strategy 1: Try Python Launcher (py. exe) - most reliable on Windows
-try {
-    $pythonVersion = py -3.12 --version 2>&1
-    if ($pythonVersion -match "Python 3\.12\.(\d+)") {
-        $pythonCmd = "py -3.12"
-        Write-Host "✓ Found via Python Launcher:  $pythonVersion" -ForegroundColor Green
-    }
-}
-catch { }
+from pydantic import BaseModel, Field
 
-# Strategy 2: Try 'python' in PATH
-if (-not $pythonCmd) {
-    try {
-        $pythonVersion = python --version 2>&1
-        if ($pythonVersion -match "Python 3\.12\. (\d+)") {
-            $pythonCmd = "python"
-            Write-Host "✓ Found in PATH: $pythonVersion" -ForegroundColor Green
-        }
-    }
-    catch { }
-}
+# Pydantic v2 preferred config (with a soft fallback pattern)
+try:
+from pydantic import ConfigDict, field_validator
+_HAS_V2 = True
+except Exception:  # pragma: no cover
+ConfigDict = None  # type: ignore
+field_validator = None  # type: ignore
+_HAS_V2 = False
 
-# Strategy 3: Search common installation locations
-if (-not $pythonCmd) {
-    Write-Host "  Searching for Python 3.12 installation..." -ForegroundColor Gray
-    
-    $searchPaths = @(
-        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
-        "$env:LOCALAPPDATA\Programs\Python\Python312-64\python.exe",
-        "C:\Program Files\Python312\python.exe",
-        "C:\Python312\python.exe"
-    )
-    
-    foreach ($path in $searchPaths) {
-        if (Test-Path $path) {
-            $testVersion = & $path --version 2>&1
-            if ($testVersion -match "Python 3\.12\.(\d+)") {
-                $pythonCmd = $path
-                $pythonVersion = $testVersion
-                Write-Host "✓ Found at: $path" -ForegroundColor Green
-                Write-Host "  Version: $pythonVersion" -ForegroundColor Green
-                break
-            }
-        }
-    }
-}
+RequirementsValue = Dict[str, Any]
+RequirementsInput = Union[RequirementsValue, str, None]
 
-# Strategy 4: Give up and show helpful error
-if (-not $pythonCmd) {
-    Write-Host "❌ Python 3.12 NOT found!" -ForegroundColor Red
-    Write-Host "`nDiagnostics:" -ForegroundColor Yellow
-    
-    Write-Host "`n  Available Python versions (via launcher):" -ForegroundColor Cyan
-    py --list 2>&1 | ForEach-Object { Write-Host "    $_" }
-    
-    Write-Host "`n  Searched locations:" -ForegroundColor Cyan
-    $searchPaths | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
-    
-    Write-Host "`n📥 Install Python 3.12:" -ForegroundColor Yellow
-    Write-Host "  1. Download: https://www.python.org/downloads/" -ForegroundColor White
-    Write-Host "  2. ✅ CHECK 'Add Python to PATH' during install!" -ForegroundColor White
-    Write-Host "  3.  Restart PowerShell after installation" -ForegroundColor White
-    
-    pause
-    exit 1
-}
+def _coerce_requirements(value: RequirementsInput) -> RequirementsValue:
+"""
+    Coerce requirements into a dict. 
 
-# ========================================
-# 2. CHECK/CREATE CORRECT VENV
-# ========================================
-Write-Host "`n[2/6] Checking virtual environment..." -ForegroundColor Yellow
+    Accepts:
+      - dict -> dict
+      - JSON string -> dict (if valid)
+      - None / "" -> {}
+      - anything else -> {}
+    """
+if value is None: 
+return {}
+if isinstance(value, dict):
+return value
+if isinstance(value, str):
+s = value.strip()
+if not s:
+return {}
+try:
+parsed = json.loads(s)
+return parsed if isinstance(parsed, dict) else {}
+except Exception:
+return {}
+return {}
 
-$venvPath = ". venv"
-$needsRecreate = $false
+def _coerce_string_list(value: Any) -> List[str]:
+"""
+    Coerce list-like fields to a list of strings. 
+    - None -> []
+    - list[str] -> list[str]
+    - list[Any] -> list[str] (stringified)
+    """
+if value is None:
+return []
+if isinstance(value, list):
+return [str(x) for x in value if x is not None]
+return []
 
-if (-not (Test-Path $venvPath)) {
-    Write-Host "⚠ Virtual environment not found" -ForegroundColor Yellow
-    $needsRecreate = $true
-}
-else {
-    $venvPython = & "$venvPath\Scripts\python.exe" --version 2>&1
-    if ($venvPython -match "Python 3\.12\.(\d+)") {
-        Write-Host "✓ Virtual environment is Python 3.12" -ForegroundColor Green
-    }
-    else {
-        Write-Host "⚠ Wrong version:  $venvPython (need 3.12)" -ForegroundColor Yellow
-        $needsRecreate = $true
-    }
-}
+class IncentiveRuleBase(BaseModel):
+"""
+    Base incentive rule fields. 
 
-if ($needsRecreate) {
-    Write-Host "  Recreating virtual environment..." -ForegroundColor Cyan
-    
-    if (Test-Path $venvPath) {
-        Remove-Item -Path $venvPath -Recurse -Force
-    }
-    
-    # Use the Python we found
-    $createCmd = "$pythonCmd -m venv $venvPath"
-    Invoke-Expression $createCmd
-    
-    if (Test-Path "$venvPath\Scripts\python. exe") {
-        $newVersion = & "$venvPath\Scripts\python.exe" --version
-        Write-Host "✓ Created:  $newVersion" -ForegroundColor Green
-    }
-    else {
-        Write-Host "❌ Failed to create venv!" -ForegroundColor Red
-        exit 1
-    }
-}
+    Note: DB schema includes a `fixedAmount` column; included here for completeness.
+    """
+jurisdictionId: str = Field(..., description="Jurisdiction ID this rule belongs to")
+ruleName: str = Field(..., description="Name of the incentive rule")
+ruleCode: str = Field(..., description="Internal reference code (unique)")
+incentiveType: str = Field(..., description="Type: tax_credit, rebate, grant, exemption")
 
-# ========================================
-# 3. ACTIVATE VENV
-# ========================================
-Write-Host "`n[3/6] Activating virtual environment..." -ForegroundColor Yellow
+# Numeric fields - percentage stored as whole number (25.0 = 25%)
+percentage: Optional[float] = Field(None, description="Percentage rate (e. g., 25.0 for 25%)")
+fixedAmount: Optional[float] = Field(None, description="Fixed amount incentive (if applicable)")
+minSpend: Optional[float] = Field(None, description="Minimum spend required")
+maxCredit: Optional[float] = Field(None, description="Maximum credit cap")
 
-try {
-    & "$venvPath\Scripts\Activate.ps1"
-    Write-Host "✓ Virtual environment activated" -ForegroundColor Green
-}
-catch {
-    Write-Host "❌ Failed to activate!" -ForegroundColor Red
-    Write-Host "   Run: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor Yellow
-    exit 1
-}
+# Arrays
+eligibleExpenses: List[str] = Field(default_factory=list, description="Eligible expense categories")
+excludedExpenses: List[str] = Field(default_factory=list, description="Excluded expense categories")
 
-# ========================================
-# 4. INSTALL/UPDATE DEPENDENCIES
-# ========================================
-Write-Host "`n[4/6] Checking dependencies..." -ForegroundColor Yellow
+# Dates
+effectiveDate: datetime = Field(..., description="When rule becomes effective")
+expirationDate: Optional[datetime] = Field(None, description="When rule expires")
 
-if (Test-Path "requirements.txt") {
-    $pipList = pip list 2>&1
-    if ($pipList -notmatch "fastapi") {
-        Write-Host "  Installing dependencies..." -ForegroundColor Cyan
-        pip install -r requirements. txt --quiet
-        Write-Host "✓ Dependencies installed" -ForegroundColor Green
-    }
-    else {
-        Write-Host "✓ Dependencies present" -ForegroundColor Green
-    }
-}
-else {
-    Write-Host "⚠ requirements.txt not found" -ForegroundColor Yellow
-}
+# Requirements (stored as TEXT in DB; may arrive as JSON string)
+requirements: RequirementsValue = Field(default_factory=dict, description="Additional requirements")
 
-if (Test-Path "prisma") {
-    python -m prisma generate 2>&1 | Out-Null
-    Write-Host "✓ Prisma client ready" -ForegroundColor Green
-}
+active: bool = Field(default=True, description="Whether rule is active")
 
-# ========================================
-# 5. START DOCKER & POSTGRESQL
-# ========================================
-Write-Host "`n[5/6] Starting Docker services..." -ForegroundColor Yellow
+# --- Validators (Pydantic v2) ---
+if _HAS_V2:
 
-try {
-    docker version 2>$null 1>$null
-    if ($LASTEXITCODE -ne 0) { throw "Docker not running" }
-    Write-Host "✓ Docker is running" -ForegroundColor Green
-}
-catch {
-    Write-Host "❌ Docker Desktop not running!" -ForegroundColor Red
-    Write-Host "   Please start Docker Desktop first" -ForegroundColor Yellow
-    exit 1
-}
+@field_validator("requirements", mode="before")
+@classmethod
+def _validate_requirements(cls, v: Any) -> RequirementsValue:
+return _coerce_requirements(v)
 
-$containerRunning = docker ps --filter "name=tax-incentive-db" --format "{{.Names}}" 2>$null
+@field_validator("eligibleExpenses", mode="before")
+@classmethod
+def _validate_eligible_expenses(cls, v: Any) -> List[str]:
+return _coerce_string_list(v)
 
-if ($containerRunning -eq "tax-incentive-db") {
-    Write-Host "✓ PostgreSQL running" -ForegroundColor Green
-}
-else {
-    docker start tax-incentive-db 2>$null | Out-Null
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  Creating container..." -ForegroundColor Cyan
-        docker-compose up -d
-    }
-    
-    Write-Host "  Waiting for PostgreSQL..." -ForegroundColor Gray
-    $maxAttempts = 20
-    for ($i = 0; $i -lt $maxAttempts; $i++) {
-        Start-Sleep -Seconds 2
-        $isReady = docker exec tax-incentive-db pg_isready -U postgres 2>$null
-        if ($isReady -match "accepting connections") {
-            Write-Host "✓ PostgreSQL ready" -ForegroundColor Green
-            break
-        }
-        Write-Host "." -NoNewline
-    }
-}
+@field_validator("excludedExpenses", mode="before")
+@classmethod
+def _validate_excluded_expenses(cls, v: Any) -> List[str]:
+return _coerce_string_list(v)
 
-# ========================================
-# 6. CHECK . ENV
-# ========================================
-Write-Host "`n[6/6] Checking configuration..." -ForegroundColor Yellow
+class IncentiveRuleCreate(IncentiveRuleBase):
+"""Model for creating an incentive rule."""
+pass
 
-if (-not (Test-Path ". env")) {
-    if (Test-Path ". env.example") {
-        Copy-Item .env.example .env
-        Write-Host "✓ .env created from template" -ForegroundColor Green
-    }
-}
-else {
-    Write-Host "✓ .env exists" -ForegroundColor Green
-}
+class IncentiveRuleUpdate(BaseModel):
+"""Model for updating an incentive rule (all fields optional)."""
+jurisdictionId: Optional[str] = None
+ruleName: Optional[str] = None
+ruleCode: Optional[str] = None
+incentiveType: Optional[str] = None
 
-# ========================================
-# START APPLICATION
-# ========================================
-Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "✓ ALL SYSTEMS READY!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "`nStarting FastAPI server..." -ForegroundColor Yellow
-Write-Host "  📚 API Docs:    http://localhost:8000/docs" -ForegroundColor Cyan
-Write-Host "  ❤️  Health:     http://localhost:8000/health" -ForegroundColor Cyan
-Write-Host "`nPress Ctrl+C to stop`n" -ForegroundColor Gray
+percentage: Optional[float] = None
+fixedAmount: Optional[float] = None
+minSpend: Optional[float] = None
+maxCredit: Optional[float] = None
 
-python -m uvicorn src.main:app --reload
+eligibleExpenses: Optional[List[str]] = None
+excludedExpenses: Optional[List[str]] = None
+
+effectiveDate: Optional[datetime] = None
+expirationDate: Optional[datetime] = None
+
+# allow dict OR json-string on update as well
+requirements: Optional[RequirementsValue] = None
+
+active: Optional[bool] = None
+
+if _HAS_V2:
+
+@field_validator("requirements", mode="before")
+@classmethod
+def _validate_requirements(cls, v: Any) -> Optional[RequirementsValue]: 
+if v is None:
+return None
+return _coerce_requirements(v)
+
+@field_validator("eligibleExpenses", mode="before")
+@classmethod
+def _validate_eligible_expenses(cls, v: Any) -> Optional[List[str]]:
+if v is None:
+return None
+return _coerce_string_list(v)
+
+@field_validator("excludedExpenses", mode="before")
+@classmethod
+def _validate_excluded_expenses(cls, v: Any) -> Optional[List[str]]:
+if v is None:
+return None
+return _coerce_string_list(v)
+
+class IncentiveRuleResponse(IncentiveRuleBase):
+"""Model for incentive rule responses."""
+id: str
+createdAt:  datetime
+updatedAt: datetime
+
+# Pydantic v2 config
+if _HAS_V2:
+model_config = ConfigDict(from_attributes=True)  # type: ignore[misc]
+else:
+class Config:  # pragma: no cover
+from_attributes = True
+
+class IncentiveRuleList(BaseModel):
+"""Model for list of incentive rules."""
+total: int = Field(..., description="Total number of rules available")
+page: int = Field(1, description="Current page number")
+pageSize: int = Field(... , description="Number of items per page")
+totalPages: int = Field(... , description="Total number of pages")
+rules: List[IncentiveRuleResponse] = Field(default_factory=list, description="Rules returned")

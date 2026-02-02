@@ -43,3 +43,7 @@ frontend/.env
 .env
 .env.backup
 create-db.py
+
+Lib/
+scripts/
+pyvenv.cfg
