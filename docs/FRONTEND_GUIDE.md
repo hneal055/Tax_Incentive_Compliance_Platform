@@ -1,54 +1,64 @@
-# Frontend UI Documentation
-
-This document provides a comprehensive guide to the frontend user interface of the PilotForge platform.
+# Frontend User Guide for PilotForge
 
 ## Dashboard
-The Dashboard serves as the primary landing page, providing users with an overview of their key metrics and performance indicators. It should display:
-- User-specific data visualizations (charts, graphs)
-- Quick access links to other areas of the platform
-- Notifications or announcements relevant to the user
+The dashboard serves as the central hub for users, providing an overview of key metrics and statistics. Users can see their progress, notifications, and quick links to important features. The dashboard is designed to be intuitive and user-friendly, allowing for easy navigation to specific sections of the platform.
 
 ## Productions Page
-The Productions page allows users to manage production-related data. Key features include:
-- A searchable list of productions
-- Filters to narrow down results (by date, status, etc.)
-- Detailed view of each production upon selection
+The Productions page allows users to manage their projects and productions seamlessly. Users can create new productions, view existing ones, and edit details as needed. This page supports functionality such as filtering, sorting, and searching to enhance the user experience.
+
+### Key Features:
+- Create new production
+- View and edit existing productions
+- Filter by status (active, completed, etc.)
+- Search functionality for quick access
 
 ## Jurisdictions Page
-This page helps users navigate the various jurisdictions relevant to tax incentives. Important elements include:
-- A map view displaying jurisdictions
-- Lists of benefits and requirements per jurisdiction
-- User-friendly filtering options to find specific information
+This page provides users with information on various jurisdictions involved in the pilot program. Users can select a jurisdiction to view specific guidelines and regulations relevant to their productions.
+
+### Features:
+- List of jurisdictions with a brief description
+- Detailed view for each jurisdiction
+- Search and filter options
 
 ## Calculator Page
-The Calculator page is designed to assist users in estimating tax benefits. Elements include:
-- Input fields for various parameters affecting calculations
-- Real-time calculation display based on user input
-- Clear explanations of each calculation field
+The Calculator page is an essential tool for users to estimate potential incentives based on their inputs. The page features a dynamic calculator that updates in real-time as users enter data.
 
-## Navigation Elements
-- **Top Navigation Bar:** Contains links to main sections of the platform (Dashboard, Productions, Jurisdictions, Calculator).
-- **Side Navigation Menu:** Offers quick access to sub-sections within the currently selected main page.
-- **Breadcrumb Navigation:** Helps users track their location within the platform.
+### How to Use:
+1. Input relevant data in the provided fields.
+2. Click on ‘Calculate’ to view results.
+3. Review the breakdown of potential incentives.
+
+## Navigation
+The navigation system is structured to provide easy access to all areas of the platform. A fixed navigation bar allows users to jump between major sections without hassle.
+
+### Features of Navigation:
+- Clear labeling of each section
+- Breadcrumbs for easy tracking of location within the app
+- Responsive design adapting to various screen sizes
+
+## UI Elements
+The platform employs consistent UI elements such as buttons, input fields, and modals to create a cohesive experience. Each element follows accessibility standards ensuring usability for all users.
 
 ## Loading States
-- Loading indicators (spinners/bars) should be displayed when fetching data or transitioning between pages.
-- Placeholders should be used when the data is loading, to give users an idea of what to expect.
+While data is being fetched or processed, loading states are displayed to inform users of ongoing actions. These include spinners, progress bars, or skeleton screens that indicate content loading.
 
 ## Error States
-- Friendly error messages should be shown for any issues encountered by the user.
-- Offer solutions or next steps when an error occurs (e.g., retry, contact support).
+In the event of an error, informative messages are shown to guide users on how to proceed. Different types of error states are handled, including network issues and validation errors.
+
+### Example Error Messages:
+- "Network error. Please try again later."
+- "Validation failed: Please check your input."
 
 ## Responsive Design
-- The UI should adapt seamlessly to different screen sizes, utilizing a mobile-first approach.
-- Key elements must be easy to access and readable on all devices.
+The design of the PilotForge platform is fully responsive, ensuring a seamless experience across devices such as tablets and smartphones. CSS media queries are employed to adapt layouts based on device size.
 
 ## Accessibility Features
-- Ensure keyboard navigability across all components.
-- Implement ARIA roles and attributes for assistive technologies.
-- Color contrast should meet accessibility standards for readability.
+Accessibility is a core focus of the PilotForge platform. The following features are implemented:
+- ARIA roles and landmarks for screen reader compatibility
+- High contrast modes for better visibility
+- Keyboard navigability for all interactive elements
 
-This document will be updated regularly to reflect changes in the UI design and features. 
+## Conclusion
+This guide serves to help users navigate and utilize the frontend features of the PilotForge platform effectively. Should you have queries or need support, please refer to our help center or contact support.
 
 ---
-Last Updated: 2026-02-03 15:14:41 UTC
