@@ -1,27 +1,51 @@
 # 📖 PilotForge - User Manual
 
 > **Tax Incentive Intelligence for Film & TV Productions**  
-> Your complete guide to maximizing film tax incentives worldwide
+> Complete guide to the PilotForge platform
 
 **Version:** 1.1.0  
-**Last Updated:** February 2, 2026  
+**Last Updated:** February 3, 2026  
 **Product Name:** PilotForge
 
 ---
 
-## 🎬 Welcome to PilotForge
+## 📚 Documentation Index
 
-PilotForge is a comprehensive tax incentive calculation and compliance platform designed specifically for the global film and television production industry.
+This user manual is organized into focused guides for easy navigation:
+
+### **Getting Started**
+- [Introduction](#introduction)
+- [System Requirements](#system-requirements)
+- [Installation & Setup](#installation--setup)
+- [Quick Start](#quick-start)
+
+### **User Guides**
+- [Frontend Guide](./FRONTEND_GUIDE.md) - Complete UI walkthrough
+- [Calculator Guide](./CALCULATOR_GUIDE.md) - Tax incentive calculations
+- [Reports Guide](./REPORTS_GUIDE.md) - PDF & Excel exports
+
+### **Developer Guides**
+- [API Guide](./API_GUIDE.md) - RESTful API documentation
+- [Data Management Guide](./DATA_MANAGEMENT_GUIDE.md) - CRUD operations
+
+### **Support**
+- [Troubleshooting Guide](./TROUBLESHOOTING_GUIDE.md) - Common issues
+- [FAQ](./FAQ.md) - Frequently asked questions
+- [Best Practices](./BEST_PRACTICES.md) - Tips and recommendations
+
+---
+
+## 🎬 Introduction
 
 ### **What is PilotForge?**
 
-PilotForge helps producers, line producers, and production accountants:
+PilotForge is a comprehensive tax incentive calculation and compliance platform designed specifically for the global film and television production industry. It helps producers, line producers, and production accountants:
 
-- 🌍 **Compare tax incentives** across 32+ global jurisdictions
-- 💰 **Calculate potential savings** with precision and compliance
-- 🎬 **Track productions** and manage budgets effectively
-- 📊 **Generate professional reports** for stakeholders and investors
-- ✅ **Ensure compliance** with jurisdiction-specific requirements
+- **Compare tax incentives** across 32+ global jurisdictions
+- **Calculate potential savings** with precision and compliance
+- **Track productions** and manage budgets effectively
+- **Generate professional reports** for stakeholders and investors
+- **Ensure compliance** with jurisdiction-specific requirements
 
 ### **Key Features**
 
@@ -34,79 +58,43 @@ PilotForge helps producers, line producers, and production accountants:
 ✅ **Modern React UI** - Intuitive, responsive interface  
 ✅ **RESTful API** - Full programmatic access
 
----
+### **Who Should Use PilotForge?**
 
-## 📚 Documentation Structure
-
-This user manual is organized into focused guides for easy navigation:
-
-### **Getting Started**
-
-- 🚀 **[Quick Start Guide](#quick-start)** - Get up and running in 5 minutes
-- 💻 **[Installation Guide](#installation)** - Detailed setup instructions
-- 🎯 **[Your First Calculation](#tutorial)** - Step-by-step tutorial
-
-### **User Guides**
-
-- 🎨 **[Frontend Guide](./FRONTEND_GUIDE.md)** - Complete UI walkthrough
-  - Dashboard
-  - Productions Management
-  - Jurisdictions Browser
-  - Tax Calculator
-  - Navigation & Features
-
-- 🧮 **[Calculator Guide](./CALCULATOR_GUIDE.md)** - Tax incentive calculations
-  - Simple Calculator
-  - Multi-Jurisdiction Comparison
-  - Compliance Verification
-  - Stackable Credits
-  - Scenario Modeling
-
-- 📄 **[Reports Guide](./REPORTS_GUIDE.md)** - Generate professional documents
-  - PDF Reports
-  - Excel Workbooks
-  - Customization Options
-
-### **Developer Guides**
-
-- 📡 **[API Guide](./API_GUIDE.md)** - Complete API reference
-  - Authentication
-  - Endpoints
-  - Request/Response Formats
-  - Error Handling
-  - Best Practices
-
-- 🗄️ **[Data Management Guide](./DATA_MANAGEMENT_GUIDE.md)** - CRUD operations
-  - Jurisdictions API
-  - Incentive Rules API
-  - Productions API
-
-### **Reference**
-
-- 🔧 **[Troubleshooting Guide](./TROUBLESHOOTING_GUIDE.md)** - Common issues & solutions
-- ❓ **[FAQ](./FAQ.md)** - Frequently asked questions
-- 📖 **[Glossary](./GLOSSARY.md)** - Industry terminology
-- 🔐 **[Security Guide](./SECURITY_GUIDE.md)** - Best practices
+- **Production Managers** - Planning shooting locations
+- **Line Producers** - Budgeting and cost analysis
+- **Production Accountants** - Tax credit calculations and compliance
+- **Developers** - API integration and automation
+- **Investors** - ROI analysis and incentive maximization
 
 ---
 
-## 🚀 Quick Start
+## 💻 System Requirements
 
-### **For Users (No Installation)**
+### **For Users (Frontend Only)**
+- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- Internet connection
+- Screen resolution: 1280x720 minimum (responsive to mobile)
 
-**Production:**
+### **For Developers (Full Stack)**
+- **Backend:** Python 3.12+
+- **Frontend:** Node.js 20+, npm 10+
+- **Database:** PostgreSQL 16+
+- **Operating System:** Windows 10/11, macOS 12+, or Linux (Ubuntu 20.04+)
+
+---
+
+## 🚀 Installation & Setup
+
+### **Option 1: Production Deployment**
+
+Simply visit:
 ```
 https://pilotforge.onrender.com
 ```
 
-**Local Development:**
-```
-http://localhost:3000
-```
+No installation required!
 
-Just open in your web browser and start using!
-
-### **For Developers (Full Stack)**
+### **Option 2: Local Development - Full Stack**
 
 **Linux/macOS:**
 ```bash
@@ -119,51 +107,40 @@ cd Tax_Incentive_Compliance_Platform
 ```powershell
 git clone https://github.com/hneal055/Tax_Incentive_Compliance_Platform.git
 cd Tax_Incentive_Compliance_Platform
-.\start-fullstack.ps1
+.\(start-fullstack.ps1
 ```
 
 **Access:**
-- Frontend: http://localhost:3000
-- API: http://localhost:8000
+- Frontend UI: http://localhost:3000
+- Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
----
-
-## 💻 Installation
-
-### **System Requirements**
-
-**For Users:**
-- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
-- Internet connection
-
-**For Developers:**
-- **Backend:** Python 3.12+
-- **Frontend:** Node.js 20+, npm 10+
-- **Database:** PostgreSQL 16+
-
-### **Backend Setup**
+### **Option 3: Backend Only**
 
 ```bash
 # Create virtual environment
 python -m venv .venv
 
-# Activate
-source .venv/bin/activate  # Linux/macOS
-.\.venv\Scripts\Activate.ps1  # Windows
+# Activate (Linux/macOS)
+source .venv/bin/activate
+
+# Activate (Windows)
+.\.venv\Scripts\Activate.ps1
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Setup database
+# Generate Prisma client
 python -m prisma generate
+
+# Run migrations
 python -m prisma migrate deploy
 
 # Start server
 python -m uvicorn src.main:app --reload
 ```
 
-### **Frontend Setup**
+### **Option 4: Frontend Only**
 
 ```bash
 cd frontend
@@ -171,86 +148,207 @@ npm install
 npm run dev
 ```
 
-### **Environment Variables**
-
-Create `.env` file:
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/pilotforge"
-SECRET_KEY="your-secret-key"
-API_VERSION="v1"
-CORS_ORIGINS="http://localhost:3000"
-```
+**Note:** Requires backend to be running.
 
 ---
 
-## 🎓 Tutorial: Your First Calculation
+## ⚡ Quick Start
 
-### **Scenario**
-You're producing a $5 million feature film and want to compare California, Georgia, and Louisiana.
+### **Your First Calculation (5 minutes)**
 
-### **Steps**
-
-**1. Create Your Production**
-1. Navigate to http://localhost:3000/productions
+**Step 1: Create a Production**
+1. Go to http://localhost:3000/productions
 2. Click "Create New Production"
 3. Fill in:
    - Title: "My Feature Film"
    - Type: Feature Film
    - Budget: $5,000,000
+   - Jurisdiction: California
    - Start Date: June 1, 2026
 4. Click "Create Production"
 
-**2. Calculate Tax Incentives**
+**Step 2: Calculate Tax Incentive**
 1. Go to Calculator page
 2. Select "My Feature Film"
 3. Select "California"
 4. Click "Calculate Tax Incentive"
-5. Result: ~$1,000,000 (20%)
+5. View result: ~$1,000,000 (20%)
 
-**3. Compare Jurisdictions**
+**Step 3: Compare Jurisdictions**
 1. Click "Compare More"
 2. Add Georgia and Louisiana
-3. View comparison:
-   - Louisiana: $1,750,000 (35%) ✅ BEST
-   - Georgia: $1,500,000 (30%)
-   - California: $1,000,000 (20%)
+3. See which offers best savings
 
-**4. Generate Report**
+**Step 4: Generate Report**
 1. Click "Generate Report"
 2. Choose PDF or Excel
 3. Share with stakeholders
 
-**Decision:** Film in Louisiana to save $750,000!
+**Congratulations!** You've completed your first tax incentive calculation.
 
 ---
 
-## 📋 What's New in v1.1.0
+## 📖 Detailed Documentation
 
-**New Features:**
-- ✨ Enhanced frontend UI with improved navigation
-- 🧮 Scenario modeling calculator
-- ✅ Improved compliance verification with deadline tracking
-- 📊 Better mobile responsiveness
+For detailed information on each component, see the specialized guides:
 
-**Improvements:**
-- ⚡ Faster API response times
-- 📱 Better mobile interface
-- 🌍 Updated jurisdiction data (32 jurisdictions)
-- 📄 Improved report formatting
+### **[Frontend Guide](./FRONTEND_GUIDE.md)**
+Complete walkthrough of the user interface including:
+- Dashboard navigation
+- Productions management
+- Jurisdictions browser
+- Calculator usage
+- UI components and features
 
-**Bug Fixes:**
-- Fixed jurisdiction filter issues
-- Corrected date validation
-- Resolved currency formatting
+### **[Calculator Guide](./CALCULATOR_GUIDE.md)**
+Tax incentive calculation features:
+- Simple calculator
+- Multi-jurisdiction comparison
+- Compliance verification
+- Stackable credits
+- Scenario modeling
+- Date-based rules
+
+### **[Reports Guide](./REPORTS_GUIDE.md)**
+Professional documentation:
+- PDF comparison reports
+- PDF compliance reports
+- Excel workbooks
+- Custom exports
+
+### **[API Guide](./API_GUIDE.md)**
+RESTful API documentation:
+- Endpoints reference
+- Request/response formats
+- Authentication (future)
+- Rate limits
+- Examples
+
+### **[Data Management Guide](./DATA_MANAGEMENT_GUIDE.md)**
+CRUD operations:
+- Jurisdictions API
+- Incentive Rules API
+- Productions API
+- Filtering and pagination
+
+### **[Troubleshooting Guide](./TROUBLESHOOTING_GUIDE.md)**
+Common issues and solutions:
+- Frontend issues
+- API errors
+- Performance problems
+- Database issues
+
+### **[FAQ](./FAQ.md)**
+Frequently asked questions:
+- General questions
+- Technical questions
+- Usage questions
+- Pricing and licensing
+
+### **[Best Practices](./BEST_PRACTICES.md)**
+Tips and recommendations:
+- Frontend development
+- API usage
+- Production planning
+- Security
 
 ---
 
-## 🆘 Need Help?
+## 🔐 Security
 
-- 📖 **Documentation:** Browse guides above
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/hneal055/Tax_Incentive_Compliance_Platform/discussions)
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/hneal055/Tax_Incentive_Compliance_Platform/issues)
-- 🔧 **Troubleshooting:** See [Troubleshooting Guide](./TROUBLESHOOTING_GUIDE.md)
+- Use HTTPS in production
+- Validate all inputs
+- Keep dependencies updated
+- Never commit secrets
+- See [Best Practices](./BEST_PRACTICES.md) for details
+
+---
+
+## 🛠️ Technology Stack
+
+**Frontend:**
+- React 19
+- TypeScript 5.9
+- React Router 7
+- Tailwind CSS 4
+- Vite 7
+
+**Backend:**
+- Python 3.12
+- FastAPI 0.115
+- Prisma ORM
+- PostgreSQL 16
+- Pydantic
+
+**Reports:**
+- ReportLab (PDF)
+- OpenPyXL (Excel)
+
+---
+
+## 📊 Current Statistics
+
+- **32** Global Jurisdictions
+- **33** Incentive Programs
+- **6** Calculator Endpoints
+- **100%** API Coverage
+- **100%** TypeScript Coverage
+
+---
+
+## 🗺️ Roadmap
+
+### **Q1 2026**
+- ✅ Enhanced UI with filtering
+- ✅ Scenario modeling
+- 🔄 User authentication (in progress)
+- 📅 Saved calculations
+
+### **Q2 2026**
+- 📅 Email notifications
+- 📅 Multi-currency expansion
+- 📅 Mobile app
+- 📅 Collaboration features
+
+### **Q3 2026**
+- 📅 AI-powered recommendations
+- 📅 Budget optimization
+- 📅 Real-time collaboration
+- 📅 Expense tracking
+
+### **Q4 2026**
+- 📅 Advanced analytics
+- 📅 Custom report templates
+- 📅 GraphQL API
+- 📅 Enterprise features
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see:
+- [Contributing Guidelines](../CONTRIBUTING.md)
+- [Code of Conduct](../CODE_OF_CONDUCT.md)
+- [Development Setup](../README.md)
+
+---
+
+## 📞 Support
+
+**Documentation:**
+- User Manual (this document)
+- [API Reference](http://localhost:8000/docs)
+- [Project Summary](../PROJECT_SUMMARY.md)
+
+**GitHub:**
+- Repository: https://github.com/hneal055/Tax_Incentive_Compliance_Platform
+- Issues: https://github.com/hneal055/Tax_Incentive_Compliance_Platform/issues
+- Discussions: https://github.com/hneal055/Tax_Incentive_Compliance_Platform/discussions
+
+**Community:**
+- Report bugs via GitHub Issues
+- Ask questions in Discussions
+- Submit feature requests
 
 ---
 
@@ -260,6 +358,22 @@ MIT License - See [LICENSE](../LICENSE) for details
 
 ---
 
-**Made with ❤️ for the film & TV industry**
+## 🙏 Acknowledgments
 
-*Maximizing tax incentives worldwide, one production at a time.*
+- FastAPI framework
+- React ecosystem
+- Prisma ORM
+- PostgreSQL
+- All contributors and users
+
+---
+
+**Thank you for using PilotForge!**
+
+*Making tax incentives simple for film & TV productions worldwide.*
+
+---
+
+**Document Version:** 1.1.0  
+**Last Updated:** February 3, 2026  
+**Next Review:** May 3, 2026
