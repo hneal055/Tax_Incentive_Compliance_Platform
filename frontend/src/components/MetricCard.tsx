@@ -20,12 +20,17 @@ const MiniChart = memo(({ data }: { data: Array<{ value: number }> }) => {
   
   const points = values.map((v, i) => {
     const x = (i / (values.length - 1)) * 100;
-    const y = 100 - ((v - min) / range) * 100;
+    const y = 100 - ((v - min) / range) * 80; // Scale to 80% height, leave padding
     return `${x},${y}`;
   }).join(' ');
   
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+    <svg 
+      viewBox="0 0 100 100" 
+      preserveAspectRatio="none" 
+      className="w-full h-full"
+      style={{ display: 'block' }}
+    >
       <defs>
         <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
@@ -123,9 +128,10 @@ const MetricCard: React.FC<MetricCardProps> = memo(({
             <Icon className="h-6 w-6 text-accent-blue dark:text-accent-teal" />
           </div>
         </div>
-        <div className="h-16 -mx-2 -mb-2">
-          <MiniChart data={defaultChartData} />
-        </div>
+      </div>
+      {/* Chart container with fixed height and overflow hidden */}
+      <div className="h-16 overflow-hidden">
+        <MiniChart data={defaultChartData} />
       </div>
     </div>
   );
