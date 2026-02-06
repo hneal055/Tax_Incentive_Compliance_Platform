@@ -1,5 +1,6 @@
 generator client {
-  provider             = "prisma-client-py"
+  provider = "prisma-client-py"
+  output   = "../.venv/Lib/site-packages/prisma"
   interface            = "asyncio"
   recursive_type_depth = 5
 }
@@ -97,4 +98,4 @@ model Expense {
   @@map("expenses")
 }
 
-}
+

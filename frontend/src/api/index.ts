@@ -11,7 +11,7 @@ import type {
 export const api = {
   // Health check
   health: async (): Promise<HealthStatus> => {
-    const response = await apiClient.get('/health', { baseURL: 'http://localhost:8000' });
+    const response = await apiClient.get('/health', { baseURL: 'http://127.0.0.1:8000' });
     return response.data;
   },
 
@@ -90,3 +90,4 @@ export const api = {
 };
 
 export default api;
+

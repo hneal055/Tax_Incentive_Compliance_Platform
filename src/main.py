@@ -86,19 +86,6 @@ app.add_middleware(
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
-# Mount frontend static files if build exists
-frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
-if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-    logger.info(f"✅ Frontend mounted from {frontend_dist}")
-else:
-    # Fallback to old static directory
-    static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-        logger.info(f"✅ Static files mounted from {static_dir}")
-
-
 # Root endpoint
 @app.get("/", tags=["Root"])
 async def root():
@@ -169,6 +156,21 @@ async def internal_error_handler(request, exc):
             "message": "An unexpected error occurred"
         }
     )
+
+
+# Mount frontend static files if build exists
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+else:
+    # Fallback to old static directory
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+        logger.info(f"✅ Static files mounted from {static_dir}")
+
+
 
 
 # Startup banner

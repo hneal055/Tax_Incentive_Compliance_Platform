@@ -30,8 +30,8 @@ class Settings(BaseSettings):
     # API metadata (referenced by src.main)
     API_TITLE: str = Field(default="PilotForge API")
     API_DESCRIPTION: str = Field(default="Phase 1 spine: rule registry + rule engine + core API endpoints.")
-    API_VERSION: str = Field(default="0.1.0")
-    API_PREFIX: str = Field(default="/api/0.1.0")
+    API_VERSION: str = Field(default="v1")
+    API_PREFIX: str = Field(default="/api/v1")
 
     # Aliases for backward compatibility (used in main.py)
     @property

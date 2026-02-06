@@ -45,7 +45,7 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 
 ### Prerequisites
 
-- **Python 3.12+**
+- **Python 3.11+**
 - **Node.js 20+** and **npm 10+**
 - **PostgreSQL 16**
 
@@ -74,7 +74,7 @@ Start both backend and frontend together:
 
 This starts:
 - Backend API: http://localhost:8000
-- Frontend UI: http://localhost:3000
+- Frontend UI: http://localhost:5173
 
 ### 🔧 Backend Only
 
@@ -146,15 +146,15 @@ cd frontend
 npm install
 
 # Start development server
-npm run dev
+npm run dev -- --port 5173
 ```
 
-**Frontend UI**: http://localhost:3000
+**Frontend UI**: http://localhost:5173
 
 ## 🏗️ Technology Stack
 
 ### Backend
-- **Python 3.12+** - Modern Python with type hints
+- **Python 3.11+** - Modern Python with type hints
 - **FastAPI 0.115** - High-performance async web framework
 - **PostgreSQL 16** - Robust relational database
 - **Prisma ORM** - Type-safe database access
@@ -270,8 +270,8 @@ python -m prisma migrate dev
 ```bash
 cd frontend
 
-# Start dev server (http://localhost:3000)
-npm run dev
+# Start dev server (http://localhost:5173)
+npm run dev -- --port 5173
 
 # Build for production
 npm run build
@@ -289,14 +289,14 @@ npm run lint
 python -m uvicorn src.main:app --reload
 
 # Terminal 2: Frontend
-cd frontend && npm run dev
+cd frontend && npm run dev -- --port 5173
 ```
 
 > 📖 **Detailed Setup Guide**: See [UI_SETUP.md](./UI_SETUP.md) for comprehensive UI setup instructions
 
 ## Features
 **Access:**
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
@@ -374,14 +374,14 @@ pytest tests/test_excel_exports.py           # 9 tests
 - ✅ Relationship integrity
 - ✅ Business logic validation
 **Backend:**
-- Python 3.12+ with FastAPI
+- Python 3.11+ with FastAPI
 - PostgreSQL database
 - Serves frontend static files
-Visit: **http://localhost:3000**
+Visit: **http://localhost:5173**
 
 ---
 
-- Python 3.12+ (FastAPI)
+- Python 3.11+ (FastAPI)
 ## 🛠️ Technology Stack
 
 ### Backend
@@ -559,3 +559,4 @@ See [LICENSE](./docs/LICENSE) for details.
 **Built with ❤️ for the film & TV industry**
 See `docs/QUICK_START.md` for detailed setup instructions.
 See `frontend/FRONTEND_README.md` for frontend-specific documentation.
+

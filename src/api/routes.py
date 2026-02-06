@@ -12,7 +12,7 @@ from src.api.excel import router as excel_router
 from src.api.expenses import router as expenses_router
 from src.api.rule_engine import router as rule_engine_router
 
-API_PREFIX = "/api/0.1.0"
+API_PREFIX = "/api/v1"
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ router.include_router(rule_engine_router)
 
 @router.get("/", tags=["Meta"])
 async def api_root():
-    """API root endpoint (under /api/0.1.0/)"""
+    """API root endpoint (under /api/v1/)"""
     return {
         "message": "Tax Incentive Compliance Platform API",
         "version": "1.0.0",

@@ -957,3 +957,42 @@ async def calculate_scenarios(request: ScenarioCalculateRequest):
     )
 
 
+
+
+@router.get("/options")
+def get_calculator_options():
+    """
+    Get available options for calculator scenarios.
+    Returns lists of available types and statuses formatted for dropdowns.
+    """
+    return {
+        "productionTypes": [
+            "Feature Film",
+            "Television Series",
+            "Documentary",
+            "Animation",
+            "Commercial",
+            "Music Video",
+            "Video Game"
+        ],
+        "ratingTypes": [
+            "MPAA",
+            "TV Parental Guidelines"
+        ],
+        "mpaaRatings": [
+            "G",
+            "PG",
+            "PG-13",
+            "R",
+            "NC-17"
+        ],
+        "tvRatings": [
+            "TV-Y",
+            "TV-Y7",
+            "TV-G",
+            "TV-PG",
+            "TV-14",
+            "TV-MA"
+        ]
+    }
+
