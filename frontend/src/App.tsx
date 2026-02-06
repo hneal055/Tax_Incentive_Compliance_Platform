@@ -3,8 +3,10 @@ import { lazy, Suspense } from 'react';
 import Layout from './components/Layout';
 import Spinner from './components/Spinner';
 
-// Lazy load pages for better performance
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+// Import Dashboard directly - it's the main page accessed immediately
+import Dashboard from './pages/Dashboard';
+
+// Lazy load other pages for better performance
 const Productions = lazy(() => import('./pages/Productions'));
 const Jurisdictions = lazy(() => import('./pages/Jurisdictions'));
 const Calculator = lazy(() => import('./pages/Calculator'));
