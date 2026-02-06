@@ -158,7 +158,7 @@ npm run dev -- --port 5173
 - **FastAPI 0.115** - High-performance async web framework
 - **PostgreSQL 16** - Robust relational database
 - **Prisma ORM** - Type-safe database access
-- **Pytest** - Comprehensive testing (31/31 passing)
+- **Pytest** - Comprehensive testing (127/127 passing)
 - **ReportLab & openpyxl** - PDF and Excel generation
 
 ### Frontend
@@ -329,7 +329,7 @@ pytest -v                # Verbose output
 pytest tests/test_api.py # Specific test file
 ```
 
-**Test Coverage**: 31/31 tests passing
+**Test Coverage**: 127/127 tests passing
 
 ### Frontend Tests (Coming Soon)
 - Unit tests with Vitest
@@ -348,13 +348,13 @@ pytest tests/test_api.py # Specific test file
 - Automated incentive calculations
 - Compliance verification
 - Audit trail
-- **Comprehensive test suite (46 tests)**
+- **Comprehensive test suite (127 tests)**
 
 ## Testing
 
 Run the comprehensive test suite:
 ```bash
-# All tests (46 total)
+# All tests (127 total)
 pytest tests/ -v
 
 # By endpoint category

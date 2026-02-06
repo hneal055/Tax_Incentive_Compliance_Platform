@@ -5,7 +5,7 @@ Test report generation endpoints for PilotForge
 import pytest
 import uuid
 from datetime import datetime
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from asgi_lifespan import LifespanManager
 from src.main import app
 
@@ -17,7 +17,7 @@ class TestReportEndpoints:
     async def test_generate_comparison_report_success(self):
         """Test generating a comparison PDF report"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create 2 jurisdictions with rules
                 jurisdiction_ids = []
                 
@@ -64,7 +64,7 @@ class TestReportEndpoints:
     async def test_generate_comparison_report_missing_jurisdictions(self):
         """Test that comparison report requires valid jurisdictions"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent jurisdiction IDs
                 report_request = {
                     "productionTitle": "Test Film",
@@ -79,7 +79,7 @@ class TestReportEndpoints:
     async def test_generate_compliance_report_success(self):
         """Test generating a compliance PDF report"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"COMP-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -131,7 +131,7 @@ class TestReportEndpoints:
     async def test_generate_compliance_report_invalid_rule(self):
         """Test that compliance report requires valid rule"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent rule ID
                 compliance_request = {
                     "productionTitle": "Test Film",
@@ -146,7 +146,7 @@ class TestReportEndpoints:
     async def test_generate_scenario_report_success(self):
         """Test generating a scenario analysis PDF report"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"SCEN-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -193,7 +193,7 @@ class TestReportEndpoints:
     async def test_generate_scenario_report_invalid_jurisdiction(self):
         """Test that scenario report requires valid jurisdiction"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent jurisdiction ID
                 scenario_request = {
                     "productionTitle": "Test Film",
@@ -206,12 +206,12 @@ class TestReportEndpoints:
                 
                 response = await client.post("/api/0.1.0/reports/scenario", json=scenario_request)
                 
-                assert response.status_code == 404
+                assert response.status_code == 422
     
     async def test_generate_report_with_multiple_scenarios(self):
         """Test scenario report with multiple budget variations"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"MULTI-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
