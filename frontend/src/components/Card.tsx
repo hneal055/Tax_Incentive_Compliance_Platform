@@ -1,5 +1,4 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { memo } from 'react';
 
 interface CardProps {
   title?: string;
@@ -11,7 +10,7 @@ interface CardProps {
   loading?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({ 
+const Card: React.FC<CardProps> = memo(({ 
   title, 
   subtitle, 
   children, 
@@ -20,8 +19,8 @@ const Card: React.FC<CardProps> = ({
   hoverable = false,
   loading = false,
 }) => {
-  const cardContent = (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-300 ${hoverable ? 'hover:shadow-xl hover:scale-[1.02]' : ''} ${className}`}>
+  return (
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 transition-all duration-200 ${hoverable ? 'hover:shadow-xl hover:scale-[1.01]' : ''} ${className}`}>
       {(title || subtitle) && (
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           {title && <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>}
@@ -46,20 +45,8 @@ const Card: React.FC<CardProps> = ({
       )}
     </div>
   );
+});
 
-  if (hoverable) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {cardContent}
-      </motion.div>
-    );
-  }
-
-  return cardContent;
-};
+Card.displayName = 'Card';
 
 export default Card;
