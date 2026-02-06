@@ -116,6 +116,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="relative">
+      {/* Create Production Modal - outside scaled container for proper interaction */}
+      <CreateProductionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        jurisdictions={jurisdictions}
+        onSuccess={handleProductionCreated}
+      />
       {/* Zoom Controls - Fixed position */}
       <div className="absolute -top-1 right-0 flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 shadow-sm z-10">
         <button
@@ -152,14 +159,6 @@ const Dashboard: React.FC = () => {
         style={{ transform: `scale(${zoom})`, width: `${100 / zoom}%` }}
       >
         <div className="space-y-3 pl-8 pr-4 py-2">
-          {/* Create Production Modal */}
-          <CreateProductionModal
-            isOpen={showCreateModal}
-            onClose={() => setShowCreateModal(false)}
-            jurisdictions={jurisdictions}
-            onSuccess={handleProductionCreated}
-          />
-
           {/* Header with System Health */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pr-36">
             <div>
@@ -348,3 +347,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
