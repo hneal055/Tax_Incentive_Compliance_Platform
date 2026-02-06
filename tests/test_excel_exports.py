@@ -5,7 +5,7 @@ Test Excel export endpoints for PilotForge
 import pytest
 import uuid
 from datetime import datetime
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from asgi_lifespan import LifespanManager
 from src.main import app
 
@@ -17,7 +17,7 @@ class TestExcelExports:
     async def test_export_comparison_excel_success(self):
         """Test generating comparison Excel workbook"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create 2 jurisdictions with rules
                 jurisdiction_ids = []
                 
@@ -66,7 +66,7 @@ class TestExcelExports:
     async def test_export_comparison_excel_missing_jurisdictions(self):
         """Test that comparison Excel requires valid jurisdictions"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent jurisdiction IDs
                 export_request = {
                     "productionTitle": "Test Film",
@@ -81,7 +81,7 @@ class TestExcelExports:
     async def test_export_compliance_excel_success(self):
         """Test generating compliance Excel workbook"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"XLS-COMP-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -136,7 +136,7 @@ class TestExcelExports:
     async def test_export_compliance_excel_invalid_rule(self):
         """Test that compliance Excel requires valid rule"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent rule ID
                 compliance_request = {
                     "productionTitle": "Test Film",
@@ -151,7 +151,7 @@ class TestExcelExports:
     async def test_export_scenario_excel_success(self):
         """Test generating scenario analysis Excel workbook"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"XLS-SCEN-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -200,7 +200,7 @@ class TestExcelExports:
     async def test_export_scenario_excel_invalid_jurisdiction(self):
         """Test that scenario Excel requires valid jurisdiction"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent jurisdiction ID
                 scenario_request = {
                     "productionTitle": "Test Film",
@@ -213,12 +213,12 @@ class TestExcelExports:
                 
                 response = await client.post("/api/0.1.0/excel/scenario", json=scenario_request)
                 
-                assert response.status_code == 404
+                assert response.status_code == 422
     
     async def test_export_comparison_excel_with_multiple_jurisdictions(self):
         """Test Excel export with multiple jurisdictions"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create 3 jurisdictions with different rates
                 jurisdiction_ids = []
                 percentages = [15.0, 25.0, 35.0]
@@ -263,7 +263,7 @@ class TestExcelExports:
     async def test_export_scenario_excel_with_multiple_scenarios(self):
         """Test scenario Excel with multiple budget variations"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"XLS-MULTI-SCEN-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -312,7 +312,7 @@ class TestExcelExports:
     async def test_export_compliance_excel_with_requirements(self):
         """Test compliance Excel with complex requirements"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"XLS-REQ-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {

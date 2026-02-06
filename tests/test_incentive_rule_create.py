@@ -5,7 +5,7 @@ Test incentive rule creation endpoints for PilotForge
 import pytest
 import uuid
 from datetime import datetime, timedelta
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from asgi_lifespan import LifespanManager
 from src.main import app
 from src.utils.database import prisma
@@ -18,7 +18,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_success(self):
         """Test creating an incentive rule successfully"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # First, create a jurisdiction to use
                 jurisdiction_code = f"JUR-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -66,7 +66,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_minimal_fields(self):
         """Test creating incentive rule with only required fields"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create a jurisdiction first
                 jurisdiction_code = f"JUR-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -100,7 +100,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_missing_required_fields(self):
         """Test that missing required fields returns 422 validation error"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Missing 'ruleCode' field
                 invalid_data = {
                     "jurisdictionId": "some-id",
@@ -116,7 +116,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_invalid_jurisdiction(self):
         """Test that invalid jurisdiction ID returns 404 error"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use a non-existent jurisdiction ID
                 rule_code = f"INVALID-{str(uuid.uuid4())[:8]}"
                 invalid_data = {
@@ -135,7 +135,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_duplicate_code(self):
         """Test that duplicate rule code returns error"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create a jurisdiction first
                 jurisdiction_code = f"JUR-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -178,7 +178,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_with_percentage(self):
         """Test creating rule with percentage-based incentive"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create a jurisdiction first
                 jurisdiction_code = f"JUR-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -215,7 +215,7 @@ class TestIncentiveRuleCreate:
     async def test_create_incentive_rule_with_fixed_amount(self):
         """Test creating rule with fixed amount incentive"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create a jurisdiction first
                 jurisdiction_code = f"JUR-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {

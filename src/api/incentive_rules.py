@@ -72,3 +72,30 @@ async def get_incentive_rule(rule_id: str):
         )
     
     return rule
+@router.post("/", response_model=IncentiveRuleResponse, status_code=status.HTTP_201_CREATED, summary="Create incentive rule")
+async def create_incentive_rule(rule: IncentiveRuleCreate):
+    """Create a new incentive rule."""
+    # Check if jurisdiction exists
+    jurisdiction = await prisma.jurisdiction.find_unique(
+        where={"id": rule.jurisdictionId}
+    )
+    if not jurisdiction:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Jurisdiction with ID {rule.jurisdictionId} not found"
+        )
+
+    # Check for duplicate code
+    existing = await prisma.incentiverule.find_first(
+        where={"ruleCode": {"equals": rule.ruleCode, "mode": "insensitive"}}
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rule with code {rule.ruleCode} already exists"
+        )
+        
+    return await prisma.incentiverule.create(
+        data=rule.model_dump()
+    )
+

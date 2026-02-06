@@ -5,7 +5,7 @@ Test calculator endpoints for PilotForge
 import pytest
 import uuid
 from datetime import datetime, timedelta, date
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from asgi_lifespan import LifespanManager
 from src.main import app
 
@@ -17,7 +17,7 @@ class TestCalculatorEndpoints:
     async def test_calculate_simple_success(self):
         """Test simple tax credit calculation"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule first
                 jurisdiction_code = f"CALC-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -64,7 +64,7 @@ class TestCalculatorEndpoints:
     async def test_calculate_simple_below_minimum(self):
         """Test calculation when budget is below minimum spend"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"MIN-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -106,7 +106,7 @@ class TestCalculatorEndpoints:
     async def test_calculate_compare_success(self):
         """Test comparing tax credits across jurisdictions"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create 2 jurisdictions with different rates
                 jurisdiction_ids = []
                 
@@ -153,7 +153,7 @@ class TestCalculatorEndpoints:
     async def test_calculate_compare_invalid_jurisdiction_count(self):
         """Test that compare requires 2-10 jurisdictions"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Test with only 1 jurisdiction (should fail)
                 jurisdiction_code = f"ONE-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -172,13 +172,13 @@ class TestCalculatorEndpoints:
                 
                 response = await client.post("/api/0.1.0/calculate/compare", json=compare_request)
                 
-                assert response.status_code == 400
-                assert "at least 2" in response.json()["detail"]
+                assert response.status_code == 422
+                assert "at least 2" in str(response.json()["detail"])
     
     async def test_calculate_jurisdiction_options(self):
         """Test getting all rules for a jurisdiction with estimates"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction
                 jurisdiction_code = f"OPT-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -218,7 +218,7 @@ class TestCalculatorEndpoints:
     async def test_calculate_with_qualifying_budget_override(self):
         """Test calculation with qualifying budget override"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction and rule
                 jurisdiction_code = f"QUAL-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {

@@ -5,7 +5,7 @@ Test production creation endpoints for PilotForge
 import pytest
 import uuid
 from datetime import datetime, timedelta, date
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from asgi_lifespan import LifespanManager
 from src.main import app
 
@@ -17,7 +17,7 @@ class TestProductionCreate:
     async def test_create_production_success(self):
         """Test creating a production successfully"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # First, create a jurisdiction
                 jurisdiction_code = f"PROD-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -57,7 +57,7 @@ class TestProductionCreate:
     async def test_create_production_minimal_fields(self):
         """Test creating production with only required fields"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction first
                 jurisdiction_code = f"MIN-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -91,7 +91,7 @@ class TestProductionCreate:
     async def test_create_production_missing_required_fields(self):
         """Test that missing required fields returns 422 validation error"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Missing 'title' field
                 invalid_data = {
                     "productionType": "feature",
@@ -109,7 +109,7 @@ class TestProductionCreate:
     async def test_create_production_invalid_jurisdiction(self):
         """Test that invalid jurisdiction ID returns 404 error"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Use non-existent jurisdiction ID
                 invalid_data = {
                     "title": "Invalid Production",
@@ -129,7 +129,7 @@ class TestProductionCreate:
     async def test_create_production_various_types(self):
         """Test creating productions of different types"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction first
                 jurisdiction_code = f"TYPE-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {
@@ -165,7 +165,7 @@ class TestProductionCreate:
     async def test_create_production_with_budget_breakdown(self):
         """Test creating production with budget breakdown"""
         async with LifespanManager(app):
-            async with AsyncClient(app=app, base_url="http://test") as client:
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 # Create jurisdiction first
                 jurisdiction_code = f"BUD-{str(uuid.uuid4())[:8]}"
                 jurisdiction_data = {

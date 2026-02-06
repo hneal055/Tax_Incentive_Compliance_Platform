@@ -957,3 +957,14 @@ async def calculate_scenarios(request: ScenarioCalculateRequest):
     )
 
 
+
+
+@router.get("/options")
+def get_calculator_options():
+    return {
+        "productionTypes": ["Feature Film", "TV Series"],
+        "ratingTypes": ["MPAA"],
+        "mpaaRatings": ["PG", "R"],
+        "tvRatings": ["TV-MA"]
+    }
+

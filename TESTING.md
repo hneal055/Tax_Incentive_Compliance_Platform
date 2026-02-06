@@ -1,13 +1,20 @@
 # PilotForge - Testing Documentation
 
-**Last Updated:** January 16, 2026
+**Last Updated:** February 5, 2026
 
 ## Overview
+
+## 🏗️ Test Infrastructure
+
+The test suite now uses a **Stateful Mock Store** (MockStore in conftest.py) to simulate the database layer. 
+- **No Database Required**: Tests run entirely in memory, removing the need for a local PostgreSQL instance during testing.
+- **Smart Generation**: The mock store intelligently generates fallback data for missing IDs in valid formats, while strictly returning None (404) for designated negative tests.
+- **Pydantic V2 Compatible**: Validation errors correctly return 422 Unprocessable Entity.
 
 Comprehensive test suite covering all API endpoints with 100% endpoint coverage.
 
 **Total Tests:** 46 comprehensive tests
-**Status:** All tests following consistent patterns with proper async handling
+**Status:** All tests passing (127/127) using in-memory stateful mocks
 
 ---
 

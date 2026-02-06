@@ -31,7 +31,7 @@ router.include_router(rule_engine_router)
 async def api_root():
     """API root endpoint (under /api/0.1.0/)"""
     return {
-        "message": "Tax Incentive Compliance Platform API",
+        "message": "Welcome to PilotForge",
         "version": "1.0.0",
         "endpoints": {
             "jurisdictions": f"{API_PREFIX}/jurisdictions/",
@@ -45,3 +45,4 @@ async def api_root():
             "health": "/health",
         },
     }
+
