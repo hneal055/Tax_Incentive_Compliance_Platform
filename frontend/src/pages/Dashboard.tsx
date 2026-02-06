@@ -72,6 +72,11 @@ const Dashboard: React.FC = () => {
     fetchProductions();
   };
 
+  // Helper to get budget value (handles both old and new field names)
+  const getBudget = (production: typeof productions[0]) => {
+    return production.budgetTotal ?? production.budget ?? 0;
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -225,7 +230,7 @@ const Dashboard: React.FC = () => {
                   <div>
                     <p className="font-semibold text-gray-900 dark:text-gray-100">{production.title}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Budget: ${production.budget.toLocaleString()}
+                      Budget: ${getBudget(production).toLocaleString()}
                     </p>
                   </div>
                 </div>
