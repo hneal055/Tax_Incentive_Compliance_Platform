@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Activity, Wifi, WifiOff, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
 import Tooltip from './Tooltip';
 
 interface SystemHealthProps {
@@ -10,47 +9,51 @@ interface SystemHealthProps {
   onRefresh?: () => void;
 }
 
-const SystemHealth: React.FC<SystemHealthProps> = ({
+const statusConfig = {
+  healthy: {
+    color: 'text-status-active',
+    bgColor: 'bg-status-active/20',
+    borderColor: 'border-status-active',
+    label: 'Healthy',
+    icon: Wifi,
+  },
+  degraded: {
+    color: 'text-status-warning',
+    bgColor: 'bg-status-warning/20',
+    borderColor: 'border-status-warning',
+    label: 'Degraded',
+    icon: Activity,
+  },
+  offline: {
+    color: 'text-status-error',
+    bgColor: 'bg-status-error/20',
+    borderColor: 'border-status-error',
+    label: 'Offline',
+    icon: WifiOff,
+  },
+  checking: {
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100 dark:bg-gray-800',
+    borderColor: 'border-gray-300 dark:border-gray-700',
+    label: 'Checking...',
+    icon: Activity,
+  },
+};
+
+function getRelativeTime(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+const SystemHealth: React.FC<SystemHealthProps> = memo(({
   status,
   lastChecked,
   responseTime,
   onRefresh,
 }) => {
-  const statusConfig = {
-    healthy: {
-      color: 'text-status-active',
-      bgColor: 'bg-status-active/20',
-      borderColor: 'border-status-active',
-      label: 'Healthy',
-      icon: Wifi,
-      pulse: true,
-    },
-    degraded: {
-      color: 'text-status-warning',
-      bgColor: 'bg-status-warning/20',
-      borderColor: 'border-status-warning',
-      label: 'Degraded',
-      icon: Activity,
-      pulse: false,
-    },
-    offline: {
-      color: 'text-status-error',
-      bgColor: 'bg-status-error/20',
-      borderColor: 'border-status-error',
-      label: 'Offline',
-      icon: WifiOff,
-      pulse: false,
-    },
-    checking: {
-      color: 'text-gray-500',
-      bgColor: 'bg-gray-100 dark:bg-gray-800',
-      borderColor: 'border-gray-300 dark:border-gray-700',
-      label: 'Checking...',
-      icon: Activity,
-      pulse: true,
-    },
-  };
-
   const config = statusConfig[status];
   const Icon = config.icon;
 
@@ -60,19 +63,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         <div className={`relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${config.borderColor} ${config.bgColor}`}>
           <div className="relative">
             <Icon className={`h-4 w-4 ${config.color}`} />
-            {config.pulse && (
-              <motion.div
-                className={`absolute inset-0 rounded-full ${config.bgColor}`}
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.5, 0, 0.5],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
+            {status === 'checking' && (
+              <span className={`absolute inset-0 rounded-full ${config.bgColor} animate-ping opacity-75`} />
             )}
           </div>
           <span className={`text-xs font-semibold ${config.color}`}>
@@ -82,7 +74,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       </Tooltip>
 
       {responseTime !== undefined && (
-        <Tooltip content="Average response time">
+        <Tooltip content="Response time">
           <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
             <Clock className="h-3 w-3" />
             <span>{responseTime}ms</span>
@@ -109,15 +101,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
       )}
     </div>
   );
-};
+});
 
-function getRelativeTime(date: Date): string {
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  
-  if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
-}
+SystemHealth.displayName = 'SystemHealth';
 
 export default SystemHealth;

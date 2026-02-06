@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
 
 interface MetricCardProps {
   title: string;
@@ -13,7 +11,45 @@ interface MetricCardProps {
   className?: string;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({
+// Simple sparkline using SVG instead of recharts
+const MiniChart = memo(({ data }: { data: Array<{ value: number }> }) => {
+  const values = data.map(d => d.value);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  
+  const points = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * 100;
+    const y = 100 - ((v - min) / range) * 100;
+    return `${x},${y}`;
+  }).join(' ');
+  
+  return (
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+      <defs>
+        <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points={`0,100 ${points} 100,100`}
+        fill="url(#sparklineGradient)"
+      />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="#3b82f6"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+});
+
+MiniChart.displayName = 'MiniChart';
+
+const MetricCard: React.FC<MetricCardProps> = memo(({
   title,
   value,
   icon: Icon,
@@ -22,29 +58,34 @@ const MetricCard: React.FC<MetricCardProps> = ({
   chartData,
   className = '',
 }) => {
-  const [displayValue, setDisplayValue] = useState(0);
+  const [displayValue, setDisplayValue] = useState(typeof value === 'number' ? 0 : value);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
-  // Animate number counting if value is a number
   useEffect(() => {
-    if (typeof value === 'number') {
-      const duration = 1000;
-      const steps = 30;
+    if (typeof value === 'number' && !hasAnimated) {
+      const duration = 600;
+      const steps = 20;
       const stepValue = value / steps;
       let current = 0;
+      let step = 0;
 
       const timer = setInterval(() => {
-        current += stepValue;
-        if (current >= value) {
+        step++;
+        current = Math.min(value, Math.floor(stepValue * step));
+        setDisplayValue(current);
+        
+        if (step >= steps) {
           setDisplayValue(value);
+          setHasAnimated(true);
           clearInterval(timer);
-        } else {
-          setDisplayValue(Math.floor(current));
         }
       }, duration / steps);
 
       return () => clearInterval(timer);
+    } else if (typeof value === 'number') {
+      setDisplayValue(value);
     }
-  }, [value]);
+  }, [value, hasAnimated]);
 
   const trendConfig = {
     up: 'text-status-active',
@@ -52,36 +93,24 @@ const MetricCard: React.FC<MetricCardProps> = ({
     neutral: 'text-gray-500 dark:text-gray-400',
   };
 
-  // Generate sample chart data if none provided (using memoization to avoid purity issues)
   const defaultChartData = React.useMemo(() => {
     if (chartData) return chartData;
     return Array.from({ length: 10 }, (_, i) => ({
-      value: 50 + (i * 5) + ((i % 3) * 10), // Deterministic pattern instead of random
+      value: 50 + (i * 5) + ((i % 3) * 10),
     }));
   }, [chartData]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 ${className}`}
-    >
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200 dark:border-gray-700 ${className}`}>
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
               {title}
             </p>
-            <motion.p
-              className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2"
-              key={displayValue}
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            >
-              {typeof value === 'number' ? displayValue : value}
-            </motion.p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+              {displayValue}
+            </p>
             {trend && trendValue && (
               <p className={`text-sm font-medium mt-1 ${trendConfig[trend]}`}>
                 {trend === 'up' && '↑ '}
@@ -94,31 +123,14 @@ const MetricCard: React.FC<MetricCardProps> = ({
             <Icon className="h-6 w-6 text-accent-blue dark:text-accent-teal" />
           </div>
         </div>
-
-        {/* Mini chart */}
         <div className="h-16 -mx-2 -mb-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={defaultChartData}>
-              <defs>
-                <linearGradient id="metricGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                fill="url(#metricGradient)"
-                animationDuration={1000}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <MiniChart data={defaultChartData} />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-};
+});
+
+MetricCard.displayName = 'MetricCard';
 
 export default MetricCard;
