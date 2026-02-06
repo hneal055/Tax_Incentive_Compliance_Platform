@@ -11,43 +11,42 @@ interface MetricCardProps {
   className?: string;
 }
 
-// Simple sparkline using SVG instead of recharts
+// Simple sparkline using SVG
 const MiniChart = memo(({ data }: { data: Array<{ value: number }> }) => {
   const values = data.map(d => d.value);
   const max = Math.max(...values);
   const min = Math.min(...values);
   const range = max - min || 1;
   
+  // Create path for the line
+  const width = 200;
+  const height = 40;
+  const padding = 2;
+  
   const points = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * 100;
-    const y = 100 - ((v - min) / range) * 80; // Scale to 80% height, leave padding
+    const x = padding + (i / (values.length - 1)) * (width - padding * 2);
+    const y = padding + (1 - (v - min) / range) * (height - padding * 2);
     return `${x},${y}`;
-  }).join(' ');
+  });
+  
+  const linePath = `M ${points.join(' L ')}`;
+  const areaPath = `${linePath} L ${width - padding},${height} L ${padding},${height} Z`;
   
   return (
     <svg 
-      viewBox="0 0 100 100" 
-      preserveAspectRatio="none" 
-      className="w-full h-full"
-      style={{ display: 'block' }}
+      width="100%" 
+      height="40"
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
     >
       <defs>
-        <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
         </linearGradient>
       </defs>
-      <polygon
-        points={`0,100 ${points} 100,100`}
-        fill="url(#sparklineGradient)"
-      />
-      <polyline
-        points={points}
-        fill="none"
-        stroke="#3b82f6"
-        strokeWidth="2"
-        vectorEffect="non-scaling-stroke"
-      />
+      <path d={areaPath} fill="url(#chartGradient)" />
+      <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="1.5" />
     </svg>
   );
 });
@@ -107,30 +106,29 @@ const MetricCard: React.FC<MetricCardProps> = memo(({
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border border-gray-200 dark:border-gray-700 ${className}`}>
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
+      <div className="p-5">
+        <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               {title}
             </p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
               {displayValue}
             </p>
             {trend && trendValue && (
-              <p className={`text-sm font-medium mt-1 ${trendConfig[trend]}`}>
+              <p className={`text-xs font-medium mt-1 ${trendConfig[trend]}`}>
                 {trend === 'up' && '↑ '}
                 {trend === 'down' && '↓ '}
                 {trendValue}
               </p>
             )}
           </div>
-          <div className="flex-shrink-0 p-3 bg-gradient-to-br from-accent-blue/20 to-accent-teal/20 dark:from-accent-blue/30 dark:to-accent-teal/30 rounded-lg">
-            <Icon className="h-6 w-6 text-accent-blue dark:text-accent-teal" />
+          <div className="flex-shrink-0 p-2.5 bg-gradient-to-br from-accent-blue/10 to-accent-teal/10 dark:from-accent-blue/20 dark:to-accent-teal/20 rounded-lg">
+            <Icon className="h-5 w-5 text-accent-blue dark:text-accent-teal" />
           </div>
         </div>
       </div>
-      {/* Chart container with fixed height and overflow hidden */}
-      <div className="h-16 overflow-hidden">
+      <div className="px-5 pb-4">
         <MiniChart data={defaultChartData} />
       </div>
     </div>
