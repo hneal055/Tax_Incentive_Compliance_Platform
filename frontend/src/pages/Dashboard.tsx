@@ -79,14 +79,14 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-48">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* Create Production Modal */}
       <CreateProductionModal
         isOpen={showCreateModal}
@@ -96,12 +96,12 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Header with System Health */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
             Dashboard
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
             Monitoring {productions.length} production{productions.length !== 1 ? 's' : ''} across {jurisdictions.length} jurisdiction{jurisdictions.length !== 1 ? 's' : ''}
           </p>
         </div>
@@ -114,7 +114,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           title="Active Productions"
           value={productions.length}
@@ -142,7 +142,7 @@ const Dashboard: React.FC = () => {
 
       {/* AI Insights */}
       {productions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <InsightCard
             type="suggestion"
             title="New Incentive Opportunities"
@@ -166,12 +166,12 @@ const Dashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <Card title="Quick Actions" className="bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Button 
             variant="primary" 
             icon={Plus}
             onClick={() => setShowCreateModal(true)}
-            className="w-full h-20 text-lg"
+            className="w-full h-12"
           >
             Create Production
           </Button>
@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
             variant="outline" 
             icon={Calculator}
             onClick={() => navigate('/calculator')}
-            className="w-full h-20 text-lg"
+            className="w-full h-12"
           >
             Calculate Incentives
           </Button>
@@ -187,7 +187,7 @@ const Dashboard: React.FC = () => {
             variant="outline" 
             icon={BarChart3}
             onClick={() => navigate('/productions')}
-            className="w-full h-20 text-lg"
+            className="w-full h-12"
           >
             View Reports
           </Button>
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
             variant="outline" 
             icon={Settings}
             onClick={() => {}}
-            className="w-full h-20 text-lg"
+            className="w-full h-12"
           >
             Settings
           </Button>
@@ -205,37 +205,37 @@ const Dashboard: React.FC = () => {
       {/* Recent Productions */}
       <Card 
         title="Recent Productions" 
-        subtitle={`${productions.length} total production${productions.length !== 1 ? 's' : ''}`}
+        subtitle={`${productions.length} total`}
         hoverable
       >
         {productions.length === 0 ? (
           <EmptyState
             icon={Film}
             title="No productions yet"
-            description="Create your first production to start tracking tax incentives and managing compliance."
-            actionLabel="Create your first production"
+            description="Create your first production to start tracking tax incentives."
+            actionLabel="Create production"
             onAction={() => setShowCreateModal(true)}
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {productions.slice(0, 5).map((production) => (
               <div 
                 key={production.id} 
-                className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent-blue/10 dark:bg-accent-teal/10 rounded-lg">
-                    <Film className="h-5 w-5 text-accent-blue dark:text-accent-teal" />
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 bg-accent-blue/10 dark:bg-accent-teal/10 rounded">
+                    <Film className="h-4 w-4 text-accent-blue dark:text-accent-teal" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">{production.title}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Budget: ${getBudget(production).toLocaleString()}
+                    <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{production.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      ${getBudget(production).toLocaleString()}
                     </p>
                   </div>
                 </div>
                 <Button size="sm" variant="ghost">
-                  View Details →
+                  View →
                 </Button>
               </div>
             ))}
@@ -253,24 +253,24 @@ const Dashboard: React.FC = () => {
           <EmptyState
             icon={MapPin}
             title="No jurisdictions available"
-            description="Jurisdiction data will be loaded from the API. Check your connection."
-            actionLabel="Refresh data"
+            description="Jurisdiction data will be loaded from the API."
+            actionLabel="Refresh"
             onAction={checkHealth}
           />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {jurisdictions.slice(0, 8).map((jurisdiction) => (
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {jurisdictions.slice(0, 11).map((jurisdiction) => (
               <div 
                 key={jurisdiction.id} 
-                className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-lg hover:shadow-md transition-all border border-gray-200 dark:border-gray-700"
+                className="text-center p-2.5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-lg hover:shadow-sm transition-all border border-gray-200 dark:border-gray-700"
               >
-                <p className="font-bold text-lg text-accent-blue dark:text-accent-teal">{jurisdiction.code}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{jurisdiction.name}</p>
+                <p className="font-bold text-sm text-accent-blue dark:text-accent-teal">{jurisdiction.code}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{jurisdiction.name}</p>
               </div>
             ))}
-            {jurisdictions.length > 8 && (
-              <div className="text-center p-4 bg-gradient-to-br from-accent-blue to-accent-teal dark:from-accent-blue/80 dark:to-accent-teal/80 text-white rounded-lg flex items-center justify-center hover:shadow-lg transition-all cursor-pointer">
-                <p className="font-bold">+{jurisdictions.length - 8} more</p>
+            {jurisdictions.length > 11 && (
+              <div className="text-center p-2.5 bg-gradient-to-br from-accent-blue to-accent-teal text-white rounded-lg flex items-center justify-center hover:shadow-md transition-all cursor-pointer">
+                <p className="font-bold text-sm">+{jurisdictions.length - 11}</p>
               </div>
             )}
           </div>
