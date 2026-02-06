@@ -1,32 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Film, Plus, DollarSign, Calendar } from 'lucide-react';
+import { Film, Plus, DollarSign, Calendar, Building2, MapPin } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
+import CreateProductionModal from '../components/CreateProductionModal';
 import { useAppStore } from '../store';
 
 const Productions: React.FC = () => {
-  const { productions, fetchProductions, createProduction, isLoading } = useAppStore();
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    budget: '',
-  });
+  const { productions, jurisdictions, fetchProductions, fetchJurisdictions, isLoading } = useAppStore();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchProductions();
-  }, [fetchProductions]);
+    fetchJurisdictions();
+  }, [fetchProductions, fetchJurisdictions]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createProduction({
-      title: formData.title,
-      budget: parseFloat(formData.budget),
-    });
-    setFormData({ title: '', budget: '' });
-    setShowForm(false);
+  const handleProductionCreated = () => {
+    fetchProductions();
   };
 
   if (isLoading && productions.length === 0) {
@@ -39,6 +31,14 @@ const Productions: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Create Production Modal */}
+      <CreateProductionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        jurisdictions={jurisdictions}
+        onSuccess={handleProductionCreated}
+      />
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
@@ -47,48 +47,12 @@ const Productions: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your film and TV productions</p>
         </div>
         <Button 
-          onClick={() => setShowForm(!showForm)}
-          icon={showForm ? undefined : Plus}
-          variant={showForm ? 'secondary' : 'primary'}
+          onClick={() => setShowCreateModal(true)}
+          icon={Plus}
         >
-          {showForm ? 'Cancel' : 'New Production'}
+          New Production
         </Button>
       </div>
-
-      {showForm && (
-        <div className="animate-fade-in">
-          <Card title="Create New Production" subtitle="Enter production details to start tracking incentives">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Production Title"
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter production title"
-                required
-              />
-              <Input
-                label="Budget ($)"
-                type="number"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                placeholder="Enter budget amount"
-                required
-                min="0"
-                step="0.01"
-              />
-              <div className="flex space-x-2">
-                <Button type="submit" className="flex-1" icon={Plus}>
-                  Create Production
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {productions.length === 0 ? (
@@ -99,7 +63,7 @@ const Productions: React.FC = () => {
                 title="No productions yet"
                 description="Create your first production to start tracking tax incentives, managing budgets, and ensuring compliance."
                 actionLabel="Create your first production"
-                onAction={() => setShowForm(true)}
+                onAction={() => setShowCreateModal(true)}
               />
             </Card>
           </div>
@@ -116,22 +80,40 @@ const Productions: React.FC = () => {
                 className="h-full"
               >
                 <div className="space-y-3">
+                  {production.productionType && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="px-2 py-1 rounded-full bg-accent-blue/10 text-accent-blue dark:bg-accent-teal/10 dark:text-accent-teal font-medium text-xs uppercase">
+                        {production.productionType.replace('_', ' ')}
+                      </span>
+                      {production.status && (
+                        <span className="px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium text-xs">
+                          {production.status.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between p-3 bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10 rounded-lg">
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <DollarSign className="h-4 w-4" />
                       <span>Budget</span>
                     </div>
                     <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      ${production.budget.toLocaleString()}
+                      ${(production.budgetTotal || production.budget).toLocaleString()}
                     </span>
                   </div>
+                  {production.productionCompany && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <Building2 className="h-4 w-4" />
+                      <span>{production.productionCompany}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <Calendar className="h-4 w-4" />
                       <span>Created</span>
                     </div>
                     <span className="text-gray-900 dark:text-gray-100 font-medium">
-                      {new Date(production.created_at).toLocaleDateString()}
+                      {new Date(production.created_at || production.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
