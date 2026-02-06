@@ -7,6 +7,7 @@ import MetricCard from '../components/MetricCard';
 import SystemHealth from '../components/SystemHealth';
 import InsightCard from '../components/InsightCard';
 import EmptyState from '../components/EmptyState';
+import CreateProductionModal from '../components/CreateProductionModal';
 import { useAppStore } from '../store';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
@@ -18,8 +19,8 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [responseTime, setResponseTime] = useState<number | undefined>(undefined);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Calculate sample chart data for metrics (deterministic for purity)
   const productionChartData = React.useMemo(() => 
     Array.from({ length: 10 }, (_, i) => ({
       value: Math.max(0, productions.length + ((i % 3) * 2 - 3)),
@@ -67,6 +68,10 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleProductionCreated = () => {
+    fetchProductions();
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -77,6 +82,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8">
+      {/* Create Production Modal */}
+      <CreateProductionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        jurisdictions={jurisdictions}
+        onSuccess={handleProductionCreated}
+      />
+
       {/* Header with System Health */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -146,13 +159,13 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Quick Actions - Floating Action Toolbar */}
+      {/* Quick Actions */}
       <Card title="Quick Actions" className="bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Button 
             variant="primary" 
             icon={Plus}
-            onClick={() => navigate('/productions')}
+            onClick={() => setShowCreateModal(true)}
             className="w-full h-20 text-lg"
           >
             Create Production
@@ -196,7 +209,7 @@ const Dashboard: React.FC = () => {
             title="No productions yet"
             description="Create your first production to start tracking tax incentives and managing compliance."
             actionLabel="Create your first production"
-            onAction={() => navigate('/productions')}
+            onAction={() => setShowCreateModal(true)}
           />
         ) : (
           <div className="space-y-3">

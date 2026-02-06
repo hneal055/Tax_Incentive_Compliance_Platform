@@ -3,13 +3,15 @@ Production API endpoints
 """
 from fastapi import APIRouter, HTTPException, status
 from typing import Optional
+from datetime import date, datetime
 import logging
 
 from src.models.production import (
     ProductionCreate,
     ProductionUpdate,
     ProductionResponse,
-    ProductionList
+    ProductionList,
+    ProductionQuickCreate
 )
 from src.utils.database import prisma
 
@@ -40,12 +42,61 @@ async def get_productions(
     }
 
 
+@router.post("/quick", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Quick create production")
+async def quick_create_production(production: ProductionQuickCreate):
+    """Quick create a production with minimal required fields. Auto-fills defaults."""
+    try:
+        logger.info(f"Quick creating production: {production.title}")
+        
+        # Get first jurisdiction as default if not provided
+        jurisdiction_id = production.jurisdictionId
+        if not jurisdiction_id:
+            first_jurisdiction = await prisma.jurisdiction.find_first()
+            if not first_jurisdiction:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No jurisdictions available. Please create a jurisdiction first."
+                )
+            jurisdiction_id = first_jurisdiction.id
+        
+        # Convert date to datetime for Prisma
+        if production.startDate:
+            start_datetime = datetime.combine(production.startDate, datetime.min.time())
+        else:
+            start_datetime = datetime.now()
+        
+        # Create with defaults
+        new_production = await prisma.production.create(
+            data={
+                "title": production.title,
+                "productionType": production.productionType or "feature",
+                "jurisdictionId": jurisdiction_id,
+                "budgetTotal": production.budget,
+                "budgetQualifying": production.budget * 0.85,
+                "startDate": start_datetime,
+                "productionCompany": production.productionCompany or "Default Company",
+                "status": production.status or "planning",
+            }
+        )
+        
+        logger.info(f"Quick production created: {new_production.id}")
+        return new_production
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error quick creating production: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating production: {str(e)}"
+        )
+
+
 @router.post("/", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Create production")
 async def create_production(production: ProductionCreate):
-    """Create a new production."""
+    """Create a new production with all required fields."""
     try:
         logger.info(f"Creating production: {production.title}")
-        logger.info(f"Production data: {production.model_dump()}")
         
         # Verify jurisdiction exists
         jurisdiction = await prisma.jurisdiction.find_unique(
@@ -59,12 +110,13 @@ async def create_production(production: ProductionCreate):
                 detail=f"Jurisdiction with ID {production.jurisdictionId} not found"
             )
         
-        logger.info(f"Jurisdiction found: {jurisdiction.name}")
+        data = production.model_dump()
+        # Convert date to datetime for Prisma
+        for field in ["startDate", "endDate", "wrapDate"]:
+            if data.get(field) and isinstance(data[field], date):
+                data[field] = datetime.combine(data[field], datetime.min.time())
         
-        # Create production
-        new_production = await prisma.production.create(
-            data=production.model_dump()
-        )
+        new_production = await prisma.production.create(data=data)
         
         logger.info(f"Production created: {new_production.id}")
         return new_production
@@ -109,6 +161,10 @@ async def update_production(production_id: str, production: ProductionUpdate):
         )
     
     update_data = production.model_dump(exclude_unset=True)
+    # Convert dates to datetimes
+    for field in ["startDate", "endDate", "wrapDate"]:
+        if update_data.get(field) and isinstance(update_data[field], date):
+            update_data[field] = datetime.combine(update_data[field], datetime.min.time())
     
     updated = await prisma.production.update(
         where={"id": production_id},

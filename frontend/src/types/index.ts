@@ -2,7 +2,13 @@ export interface Production {
   id: string;
   title: string;
   budget: number;
-  jurisdiction_id?: string;
+  productionType?: string;
+  jurisdictionId?: string;
+  budgetTotal?: number;
+  budgetQualifying?: number;
+  startDate?: string;
+  productionCompany?: string;
+  status?: string;
   created_at: string;
   updated_at: string;
 }
@@ -51,7 +57,6 @@ export interface CalculationResult {
 
 export interface HealthStatus {
   status: string;
-  database: string;
-  version: string;
-  environment: string;
+  version?: string;
+  database?: string;
 }

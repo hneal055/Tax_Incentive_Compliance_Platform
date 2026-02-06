@@ -26,7 +26,13 @@ export const api = {
       return response.data;
     },
     create: async (data: Partial<Production>): Promise<Production> => {
-      const response = await apiClient.post('/productions', data);
+      // Use quick-create endpoint for simplified creation
+      const response = await apiClient.post('/productions/quick', data);
+      return response.data;
+    },
+    createFull: async (data: Partial<Production>): Promise<Production> => {
+      // Use full create endpoint when all fields provided
+      const response = await apiClient.post('/productions/', data);
       return response.data;
     },
     update: async (id: string, data: Partial<Production>): Promise<Production> => {
@@ -90,7 +96,3 @@ export const api = {
 };
 
 export default api;
-
-
-
-
