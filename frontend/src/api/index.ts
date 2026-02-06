@@ -18,8 +18,8 @@ export const api = {
   // Productions
   productions: {
     list: async (): Promise<Production[]> => {
-      const response = await apiClient.get('/productions');
-      return response.data;
+      const response = await apiClient.get('/productions/');
+      return response.data.productions;
     },
     get: async (id: string): Promise<Production> => {
       const response = await apiClient.get(`/productions/${id}`);
@@ -41,8 +41,8 @@ export const api = {
   // Jurisdictions
   jurisdictions: {
     list: async (): Promise<Jurisdiction[]> => {
-      const response = await apiClient.get('/jurisdictions');
-      return response.data;
+      const response = await apiClient.get('/jurisdictions/');
+      return response.data.jurisdictions;
     },
     get: async (id: string): Promise<Jurisdiction> => {
       const response = await apiClient.get(`/jurisdictions/${id}`);
@@ -53,8 +53,8 @@ export const api = {
   // Incentive Rules
   incentiveRules: {
     list: async (): Promise<IncentiveRule[]> => {
-      const response = await apiClient.get('/incentive-rules');
-      return response.data;
+      const response = await apiClient.get('/incentive-rules/');
+      return response.data.rules;
     },
     getByJurisdiction: async (jurisdictionId: string): Promise<IncentiveRule[]> => {
       const response = await apiClient.get(`/jurisdictions/${jurisdictionId}/incentive-rules`);
@@ -90,4 +90,7 @@ export const api = {
 };
 
 export default api;
+
+
+
 

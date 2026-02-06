@@ -17,9 +17,9 @@ Write-Host "`n📋 Pre-flight Checks" -ForegroundColor Yellow
 Write-Host "======================================" -ForegroundColor Cyan
 
 
-# Kill existing processes on ports 5173 and 8000
-Write-Host "Checking for existing processes on ports 5173 and 8000..." -ForegroundColor Gray
-foreach ($port in @(5173, 8000)) {
+# Kill existing processes on ports 5200 and 8000
+Write-Host "Checking for existing processes on ports 5200 and 8000..." -ForegroundColor Gray
+foreach ($port in @(5200, 8000)) {
     $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
     if ($conns) {
         foreach ($conn in $conns) {
@@ -104,7 +104,7 @@ for ($i = 1; $i -le 30; $i++) {
 }
 
 # Start frontend in a new PowerShell window
-Write-Host "`nStarting frontend on http://localhost:5173..." -ForegroundColor Yellow
+Write-Host "`nStarting frontend on http://localhost:5200..." -ForegroundColor Yellow
 $frontendScript = @"
 Set-Location frontend
 npm run dev
@@ -116,7 +116,7 @@ Write-Host "`n======================================" -ForegroundColor Cyan
 Write-Host "✅ Both Servers Running!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "`n📍 URLs:" -ForegroundColor White
-Write-Host "  Frontend:  http://localhost:5173" -ForegroundColor Cyan
+Write-Host "  Frontend:  http://localhost:5200" -ForegroundColor Cyan
 Write-Host "  Backend:   http://localhost:8000" -ForegroundColor Cyan
 Write-Host "  API Docs:  http://localhost:8000/docs" -ForegroundColor Cyan
 Write-Host "`n💡 Tips:" -ForegroundColor White
@@ -126,6 +126,7 @@ Write-Host "  - Backend PID: $($backendProcess.Id)" -ForegroundColor Gray
 Write-Host "  - Frontend PID: $($frontendProcess.Id)" -ForegroundColor Gray
 Write-Host "`nPress any key to exit this window..." -ForegroundColor Yellow
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+
 
 
 

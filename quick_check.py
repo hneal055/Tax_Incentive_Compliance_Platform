@@ -1,0 +1,1 @@
+import requests; import time; check = lambda u, n: print(f'{n}: {requests.get(u).status_code}') if requests.get(u).status_code else print('Fail'); check('http://127.0.0.1:8000/api/v1/productions', 'Backend'); check('http://localhost:5173', 'Frontend')
