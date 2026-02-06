@@ -6,17 +6,30 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5200,
-    host: '127.0.0.1', // Force IPv4 binding
+    host: '127.0.0.1',
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // Add port for backend
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
     },
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts': ['recharts'],
+          'vendor-ui': ['framer-motion', 'lucide-react'],
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'zustand', 'axios', 'recharts', 'framer-motion', 'lucide-react'],
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
   },
 })
-
-
