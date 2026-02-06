@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {/* Create Production Modal */}
       <CreateProductionModal
         isOpen={showCreateModal}
