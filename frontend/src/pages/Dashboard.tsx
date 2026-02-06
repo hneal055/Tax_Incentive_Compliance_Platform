@@ -151,7 +151,7 @@ const Dashboard: React.FC = () => {
         className="origin-top-left transition-transform duration-200"
         style={{ transform: `scale(${zoom})`, width: `${100 / zoom}%` }}
       >
-        <div className="space-y-3 px-4 py-2">
+        <div className="space-y-3 pl-8 pr-4 py-2">
           {/* Create Production Modal */}
           <CreateProductionModal
             isOpen={showCreateModal}
