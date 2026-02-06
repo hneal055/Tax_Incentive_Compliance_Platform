@@ -6,7 +6,6 @@ import Input from '../components/Input';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import { useAppStore } from '../store';
-import { motion } from 'framer-motion';
 
 const Productions: React.FC = () => {
   const { productions, fetchProductions, createProduction, isLoading } = useAppStore();
@@ -57,11 +56,7 @@ const Productions: React.FC = () => {
       </div>
 
       {showForm && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
+        <div className="animate-fade-in">
           <Card title="Create New Production" subtitle="Enter production details to start tracking incentives">
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
@@ -92,7 +87,7 @@ const Productions: React.FC = () => {
               </div>
             </form>
           </Card>
-        </motion.div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -110,11 +105,10 @@ const Productions: React.FC = () => {
           </div>
         ) : (
           productions.map((production, index) => (
-            <motion.div
+            <div
               key={production.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               <Card 
                 title={production.title}
@@ -147,7 +141,7 @@ const Productions: React.FC = () => {
                   </Button>
                 </div>
               </Card>
-            </motion.div>
+            </div>
           ))
         )}
       </div>

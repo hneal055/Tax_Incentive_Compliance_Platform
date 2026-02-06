@@ -6,7 +6,6 @@ import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import InsightCard from '../components/InsightCard';
 import { useAppStore } from '../store';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const Calculator: React.FC = () => {
@@ -35,7 +34,6 @@ const Calculator: React.FC = () => {
     }
 
     setCalculating(true);
-    // Simulate calculation - in real app would call API
     setTimeout(() => {
       const production = productions.find(p => p.id === selectedProduction);
       const jurisdiction = jurisdictions.find(j => j.id === selectedJurisdiction);
@@ -151,11 +149,7 @@ const Calculator: React.FC = () => {
                   <p className="text-gray-500 dark:text-gray-400 text-sm">Analyzing incentive programs...</p>
                 </div>
               ) : results ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-4"
-                >
+                <div className="space-y-4 animate-fade-in">
                   <div className="p-6 bg-gradient-to-br from-status-active/20 to-accent-emerald/20 dark:from-status-active/30 dark:to-accent-emerald/30 border border-status-active dark:border-status-active/50 rounded-xl">
                     <div className="flex items-center gap-2 text-sm text-status-active dark:text-status-active font-medium mb-2">
                       <DollarSign className="h-4 w-4" />
@@ -203,7 +197,7 @@ const Calculator: React.FC = () => {
                       Generate Report
                     </Button>
                   </div>
-                </motion.div>
+                </div>
               ) : (
                 <EmptyState
                   icon={Sparkles}

@@ -4,7 +4,6 @@ import Card from '../components/Card';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import { useAppStore } from '../store';
-import { motion } from 'framer-motion';
 
 const Jurisdictions: React.FC = () => {
   const { jurisdictions, fetchJurisdictions, isLoading } = useAppStore();
@@ -73,11 +72,10 @@ const Jurisdictions: React.FC = () => {
           jurisdictions.map((jurisdiction, index) => {
             const TypeIcon = getTypeIcon(jurisdiction.type);
             return (
-              <motion.div
+              <div
                 key={jurisdiction.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 <Card hoverable className="h-full">
                   <div className="space-y-4">
@@ -105,7 +103,7 @@ const Jurisdictions: React.FC = () => {
                     </div>
                   </div>
                 </Card>
-              </motion.div>
+              </div>
             );
           })
         )}
