@@ -114,7 +114,7 @@ async def mark_event_as_read(event_id: str):
     # Update readAt timestamp
     updated_event = await prisma.monitoringevent.update(
         where={"id": event_id},
-        data={"readAt": datetime.utcnow()}
+        data={"readAt": datetime.now()}
     )
     
     return updated_event
