@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -34,42 +35,45 @@ const Modal: React.FC<ModalProps> = memo(({ isOpen, onClose, title, children, si
 
   if (!isOpen) return null;
 
-  return (
-    <div 
+  const modalContent = (
+    <div
       className="fixed inset-0 flex items-center justify-center p-4"
-      style={{ zIndex: 9999 }}
+      style={{ zIndex: 99999 }}
     >
-      {/* Backdrop - solid gray with opacity */}
-      <div 
-        className="absolute inset-0 bg-gray-900/70"
+      {/* Backdrop — fully opaque to hide content behind */}
+      <div
+        className="absolute inset-0"
         onClick={onClose}
-        style={{ backdropFilter: 'blur(4px)' }}
+        style={{ backgroundColor: 'rgba(17, 24, 39, 0.80)', backdropFilter: 'blur(6px)' }}
       />
-      
-      {/* Modal */}
-      <div 
-        className={`relative w-full ${sizeClasses[size]} bg-white rounded-xl shadow-2xl`}
-        style={{ zIndex: 10000 }}
+
+      {/* Modal panel */}
+      <div
+        className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700`}
+        style={{ zIndex: 100000 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             aria-label="Close modal"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
-        
+
         {/* Content */}
-        <div className="p-6 bg-white rounded-b-xl">
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-b-xl">
           {children}
         </div>
       </div>
     </div>
   );
+
+  // Portal renders at document.body — escapes any parent transforms/stacking contexts
+  return createPortal(modalContent, document.body);
 });
 
 Modal.displayName = 'Modal';

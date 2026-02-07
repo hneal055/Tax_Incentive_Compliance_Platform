@@ -1,130 +1,101 @@
 import React, { useEffect, useState } from 'react';
-import { Film, MapPin, Award, Plus, Calculator, BarChart3, Settings, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { 
+  BarChart3, Users, Globe, Plus, 
+  ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, 
+  AlertCircle, ChevronRight, ZoomIn, ZoomOut, RotateCcw
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
-import MetricCard from '../components/MetricCard';
 import SystemHealth from '../components/SystemHealth';
-import InsightCard from '../components/InsightCard';
-import EmptyState from '../components/EmptyState';
-import CreateProductionModal from '../components/CreateProductionModal';
 import { useAppStore } from '../store';
-import api from '../api';
-import { useNavigate } from 'react-router-dom';
 
-const ZOOM_LEVELS = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2];
-const DEFAULT_ZOOM_INDEX = 3; // 1.0 = 100%
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { productions, jurisdictions, fetchProductions, fetchJurisdictions } = useAppStore();
-  const [healthStatus, setHealthStatus] = useState<'healthy' | 'degraded' | 'offline' | 'checking'>('checking');
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastChecked, setLastChecked] = useState<Date>(new Date());
-  const [responseTime, setResponseTime] = useState<number | undefined>(undefined);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [zoomIndex, setZoomIndex] = useState(() => {
+  const { 
+    productions, 
+    jurisdictions, 
+    fetchProductions, 
+    fetchJurisdictions, 
+    isLoading,
+    selectProduction 
+  } = useAppStore();
+  
+  const [healthStatus, setHealthStatus] = useState<'healthy' | 'degraded' | 'offline' | 'checking'>('healthy');
+  const [zoomLevel, setZoomLevel] = useState(() => {
     const saved = localStorage.getItem('dashboard-zoom');
-    return saved ? parseInt(saved, 10) : DEFAULT_ZOOM_INDEX;
+    return saved ? parseFloat(saved) : 1;
   });
 
-  const zoom = ZOOM_LEVELS[zoomIndex];
+  const ZOOM_LEVELS = [0.75, 0.85, 1, 1.15, 1.25];
+  const zoomIndex = ZOOM_LEVELS.indexOf(zoomLevel) !== -1 ? ZOOM_LEVELS.indexOf(zoomLevel) : 2;
+
+  useEffect(() => {
+    fetchProductions();
+    fetchJurisdictions();
+    
+    const checkHealth = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/health');
+        if (response.ok) setHealthStatus('healthy');
+        else setHealthStatus('degraded');
+      } catch (error) {
+        setHealthStatus('offline');
+      }
+    };
+    checkHealth();
+  }, [fetchProductions, fetchJurisdictions]);
 
   const handleZoomIn = () => {
     if (zoomIndex < ZOOM_LEVELS.length - 1) {
-      const newIndex = zoomIndex + 1;
-      setZoomIndex(newIndex);
-      localStorage.setItem('dashboard-zoom', String(newIndex));
+      const newZoom = ZOOM_LEVELS[zoomIndex + 1];
+      setZoomLevel(newZoom);
+      localStorage.setItem('dashboard-zoom', newZoom.toString());
     }
   };
 
   const handleZoomOut = () => {
     if (zoomIndex > 0) {
-      const newIndex = zoomIndex - 1;
-      setZoomIndex(newIndex);
-      localStorage.setItem('dashboard-zoom', String(newIndex));
+      const newZoom = ZOOM_LEVELS[zoomIndex - 1];
+      setZoomLevel(newZoom);
+      localStorage.setItem('dashboard-zoom', newZoom.toString());
     }
   };
 
   const handleZoomReset = () => {
-    setZoomIndex(DEFAULT_ZOOM_INDEX);
-    localStorage.setItem('dashboard-zoom', String(DEFAULT_ZOOM_INDEX));
+    setZoomLevel(1);
+    localStorage.setItem('dashboard-zoom', '1');
   };
 
-  const productionChartData = React.useMemo(() => 
-    Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, productions.length + ((i % 3) * 2 - 3)),
-    }))
-  , [productions.length]);
-
-  const jurisdictionChartData = React.useMemo(() =>
-    Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, jurisdictions.length + ((i % 4) * 3 - 5)),
-    }))
-  , [jurisdictions.length]);
-
-  const checkHealth = async () => {
-    const startTime = Date.now();
-    setHealthStatus('checking');
-    try {
-      const health = await api.health();
-      const endTime = Date.now();
-      setResponseTime(endTime - startTime);
-      setHealthStatus(health.status === 'healthy' ? 'healthy' : 'degraded');
-      setLastChecked(new Date());
-    } catch {
-      setHealthStatus('offline');
-      setResponseTime(undefined);
+  const handleViewProduction = (id: string) => {
+    const prod = productions.find(p => p.id === id);
+    if (prod) {
+      selectProduction(prod);
+      navigate('/productions');
     }
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        await Promise.all([
-          fetchProductions(),
-          fetchJurisdictions(),
-          checkHealth(),
-        ]);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleProductionCreated = () => {
-    fetchProductions();
-  };
-
-  const getBudget = (production: typeof productions[0]) => {
-    return production.budgetTotal ?? production.budget ?? 0;
-  };
-
-  if (isLoading) {
+  if (isLoading && productions.length === 0) {
     return (
-      <div className="flex justify-center items-center h-48">
+      <div className="flex justify-center items-center h-full">
         <Spinner size="lg" />
       </div>
     );
   }
 
+  const stats = [
+    { label: 'Active Productions', value: productions.filter(p => p.status === 'PRODUCTION').length.toString(), icon: BarChart3, color: 'text-accent-blue', trend: '+12%', trendUp: true },
+    { label: 'Total Budget', value: `$${(productions.reduce((acc, p) => acc + (p.budgetTotal || p.budget || 0), 0) / 1000000).toFixed(1)}M`, icon: Users, color: 'text-accent-teal', trend: '+5%', trendUp: true },
+    { label: 'Jurisdictions', value: jurisdictions.length.toString(), icon: Globe, color: 'text-purple-500', trend: '0%', trendUp: true },
+    { label: 'Compliance Rate', value: '98.2%', icon: CheckCircle2, color: 'text-status-active', trend: '+0.5%', trendUp: true }
+  ];
+
   return (
-    <div className="relative">
-      {/* Create Production Modal - outside scaled container for proper interaction */}
-      <CreateProductionModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        jurisdictions={jurisdictions}
-        onSuccess={handleProductionCreated}
-      />
-      {/* Zoom Controls - Fixed position */}
-      <div className="absolute -top-1 right-0 flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1 shadow-sm z-10">
+    <div className="relative min-h-screen">
+      {/* Zoom controls — fixed position, outside any transform */}
+      <div className="fixed top-20 right-6 z-50 flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1">
         <button
           onClick={handleZoomOut}
           disabled={zoomIndex === 0}
@@ -133,9 +104,9 @@ const Dashboard: React.FC = () => {
         >
           <ZoomOut className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 min-w-[3rem] text-center">
-          {Math.round(zoom * 100)}%
-        </span>
+        <div className="px-2 text-[10px] font-bold text-gray-400 min-w-[40px] text-center">
+          {Math.round(zoomLevel * 100)}%
+        </div>
         <button
           onClick={handleZoomIn}
           disabled={zoomIndex === ZOOM_LEVELS.length - 1}
@@ -153,13 +124,9 @@ const Dashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Zoomable Content */}
-      <div 
-        className="origin-top-left transition-transform duration-200"
-        style={{ transform: `scale(${zoom})`, width: `${100 / zoom}%` }}
-      >
-        <div className="space-y-3 pl-8 pr-4 py-2">
-          {/* Header with System Health */}
+      {/* Dashboard content — uses CSS zoom (does not create stacking context like transform) */}
+      <div style={{ zoom: zoomLevel }} className="transition-all duration-300">
+        <div className="space-y-3 px-8 py-2">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pr-36">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
@@ -171,173 +138,106 @@ const Dashboard: React.FC = () => {
             </div>
             <SystemHealth
               status={healthStatus}
-              lastChecked={lastChecked}
-              responseTime={responseTime}
-              onRefresh={checkHealth}
             />
-          </div>
-
-          {/* Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <MetricCard
-              title="Active Productions"
-              value={productions.length}
-              icon={Film}
-              trend="neutral"
-              chartData={productionChartData}
-            />
-
-            <MetricCard
-              title="Jurisdictions"
-              value={jurisdictions.length}
-              icon={MapPin}
-              trend="neutral"
-              chartData={jurisdictionChartData}
-            />
-
-            <MetricCard
-              title="Tax Programs"
-              value="33+"
-              icon={Award}
-              trend="up"
-              trendValue="+3 this month"
-            />
-          </div>
-
-          {/* AI Insights */}
-          {productions.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <InsightCard
-                type="suggestion"
-                title="New Incentive Opportunities"
-                description="Based on your production locations, you may qualify for 3 additional tax credit programs."
-                action={{
-                  label: "View recommendations",
-                  onClick: () => navigate('/calculator'),
-                }}
-              />
-              <InsightCard
-                type="insight"
-                title="Compliance Deadline Approaching"
-                description="2 productions have incentive reporting deadlines within the next 30 days."
-                action={{
-                  label: "View details",
-                  onClick: () => navigate('/productions'),
-                }}
-              />
-            </div>
-          )}
-
-          {/* Quick Actions */}
-          <Card title="Quick Actions" className="bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Button 
-                variant="primary" 
-                icon={Plus}
-                onClick={() => setShowCreateModal(true)}
-                className="w-full h-12"
-              >
-                Create Production
-              </Button>
-              <Button 
-                variant="outline" 
-                icon={Calculator}
-                onClick={() => navigate('/calculator')}
-                className="w-full h-12"
-              >
-                Calculate Incentives
-              </Button>
-              <Button 
-                variant="outline" 
-                icon={BarChart3}
-                onClick={() => navigate('/productions')}
-                className="w-full h-12"
-              >
-                View Reports
-              </Button>
-              <Button 
-                variant="outline" 
-                icon={Settings}
-                onClick={() => {}}
-                className="w-full h-12"
-              >
-                Settings
+            <div className="flex gap-2">
+              <Button onClick={() => navigate('/productions')} icon={Plus} size="sm">
+                New Production
               </Button>
             </div>
-          </Card>
+          </div>
 
-          {/* Recent Productions */}
-          <Card 
-            title="Recent Productions" 
-            subtitle={`${productions.length} total`}
-            hoverable
-          >
-            {productions.length === 0 ? (
-              <EmptyState
-                icon={Film}
-                title="No productions yet"
-                description="Create your first production to start tracking tax incentives."
-                actionLabel="Create production"
-                onAction={() => setShowCreateModal(true)}
-              />
-            ) : (
-              <div className="space-y-2">
-                {productions.slice(0, 5).map((production) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {stats.map((stat, index) => (
+              <Card key={index} className="overflow-hidden group">
+                <div className="flex items-start justify-between">
+                  <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-900 group-hover:scale-110 transition-transform">
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                  <div className={`flex items-center gap-1 text-[10px] font-bold ${stat.trendUp ? 'text-status-active' : 'text-status-error'}`}>
+                    {stat.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                    {stat.trend}
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{stat.value}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card title="Quick Overview" className="lg:col-span-2">
+              <div className="space-y-3">
+                {productions.slice(0, 5).map((prod) => (
                   <div 
-                    key={production.id} 
-                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                    key={prod.id} 
+                    className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all cursor-pointer group"
+                    onClick={() => handleViewProduction(prod.id)}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-1.5 bg-accent-blue/10 dark:bg-accent-teal/10 rounded">
-                        <Film className="h-4 w-4 text-accent-blue dark:text-accent-teal" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-bold text-gray-500">
+                        {prod.title.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{production.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          ${getBudget(production).toLocaleString()}
-                        </p>
+                        <p className="font-bold text-sm text-gray-900 dark:text-white">{prod.title}</p>
+                        <p className="text-xs text-gray-500">{prod.productionCompany}</p>
                       </div>
                     </div>
-                    <Button size="sm" variant="ghost" onClick={() => navigate(`/productions`)}>View →</Button>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right hidden sm:block">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white">${((prod.budgetTotal || prod.budget || 0) / 1000).toFixed(0)}k</p>
+                        <p className="text-[10px] uppercase font-bold text-gray-400">Budget</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-accent-blue transition-colors" />
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </Card>
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+                <Button variant="outline" size="sm" onClick={() => navigate('/productions')}>
+                  View All Productions
+                </Button>
+              </div>
+            </Card>
 
-          {/* Jurisdiction Coverage */}
-          <Card 
-            title="Jurisdiction Coverage" 
-            subtitle="Global tax incentive programs"
-            hoverable
-          >
-            {jurisdictions.length === 0 ? (
-              <EmptyState
-                icon={MapPin}
-                title="No jurisdictions available"
-                description="Jurisdiction data will be loaded from the API."
-                actionLabel="Refresh"
-                onAction={checkHealth}
-              />
-            ) : (
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {jurisdictions.slice(0, 11).map((jurisdiction) => (
-                  <div 
-                    key={jurisdiction.id} 
-                    className="text-center p-2.5 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-lg hover:shadow-sm transition-all border border-gray-200 dark:border-gray-700"
-                  >
-                    <p className="font-bold text-sm text-accent-blue dark:text-accent-teal">{jurisdiction.code}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">{jurisdiction.name}</p>
-                  </div>
-                ))}
-                {jurisdictions.length > 11 && (
-                  <div className="text-center p-2.5 bg-gradient-to-br from-accent-blue to-accent-teal text-white rounded-lg flex items-center justify-center hover:shadow-md transition-all cursor-pointer">
-                    <p className="font-bold text-sm">+{jurisdictions.length - 11}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+            <div className="space-y-4">
+              <Card title="Recent Activity">
+                <div className="space-y-4">
+                  {[
+                    { action: 'Audit Completed', project: 'Project Phoenix', time: '2h ago', icon: CheckCircle2, color: 'text-status-active' },
+                    { action: 'Incentive Updated', project: 'Desert Storm', time: '4h ago', icon: Clock, color: 'text-accent-blue' },
+                    { action: 'Flag Raised', project: 'Neon Nights', time: '6h ago', icon: AlertCircle, color: 'text-status-error' }
+                  ].map((activity, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                      <div className={`mt-0.5 p-1 rounded-full ${activity.color} bg-current opacity-10`}>
+                        <activity.icon className={`h-3 w-3 ${activity.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-900 dark:text-white">{activity.action}</p>
+                        <p className="text-[10px] text-gray-500">{activity.project} &bull; {activity.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-accent-blue to-blue-700 text-white border-none shadow-blue-200">
+                <p className="text-xs font-bold uppercase tracking-widest opacity-80">System Compliance</p>
+                <div className="mt-4 flex items-end gap-2">
+                  <p className="text-4xl font-black">98.2%</p>
+                  <ArrowUpRight className="h-6 w-6 mb-1 text-green-300" />
+                </div>
+                <p className="text-xs mt-2 opacity-80">Up 0.5% from last month. Keep it up!</p>
+                <button 
+                  onClick={() => navigate('/reports')}
+                  className="mt-6 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-colors backdrop-blur-sm"
+                >
+                  View Full Report
+                </button>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -345,6 +245,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
-
-
