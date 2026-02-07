@@ -3,7 +3,7 @@ Comprehensive tests for Monitoring API endpoints
 Tests coverage for monitoring events and sources
 """
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TestMonitoringModelValidation:
@@ -97,7 +97,7 @@ class TestMonitoringModelValidation:
         assert update.model_dump(exclude_unset=True) == {}
         
         # Partial update with readAt
-        update = MonitoringEventUpdate(readAt=datetime.now())
+        update = MonitoringEventUpdate(readAt=datetime.now(timezone.utc))
         assert update.readAt is not None
     
     def test_unread_count_response(self):

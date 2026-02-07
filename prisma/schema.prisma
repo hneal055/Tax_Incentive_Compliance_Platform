@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-py"
+  # Note: output path removed to use default location (site-packages/prisma)
+  # This allows the client to work in both venv and user installation scenarios
   interface            = "asyncio"
   recursive_type_depth = 5
 }

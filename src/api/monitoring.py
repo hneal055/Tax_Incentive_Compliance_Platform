@@ -3,7 +3,7 @@ Monitoring API endpoints for real-time jurisdiction monitoring
 """
 from fastapi import APIRouter, HTTPException, Query, status
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.models.monitoring import (
     MonitoringSourceCreate,
@@ -114,7 +114,7 @@ async def mark_event_as_read(event_id: str):
     # Update readAt timestamp
     updated_event = await prisma.monitoringevent.update(
         where={"id": event_id},
-        data={"readAt": datetime.now()}
+        data={"readAt": datetime.now(timezone.utc)}
     )
     
     return updated_event
