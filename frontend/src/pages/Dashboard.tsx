@@ -298,9 +298,7 @@ const Dashboard: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                    <Button size="sm" variant="ghost">
-                      View →
-                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => navigate(`/productions`)}>View →</Button>
                   </div>
                 ))}
               </div>
@@ -347,4 +345,6 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+
 
