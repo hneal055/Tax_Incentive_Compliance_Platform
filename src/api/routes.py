@@ -11,6 +11,7 @@ from src.api.reports import router as reports_router
 from src.api.excel import router as excel_router
 from src.api.expenses import router as expenses_router
 from src.api.rule_engine import router as rule_engine_router
+from src.api.monitoring import router as monitoring_router
 
 API_PREFIX = "/api/v1"
 
@@ -25,6 +26,7 @@ router.include_router(reports_router)
 router.include_router(excel_router)
 router.include_router(expenses_router)
 router.include_router(rule_engine_router)
+router.include_router(monitoring_router)
 
 
 @router.get("/", tags=["Meta"])
@@ -42,6 +44,8 @@ async def api_root():
             "calculator_compare": f"{API_PREFIX}/calculate/compare",
             "reports": f"{API_PREFIX}/reports",
             "excel": f"{API_PREFIX}/excel",
+            "monitoring_events": f"{API_PREFIX}/monitoring/events",
+            "monitoring_sources": f"{API_PREFIX}/monitoring/sources",
             "health": "/health",
         },
     }

@@ -39,7 +39,9 @@ class MockStore:
             'production': [],
             'expense': [],
             'report': [],
-            'scenario': []
+            'scenario': [],
+            'monitoringsource': [],
+            'monitoringevent': []
         }
         
     def add(self, model, item):
@@ -292,6 +294,8 @@ def mock_prisma_db(monkeypatch):
     mock_client.expense = make_model_mock(store, 'expense')
     mock_client.report = make_model_mock(store, 'report')
     mock_client.scenario = make_model_mock(store, 'scenario')
+    mock_client.monitoringsource = make_model_mock(store, 'monitoringsource')
+    mock_client.monitoringevent = make_model_mock(store, 'monitoringevent')
 
     from src.utils import database
     monkeypatch.setattr(database, "prisma", mock_client)
@@ -299,7 +303,8 @@ def mock_prisma_db(monkeypatch):
     modules_to_patch = [
         "src.api.jurisdictions.prisma", "src.api.incentive_rules.prisma",
         "src.api.productions.prisma", "src.api.calculator.prisma",
-        "src.api.reports.prisma", "src.api.excel.prisma", "src.main.prisma"
+        "src.api.reports.prisma", "src.api.excel.prisma", "src.api.monitoring.prisma",
+        "src.main.prisma"
     ]
     for module in modules_to_patch:
         try: monkeypatch.setattr(module, mock_client)

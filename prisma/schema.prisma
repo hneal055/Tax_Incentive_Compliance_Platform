@@ -1,6 +1,6 @@
+// Prisma schema for PilotForge monitoring system
 generator client {
   provider = "prisma-client-py"
-  output   = "../.venv/Lib/site-packages/prisma"
   interface            = "asyncio"
   recursive_type_depth = 5
 }
@@ -11,18 +11,20 @@ datasource db {
 }
 
 model Jurisdiction {
-  id             String          @id @default(uuid())
-  name           String
-  code           String          @unique
-  country        String
-  type           String
-  description    String? 
-  website        String?
-  active         Boolean         @default(true)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  incentiveRules IncentiveRule[]
-  productions    Production[]
+  id               String             @id @default(uuid())
+  name             String
+  code             String             @unique
+  country          String
+  type             String
+  description      String? 
+  website          String?
+  active           Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  incentiveRules   IncentiveRule[]
+  productions      Production[]
+  monitoringSources MonitoringSource[]
+  monitoringEvents MonitoringEvent[]
 
   @@map("jurisdictions")
 }
@@ -98,4 +100,48 @@ model Expense {
   @@map("expenses")
 }
 
+model MonitoringSource {
+  id             String            @id @default(uuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction      @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  sourceType     String
+  url            String
+  checkInterval  Int               @default(3600)
+  lastCheckedAt  DateTime?
+  lastHash       String?
+  active         Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  events         MonitoringEvent[]
+
+  @@index([jurisdictionId])
+  @@index([active])
+  @@map("monitoring_sources")
+}
+
+model MonitoringEvent {
+  id             String           @id @default(uuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction     @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  sourceId       String?
+  source         MonitoringSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  eventType      String
+  severity       String
+  title          String
+  summary        String
+  sourceUrl      String?
+  detectedAt     DateTime         @default(now())
+  readAt         DateTime?
+  metadata       String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([sourceId])
+  @@index([eventType])
+  @@index([severity])
+  @@index([detectedAt])
+  @@index([readAt])
+  @@map("monitoring_events")
+}
 
