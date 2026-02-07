@@ -15,6 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from src.utils.config import settings
 from src.utils.database import prisma
 from src.api.routes import router
+from src.services.monitoring_service import monitoring_service
+from src.services.scheduler_service import scheduler_service
 
 
 # Configure logging
@@ -41,10 +43,28 @@ async def lifespan(app: FastAPI):
         logger.warning("   Application will run with limited functionality")
         # Don't raise in case we're running tests or without a database
     
+    # Initialize monitoring services
+    try:
+        await monitoring_service.initialize()
+        await scheduler_service.initialize()
+        logger.info("✅ Monitoring services initialized")
+    except Exception as e:
+        logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
+    
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down PilotForge")
+    
+    # Shutdown monitoring services
+    try:
+        await scheduler_service.shutdown()
+        await monitoring_service.shutdown()
+        logger.info("✅ Monitoring services shut down")
+    except Exception as e:
+        logger.error(f"❌ Monitoring service shutdown failed: {e}")
+    
+    # Shutdown database
     try:
         if prisma.is_connected():
             await prisma.disconnect()
@@ -124,9 +144,13 @@ async def health_check():
             }
         )
     
+    # Check monitoring service
+    monitoring_status = "active" if scheduler_service._is_running else "inactive"
+    
     return {
         "status": "healthy",
         "database": db_status,
+        "monitoring": monitoring_status,
         "version": settings.API_VERSION,
         "environment": "production"
     }

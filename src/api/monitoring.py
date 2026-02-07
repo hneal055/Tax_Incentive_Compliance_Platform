@@ -1,7 +1,7 @@
 """
 Monitoring API endpoints for real-time jurisdiction monitoring
 """
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from typing import Optional
 from datetime import datetime, timezone
 
@@ -16,6 +16,7 @@ from src.models.monitoring import (
     UnreadCountResponse,
 )
 from src.utils.database import prisma
+from src.services.websocket_manager import connection_manager
 
 router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
 
@@ -191,3 +192,43 @@ async def create_monitoring_source(source: MonitoringSourceCreate):
     )
     
     return new_source
+
+
+# WebSocket endpoint for real-time notifications
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, jurisdiction_ids: Optional[str] = Query(None)):
+    """
+    WebSocket endpoint for real-time monitoring event notifications
+    
+    - **jurisdiction_ids**: Optional comma-separated list of jurisdiction IDs to subscribe to
+    
+    Clients will receive real-time notifications when new monitoring events are created.
+    Message format: {"type": "monitoring_event", "event": {...}}
+    """
+    # Parse jurisdiction IDs if provided
+    subscribed_jurisdictions = None
+    if jurisdiction_ids:
+        subscribed_jurisdictions = set(jurisdiction_ids.split(','))
+    
+    await connection_manager.connect(websocket, subscribed_jurisdictions)
+    
+    try:
+        # Send welcome message
+        await websocket.send_json({
+            "type": "connection",
+            "status": "connected",
+            "subscriptions": list(subscribed_jurisdictions) if subscribed_jurisdictions else "all"
+        })
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            data = await websocket.receive_text()
+            
+            # Handle ping/pong for keepalive
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+            
+    except WebSocketDisconnect:
+        connection_manager.disconnect(websocket)
+    except Exception as e:
+        connection_manager.disconnect(websocket)
