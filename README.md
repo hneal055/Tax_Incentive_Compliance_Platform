@@ -1,26 +1,6 @@
 # PilotForge
 
 > **Tax Incentive Intelligence for Film & TV Productions**
-> Tax Incentive Intelligence for Film & TV
-
-## 🎬 Overview
-
-PilotForge is a comprehensive tax incentive calculation and compliance platform for the global film and television industry. Manage productions, calculate tax incentives across 32+ jurisdictions, and maximize your tax savings with our modern full-stack application.
-
-## ✨ Features
-
-- **Multi-jurisdictional tax incentive rules** across 32 jurisdictions and 33 programs
-- **Production expense tracking** with categorization and validation
-- **Automated incentive calculations** with stackable credits
-- **Compliance verification** against jurisdiction requirements
-- **Audit trail** for defensible reporting
-- **Modern React UI** with Dashboard, Productions, Jurisdictions, and Calculator pages
-- **RESTful API** with comprehensive OpenAPI documentation
-- **PDF & Excel reports** for professional documentation
-
-## 🚀 Quick Start
-
-Jurisdictional rule engine for managing tax incentives for the film & television industry.
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
@@ -30,18 +10,23 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 
 ---
 
-## 🎯 Features
+## Overview
 
-- 🌍 **32 Global Jurisdictions** - Compare incentives across USA, Canada, UK, and more
-- 💰 **Tax Incentive Calculator** - Instant credit estimates with compliance checks
-- 🎬 **Production Management** - Track productions, budgets, and locations
-- 📊 **Dashboard UI** - Modern React interface for easy navigation
-- 📄 **PDF & Excel Reports** - Professional documentation for stakeholders
-- 🔒 **Type-Safe** - Full TypeScript coverage for reliability
+PilotForge is a comprehensive tax incentive calculation and compliance platform for the global film and television industry. Manage productions, calculate tax incentives across 32+ jurisdictions, and maximize your tax savings with a modern full-stack application.
+
+## Features
+
+- **32 Global Jurisdictions** — Compare incentives across USA, Canada, UK, and more
+- **Tax Incentive Calculator** — Instant credit estimates with compliance checks and downloadable reports
+- **Production Management** — Track productions, budgets, and locations
+- **Dashboard** — Modern React interface with real-time metrics and zoom controls
+- **PDF & Excel Reports** — Professional documentation for stakeholders
+- **Type-Safe** — Full TypeScript coverage for reliability
+- **Comprehensive Testing** — 51 frontend tests + 127 backend tests passing
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -49,258 +34,161 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 - **Node.js 20+** and **npm 10+**
 - **PostgreSQL 16**
 
-### Backend Setup
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Generate Prisma client
-python -m prisma generate
-
-### 🚀 Full Stack (Recommended)
-
-Start both backend and frontend together:
-
-**Linux/Mac:**
-```bash
-./start-fullstack.sh
-```
+### Full Stack (Recommended)
 
 **Windows:**
 ```powershell
 .\start-fullstack.ps1
 ```
 
+**Linux/Mac:**
+```bash
+./start-fullstack.sh
+```
+
 This starts:
 - Backend API: http://localhost:8000
 - Frontend UI: http://localhost:5200
 
-### 🔧 Backend Only
-
-**Linux/Mac:**
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m uvicorn src.main:app --reload
-```
-
-**Windows:**
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-# Run migrations
-python -m prisma migrate deploy
-
-# Start development server
-### Backend
-
-```powershell
-cd C:\Projects\Tax_Incentive_Compliance_Platform
-# Windows PowerShell
-cd C:\Projects\PilotForge
-.\scripts\setup\setup.ps1
-.\venv\Scripts\Activate.ps1
-python -m uvicorn src.main:app --reload
-```
+### Backend Only
 
 ```bash
-# macOS/Linux
-cd /path/to/PilotForge
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate          # Linux/Mac
+# .\.venv\Scripts\Activate.ps1    # Windows
+
 pip install -r requirements.txt
 python -m prisma generate
+python -m prisma migrate deploy
 python -m uvicorn src.main:app --reload
 ```
 
-**Backend API**: http://localhost:8000/docs
+API Docs: http://localhost:8000/docs
 
-### 🎨 Frontend Only
-
-**Linux/Mac:**
-```bash
-cd frontend
-./start-ui.sh
-```
-
-**Windows:**
-```powershell
-cd frontend
-.\start-ui.ps1
-```
-
-**Or manually:**
-### Frontend
-
-Visit: **http://localhost:8000/docs** (Swagger UI)
-
-### Frontend Setup
+### Frontend Only
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev -- --port 5200
 ```
 
-**Frontend UI**: http://localhost:5200
+Frontend UI: http://localhost:5200
 
-## 🏗️ Technology Stack
+---
+
+## Technology Stack
 
 ### Backend
-- **Python 3.11+** - Modern Python with type hints
-- **FastAPI 0.115** - High-performance async web framework
-- **PostgreSQL 16** - Robust relational database
-- **Prisma ORM** - Type-safe database access
-- **Pytest** - Comprehensive testing (127/127 passing)
-- **ReportLab & openpyxl** - PDF and Excel generation
+- **Python 3.12** — Modern Python with type hints
+- **FastAPI 0.115** — High-performance async web framework
+- **PostgreSQL 16** — Robust relational database
+- **Prisma ORM** — Type-safe database access
+- **Pytest** — Comprehensive testing (127/127 passing)
+- **ReportLab & openpyxl** — PDF and Excel generation
 
 ### Frontend
-- **React 19** - Latest React with concurrent rendering
-- **TypeScript 5.9** - Type-safe development
-- **Vite 7** - Lightning-fast build tool with HMR
-- **TailwindCSS 4** - Utility-first styling framework
-- **Zustand** - Lightweight state management
-- **React Router v7** - Client-side routing
-- **Axios** - Typed HTTP client for API calls
+- **React 19** — Latest React with concurrent rendering
+- **TypeScript 5.9** — Type-safe development
+- **Vite 7** — Lightning-fast build tool with HMR
+- **TailwindCSS 4** — Utility-first styling framework
+- **Zustand** — Lightweight state management
+- **Vitest** — Unit and integration testing (51/51 passing)
+- **React Router v7** — Client-side routing
+- **Axios** — Typed HTTP client for API calls
 
-## 📁 Project Structure
+---
+
+## Project Structure
 
 ```
-PilotForge/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── api/             # Typed API client and services
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/           # Page components (Dashboard, Productions, etc.)
-│   │   ├── store/           # Zustand state management
-│   │   └── types/           # TypeScript interfaces
-│   ├── package.json         # Frontend dependencies
-│   └── vite.config.ts       # Vite configuration
+Tax_Incentive_Compliance_Platform/
 ├── src/                     # Backend Python application
-│   ├── main.py             # FastAPI application entry
-│   ├── routes.py           # API route definitions
-│   └── utils/              # Utility functions
+│   ├── main.py             # FastAPI app entry (async lifespan, CORS, health check)
+│   ├── api/                # API route handlers
+│   │   ├── routes.py       # Router registry (8 sub-routers)
+│   │   ├── jurisdictions.py
+│   │   ├── productions.py
+│   │   ├── calculator.py
+│   │   ├── expenses.py
+│   │   ├── incentive_rules.py
+│   │   ├── reports.py
+│   │   ├── excel.py
+│   │   └── rule_engine.py
+│   ├── models/             # Pydantic request/response models
+│   ├── rule_engine/        # Jurisdiction rule evaluation engine
+│   └── utils/              # Config, DB, PDF/Excel generators
+├── frontend/               # React frontend application
+│   ├── src/
+│   │   ├── api/           # Axios API client and service layer
+│   │   ├── components/    # Reusable UI (Card, Button, Modal, Navbar, etc.)
+│   │   ├── pages/         # Route pages (Dashboard, Productions, Jurisdictions, Calculator)
+│   │   ├── store/         # Zustand state management
+│   │   ├── types/         # TypeScript interfaces
+│   │   ├── utils/         # Report generation utilities
+│   │   └── test/          # Vitest test suite
+│   └── vitest.config.ts
 ├── prisma/                 # Database schema and migrations
 ├── rules/                  # Jurisdiction tax rule definitions (JSON)
 ├── tests/                  # Backend test suite
 ├── docs/                   # Documentation
-│   ├── README.md           # Architecture overview
-│   ├── FRONTEND_SETUP.md   # Frontend setup guide
-│   ├── DEPLOYMENT.md       # Deployment instructions
-│   ├── USER_MANUAL.md      # API and UI usage guide
-│   └── API_EXAMPLES.md     # Code examples
-└── requirements.txt        # Backend Python dependencies
+└── requirements.txt        # Python dependencies
 ```
 
-## 🎨 Frontend Features
+---
 
-### **Dashboard**
-- Production count overview
-- Jurisdiction grid with 32+ jurisdictions
-- Quick actions for common tasks
-- Responsive design with PilotForge branding
+## Frontend Pages
 
-### **Productions Management**
+### Dashboard
+- Production count overview with trend indicators
+- Jurisdiction metrics across 15+ active jurisdictions
+- Quick overview list with clickable production rows
+- Recent activity feed with status indicators
+- System compliance card with report navigation
+- Zoom controls (50%–150%) with localStorage persistence
+- System health monitoring (live backend ping)
+
+### Productions Management
 - Create, view, edit, delete productions
 - Track budget, status, and filming details
 - Associate with jurisdictions
-- Filter and search capabilities
+- Side-panel detail view
 
-### **Jurisdictions Browser**
-- Browse all available jurisdictions
+### Jurisdictions Browser
+- Browse all available jurisdictions (15 seeded)
 - Filter by type (State, Country, Province)
-- View incentive program details
+- View incentive program descriptions and websites
 - Search and sort options
 
-### **Tax Incentive Calculator**
-- Select production and jurisdiction
-- Calculate tax incentives in real-time
-- View detailed credit breakdown
-- Compare multiple jurisdictions
+### Tax Incentive Calculator
+- Select production and jurisdiction from live data
+- Calculate tax incentives with qualified expense breakdown
+- **Generate Report** — Preview in new window or download as HTML
+- Professional report includes financial breakdown, budget utilization bar, and disclaimers
 
-## 📚 Documentation
+---
 
-### Getting Started
-- **[Frontend Setup Guide](./docs/FRONTEND_SETUP.md)** - Complete frontend installation and development guide
-- **[Backend Setup](./docs/README.md#backend-architecture)** - Backend setup and architecture
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment with frontend build steps
+## Testing
 
-### Usage
-- **[User Manual](./docs/USER_MANUAL.md)** - API reference and Frontend UI guide
-- **[API Examples](./docs/API_EXAMPLES.md)** - Code samples including React frontend examples
-- **[Frontend Examples](./docs/API_EXAMPLES.md#frontend-react-examples)** - React hooks, Zustand, and API integration
-
-### Development
-- **[Roadmap](./docs/ROADMAP.md)** - Project phases and future features
-- **[Rule Format](./docs/RULE_FORMAT.md)** - Jurisdiction rule schema
-- **[North Star](./docs/NORTH_STAR.md)** - Project vision and principles
-
-## 🌐 Live Demo
-
-**Production Application**: https://pilotforge.onrender.com
-- Full React frontend with interactive UI
-- RESTful API with Swagger documentation
-- Real-time tax incentive calculations
-
-**API Documentation**: https://pilotforge.onrender.com/docs
-
-## 💻 Development
-
-### Backend Development
+### Backend Tests
 ```bash
-# Run with auto-reload
-python -m uvicorn src.main:app --reload
-
-# Run tests
-pytest
-
-# Generate Prisma client after schema changes
-python -m prisma generate
-python -m prisma migrate dev
+pytest                     # Run all tests
+pytest -v                  # Verbose output
+pytest --cov=src           # With coverage
 ```
+**Coverage:** 127/127 tests passing
 
-### Frontend Development
+### Frontend Tests
 ```bash
 cd frontend
-
-# Start dev server (http://localhost:5200)
-npm run dev -- --port 5200
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run linter
-npm run lint
+npx vitest run             # Run all tests
+npx vitest --watch         # Watch mode
 ```
+**Coverage:** 51/51 tests across 8 test files (Dashboard, Button, Card, Input, Modal, Navbar, MetricCard, CreateProductionModal)
 
-### Full Stack Development
-```bash
-# Terminal 1: Backend
-python -m uvicorn src.main:app --reload
+---
 
-# Terminal 2: Frontend
-cd frontend && npm run dev -- --port 5200
-```
-
-> 📖 **Detailed Setup Guide**: See [UI_SETUP.md](./UI_SETUP.md) for comprehensive UI setup instructions
-
-## Features
-**Access:**
-- Frontend: http://localhost:5200
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-
-## 🚀 Deployment
+## Deployment
 
 ### Build Frontend
 ```bash
@@ -309,223 +197,191 @@ npm install
 npm run build
 ```
 
-### Deploy Full Stack (Render.com)
-The backend serves the built frontend from `frontend/dist/`:
-
+### Deploy (Render.com)
 ```yaml
-# render.yaml
 buildCommand: cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && python -m prisma generate
 startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
 ```
 
-See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
+**Production**: https://pilotforge.onrender.com
 
-## 🧪 Testing
-
-### Backend Tests
-```bash
-pytest                    # Run all tests
-pytest -v                # Verbose output
-pytest tests/test_api.py # Specific test file
-```
-
-**Test Coverage**: 127/127 tests passing
-
-### Frontend Tests (Coming Soon)
-- Unit tests with Vitest
-- Component tests with React Testing Library
-- E2E tests with Playwright
-
-## 📦 Production Bundle
-
-**Frontend:**
-- JavaScript: 283KB (92KB gzipped)
-- CSS: 3.6KB
-- Optimized with Vite code splitting and tree shaking
-
-- Multi-jurisdictional tax incentive rules
-- Production expense tracking
-- Automated incentive calculations
-- Compliance verification
-- Audit trail
-- **Comprehensive test suite (127 tests)**
-
-## Testing
-
-Run the comprehensive test suite:
-```bash
-# All tests (127 total)
-pytest tests/ -v
-
-# By endpoint category
-pytest tests/test_jurisdiction_create.py     # 7 tests
-pytest tests/test_incentive_rule_create.py   # 9 tests  
-pytest tests/test_production_create.py       # 6 tests
-pytest tests/test_calculator.py              # 7 tests
-pytest tests/test_reports.py                 # 8 tests
-pytest tests/test_excel_exports.py           # 9 tests
-```
-
-**Test Coverage:**
-- ✅ 100% endpoint coverage
-- ✅ Creation workflows
-- ✅ Validation scenarios
-- ✅ Error handling (201, 404, 422, 400)
-- ✅ Relationship integrity
-- ✅ Business logic validation
-**Backend:**
-- Python 3.11+ with FastAPI
-- PostgreSQL database
-- Serves frontend static files
-Visit: **http://localhost:5200**
+See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ---
 
-- Python 3.11+ (FastAPI)
-## 🛠️ Technology Stack
+## Next Phase: Real-Time Jurisdiction Monitoring
 
-### Backend
-- **Python 3.12** - Modern Python with FastAPI
-- **FastAPI** - High-performance async web framework
-- **PostgreSQL 16** - Robust relational database
-- **Prisma ORM** - Type-safe database client
-- **Pytest** - Comprehensive testing suite
-- **Python 3.12** (FastAPI)
-- PostgreSQL 16
-- Prisma ORM
-- pytest + pytest-asyncio
-- asgi-lifespan
+### Vision
 
-### Frontend
-- **React 19** - Latest React with concurrent features
-- **TypeScript 5.9** - Type safety and better DX
-- **Vite 7** - Lightning-fast build tool and HMR
-- **TailwindCSS 4** - Utility-first CSS framework
-- **Zustand** - Lightweight state management (<1KB)
-- **React Router v7** - Client-side routing
-- **Axios** - Promise-based HTTP client
+A real-time monitoring system that watches external sources — state film commission websites, legislative trackers, news feeds — for changes to tax incentive programs, rebates, and grants, then pushes alerts to the PilotForge dashboard as they happen.
 
----
+### Why This Matters
 
-## 📚 Documentation
+Tax incentive programs change frequently. States modify credit percentages, cap amounts shift, new programs launch, and existing ones expire — often with limited notice. Currently, production companies rely on manual research or expensive consultants to stay current. PilotForge monitoring would provide an automated early warning system that keeps users ahead of changes that directly impact their bottom line.
 
-- **[Frontend Setup Guide](./docs/FRONTEND_SETUP.md)** - Complete frontend development guide
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Deploy to production (Render, Vercel, AWS)
-- **[User Manual](./docs/USER_MANUAL.md)** - API reference and UI guide
-- **[API Examples](./docs/API_EXAMPLES.md)** - Code examples in Python, JavaScript, TypeScript
-- **[Roadmap](./docs/ROADMAP.md)** - Development phases and future plans
-- **[Full Documentation](./docs/README.md)** - Architecture overview
-
----
-
-## 💡 Example Usage
-
-### Calculate Tax Incentive (API)
-
-```python
-import httpx
-
-response = httpx.post('http://localhost:8000/api/v1/calculate/simple', json={
-    'budget': 5000000,
-    'jurisdictionId': 'california-id',
-    'ruleId': 'ca-film-credit-2025'
-})
-
-result = response.json()
-print(f"Estimated Credit: ${result['estimatedCredit']:,}")
-# Output: Estimated Credit: $1,000,000
-```
-
-### Using Frontend (React/TypeScript)
-
-```typescript
-import { calculatorService } from './api'
-
-const result = await calculatorService.calculate(
-  productionId,
-  jurisdictionId
-)
-
-console.log(`Estimated Credit: $${result.estimatedCredit.toLocaleString()}`)
-```
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest
-
-# Run specific test file
-pytest tests/test_calculator_logic.py
-
-# Run with coverage
-pytest --cov=src
-```
-
-**Test Coverage:** 31/31 tests passing ✅
-
----
-
-## 📦 Project Structure
+### Architecture
 
 ```
-Tax_Incentive_Compliance_Platform/
-├── src/                    # Backend source code
-│   ├── main.py            # FastAPI application
-│   ├── routes.py          # API endpoints
-│   └── ...
-├── frontend/              # React frontend
-│   ├── src/
-│   │   ├── api/          # API client
-│   │   ├── components/   # UI components
-│   │   ├── pages/        # Route pages
-│   │   ├── store/        # Zustand store
-│   │   └── types/        # TypeScript types
-│   └── package.json
-├── docs/                  # Documentation
-├── tests/                 # Backend tests
-├── rules/                 # Jurisdiction rule files
-└── requirements.txt       # Python dependencies
+┌─────────────────────┐     ┌──────────────────────┐     ┌────────────────────┐
+│   Data Collection    │     │   Event Pipeline      │     │   Live Frontend    │
+│                      │     │                       │     │                    │
+│  • News API feeds    │────▶│  • FastAPI async      │────▶│  • WebSocket conn  │
+│  • RSS/Atom feeds    │     │  • PostgreSQL events   │     │  • Zustand events  │
+│  • Gov open data     │     │  • Change detection    │     │  • Notification UI │
+│  • Web scraping      │     │  • APScheduler cron    │     │  • Alert feed      │
+│  • LLM summarization │     │  • WebSocket push      │     │  • Toast alerts    │
+└─────────────────────┘     └──────────────────────┘     └────────────────────┘
 ```
 
+### Implementation Plan
+
+#### Phase 1 — Data Models & REST API (Week 1, Days 1–3)
+
+**Objective:** Establish the database foundation and basic CRUD for monitoring events.
+
+- [ ] Add `MonitoringSource` model to Prisma schema
+  - Fields: `jurisdictionId`, `sourceType` (rss/api/webpage), `url`, `checkInterval`, `lastCheckedAt`, `lastHash`, `active`
+- [ ] Add `MonitoringEvent` model to Prisma schema
+  - Fields: `jurisdictionId`, `sourceId`, `eventType` (incentive_change/new_program/expiration/news), `severity` (info/warning/critical), `title`, `summary`, `sourceUrl`, `detectedAt`, `readAt`, `metadata`
+- [ ] Create `src/api/monitoring.py` with REST endpoints:
+  - `GET /api/v1/monitoring/events` — paginated event feed with filters
+  - `GET /api/v1/monitoring/events/unread` — unread count
+  - `PATCH /api/v1/monitoring/events/:id/read` — mark as read
+  - `GET /api/v1/monitoring/sources` — list configured sources
+  - `POST /api/v1/monitoring/sources` — add new source
+- [ ] Register router in `src/api/routes.py`
+- [ ] Write Pytest tests for all new endpoints
+
+#### Phase 2 — WebSocket & Frontend Real-Time UI (Week 1–2, Days 3–6)
+
+**Objective:** Push events to the browser in real-time and display them.
+
+- [ ] Add WebSocket endpoint `ws://localhost:8000/ws/events` in FastAPI
+  - Broadcast new events to all connected clients
+  - Support connection heartbeat/ping-pong
+- [ ] Create frontend WebSocket connection manager (`src/utils/wsClient.ts`)
+  - Auto-reconnect with exponential backoff
+  - Parse incoming event payloads
+- [ ] Extend Zustand store with `monitoringEvents` slice
+  - `events: MonitoringEvent[]`, `unreadCount: number`
+  - Actions: `addEvent()`, `markRead()`, `fetchEvents()`
+- [ ] Add notification bell/badge to Navbar showing unread count
+- [ ] Add event feed panel to Dashboard (replace or augment "Recent Activity" card)
+- [ ] Add toast notifications for critical severity alerts
+- [ ] Write Vitest tests for new components
+
+#### Phase 3 — News API Integration (Week 2, Days 7–9)
+
+**Objective:** Automated keyword monitoring across news sources.
+
+- [ ] Integrate NewsAPI (free tier: 100 requests/day) or GNews API
+  - Keywords: `"film tax credit"`, `"production incentive"`, `"film rebate"`, `"entertainment tax"`, per-jurisdiction terms
+- [ ] Create `src/services/news_monitor.py`
+  - Async news fetcher with httpx
+  - Deduplication via article URL hashing
+  - Map articles to relevant jurisdictions by keyword matching
+- [ ] Create `MonitoringEvent` records from matched articles
+- [ ] Add APScheduler background task (runs every 4 hours)
+- [ ] Configure via environment variables (`NEWS_API_KEY`, `MONITOR_INTERVAL_HOURS`)
+
+#### Phase 4 — RSS Feed Monitoring (Week 2–3, Days 9–12)
+
+**Objective:** Watch film commission and government RSS feeds for program updates.
+
+- [ ] Add `feedparser` dependency
+- [ ] Create `src/services/rss_monitor.py`
+  - Parse RSS/Atom feeds from film commissions
+  - Content-hash-based change detection (`lastHash` field)
+  - Extract title, summary, publication date
+- [ ] Seed initial `MonitoringSource` records for key jurisdictions:
+  - California Film Commission, New York Governor's Office, Georgia Film Office, etc.
+- [ ] Schedule feed checks via APScheduler (configurable per-source interval)
+- [ ] Write deduplication logic (avoid repeat alerts for the same story)
+
+#### Phase 5 — Web Scraping for Commission Pages (Week 3–4, Days 12–16)
+
+**Objective:** Monitor specific film commission pages that don't offer RSS.
+
+- [ ] Create `src/services/page_monitor.py`
+  - Fetch page HTML via httpx
+  - Compute content hash; compare against stored `lastHash`
+  - On change: extract text diff, create MonitoringEvent
+- [ ] Add configurable CSS selectors per source (target specific page sections)
+- [ ] Implement retry logic and error handling (sites go down, layouts change)
+- [ ] Add admin endpoint to manually trigger a source check
+- [ ] Note: This layer is inherently fragile — design for graceful degradation
+
+#### Phase 6 — LLM-Assisted Summarization (Week 4, Days 16–18)
+
+**Objective:** Use AI to summarize detected changes into actionable alerts.
+
+- [ ] Integrate OpenAI API (or equivalent) for text summarization
+- [ ] When a change is detected, send the diff/article text to LLM with prompt:
+  - "Summarize this tax incentive change for a film production company. Include: what changed, effective date, impact on qualifying productions."
+- [ ] Store LLM summary in `MonitoringEvent.summary`
+- [ ] Add cost controls: cache results, rate-limit API calls, token budgets
+- [ ] Configure via `OPENAI_API_KEY` environment variable
+
+### New Dependencies Required
+
+**Backend (requirements.txt):**
+```
+apscheduler>=3.10         # Background task scheduling
+feedparser>=6.0           # RSS/Atom feed parsing
+```
+
+**Frontend:** None — native `WebSocket` API + existing Zustand is sufficient.
+
+### Cost Estimate
+
+| Component | Cost | Notes |
+|---|---|---|
+| NewsAPI (free tier) | $0 | 100 requests/day, sufficient for hourly checks |
+| NewsAPI (paid) | $49/mo | 1,000 requests/day, historical search |
+| OpenAI summarization | $10–50/mo | ~100 summaries/day at GPT-4o-mini pricing |
+| Infrastructure | $0 | Runs on existing FastAPI server |
+| RSS feeds | $0 | Public feeds, no API key needed |
+
+### Success Metrics
+
+- **Alert latency:** < 4 hours from source publication to user notification
+- **False positive rate:** < 15% of alerts are irrelevant
+- **Jurisdiction coverage:** 10+ jurisdictions monitored at launch
+- **User engagement:** > 60% of alerts are read within 24 hours
+
 ---
 
-## 🌐 Deployment
+## Documentation
 
-Deploy the backend to **Render.com**, **Railway**, **Fly.io**, or **AWS**.
-
-Deploy the frontend to **Vercel**, **Netlify**, or **Render Static Site**.
-
-See **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** for detailed instructions.
+- **[Frontend Setup Guide](./docs/FRONTEND_SETUP.md)** — Complete frontend development guide
+- **[Backend Architecture](./docs/README.md)** — Backend setup and architecture
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** — Production deployment instructions
+- **[User Manual](./docs/USER_MANUAL.md)** — API reference and UI guide
+- **[API Examples](./docs/API_EXAMPLES.md)** — Code samples in Python, JavaScript, TypeScript
+- **[Roadmap](./docs/ROADMAP.md)** — Development phases and future plans
+- **[UI Setup](./UI_SETUP.md)** — Comprehensive UI setup and troubleshooting
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`pytest` for backend, `npm run lint` for frontend)
+4. Run tests (`pytest` for backend, `npx vitest run` for frontend)
 5. Commit your changes (`git commit -m 'Add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
-## 📄 License
+## License
 
-MIT License
-
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+MIT License — Copyright (c) 2025-2026 Howard Neal - PilotForge
 
 See [LICENSE](./docs/LICENSE) for full details.
 
-## 📞 Support
+## Support
 
 - **Documentation**: Check the [docs/](./docs/) directory
 - **Issues**: Open a [GitHub Issue](https://github.com/hneal055/Tax_Incentive_Compliance_Platform/issues)
@@ -534,30 +390,4 @@ See [LICENSE](./docs/LICENSE) for full details.
 
 ---
 
-**Built with ❤️ for the film and television industry**
-See [LICENSE](./docs/LICENSE) for details.
-
----
-
-## 📞 Support
-
-- **Documentation Issues**: Open a GitHub issue
-- **Questions**: Check [docs/USER_MANUAL.md](./docs/USER_MANUAL.md)
-- **Bug Reports**: Include reproduction steps and error messages
-
----
-
-- **[UI_SETUP.md](./UI_SETUP.md)** - Comprehensive frontend setup and troubleshooting guide
-- **[frontend/FRONTEND_README.md](./frontend/FRONTEND_README.md)** - Frontend technology stack details
-- **[docs/USER_MANUAL.md](./docs/USER_MANUAL.md)** - User guide for the application
-- **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Production deployment instructions
-- **User Manual:** `USER_MANUAL.md` - Platform capabilities and API reference
-- **API Examples:** `docs/API_EXAMPLES.md` - Common use cases
-- **Testing:** `docs/END_TO_END_TESTING_PROCESS.md` - Comprehensive testing process
-- **Brand Guidelines:** `BRAND_GUIDELINES.md` - Branding standards
-- **Deployment:** `docs/DEPLOYMENT.md` - Deployment guide
-**Built with ❤️ for the film & TV industry**
-See `docs/QUICK_START.md` for detailed setup instructions.
-See `frontend/FRONTEND_README.md` for frontend-specific documentation.
-
-
+**Built with care for the film and television industry**
