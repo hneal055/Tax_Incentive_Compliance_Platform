@@ -1,247 +1,305 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  BarChart3, Users, Globe, Plus, 
-  ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, 
-  AlertCircle, ChevronRight, ZoomIn, ZoomOut, RotateCcw
+import { useEffect, useMemo } from 'react';
+import {
+  Clapperboard,
+  Globe,
+  DollarSign,
+  Award,
+  ShieldCheck,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Spinner from '../components/Spinner';
-import SystemHealth from '../components/SystemHealth';
 import { useAppStore } from '../store';
+import TopBar from '../components/TopBar';
+import MonthlyBarChart from '../components/MonthlyBarChart';
+import ExpenseDonutChart from '../components/ExpenseDonutChart';
+import Spinner from '../components/Spinner';
 
+// ─── Metric Card ────────────────────────────────────────────────
+interface MetricProps {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  trend: string;
+  trendUp: boolean;
+}
 
-const Dashboard: React.FC = () => {
+function MetricCard({ label, value, icon: Icon, color, bgColor, trend, trendUp }: MetricProps) {
+  return (
+    <div className="metric-card rounded-xl border border-card-border bg-card-bg p-5 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${bgColor}`}>
+          <Icon className={`h-5 w-5 ${color}`} />
+        </div>
+        <div
+          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+            trendUp
+              ? 'bg-green-50 text-status-active'
+              : 'bg-red-50 text-status-error'
+          }`}
+        >
+          {trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          {trend}
+        </div>
+      </div>
+      <p className="mt-4 text-2xl font-extrabold text-gray-900">{value}</p>
+      <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-500">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+// ─── Compliance Card ────────────────────────────────────────────
+function ComplianceCard() {
   const navigate = useNavigate();
-  const { 
-    productions, 
-    jurisdictions, 
-    fetchProductions, 
-    fetchJurisdictions, 
-    isLoading,
-    selectProduction 
-  } = useAppStore();
-  
-  const [healthStatus, setHealthStatus] = useState<'healthy' | 'degraded' | 'offline' | 'checking'>('healthy');
-  const [zoomLevel, setZoomLevel] = useState(() => {
-    const saved = localStorage.getItem('dashboard-zoom');
-    return saved ? parseFloat(saved) : 1;
-  });
+  return (
+    <div className="rounded-xl bg-gradient-to-br from-accent-blue via-blue-600 to-blue-700 p-6 text-white shadow-md">
+      <div className="flex items-center gap-2 mb-4">
+        <ShieldCheck className="h-5 w-5 text-blue-200" />
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-200">
+          Compliance Status
+        </p>
+      </div>
+      <div className="flex items-end gap-3">
+        <p className="text-5xl font-black leading-none">98.2%</p>
+        <div className="mb-1 flex items-center gap-1 text-green-300">
+          <ArrowUpRight className="h-4 w-4" />
+          <span className="text-sm font-bold">+0.5%</span>
+        </div>
+      </div>
+      <p className="mt-2 text-sm text-blue-200/80">
+        All productions are meeting compliance thresholds
+      </p>
+      {/* Mini progress bar */}
+      <div className="mt-4 h-2 rounded-full bg-white/20">
+        <div
+          className="h-2 rounded-full bg-white/80 transition-all duration-700"
+          style={{ width: '98.2%' }}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => navigate('/reports')}
+        className="mt-5 w-full rounded-lg bg-white/20 py-2.5 text-sm font-bold backdrop-blur-sm hover:bg-white/30 transition-colors"
+      >
+        View Full Report
+      </button>
+    </div>
+  );
+}
 
-  const ZOOM_LEVELS = [0.75, 0.85, 1, 1.15, 1.25];
-  const zoomIndex = ZOOM_LEVELS.indexOf(zoomLevel) !== -1 ? ZOOM_LEVELS.indexOf(zoomLevel) : 2;
+// ─── Recent Activity ────────────────────────────────────────────
+function RecentActivity() {
+  const activities = [
+    { action: 'Audit Completed', project: 'Project Phoenix', time: '2h ago', icon: CheckCircle2, color: 'text-status-active', bgColor: 'bg-green-50' },
+    { action: 'Incentive Updated', project: 'Desert Storm', time: '4h ago', icon: Clock, color: 'text-accent-blue', bgColor: 'bg-blue-50' },
+    { action: 'Flag Raised', project: 'Neon Nights', time: '6h ago', icon: AlertCircle, color: 'text-status-error', bgColor: 'bg-red-50' },
+    { action: 'Budget Approved', project: 'Arctic Venture', time: '8h ago', icon: TrendingUp, color: 'text-accent-teal', bgColor: 'bg-teal-50' },
+  ];
 
-  useEffect(() => {
-    fetchProductions();
-    fetchJurisdictions();
-    
-    const checkHealth = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/health');
-        if (response.ok) setHealthStatus('healthy');
-        else setHealthStatus('degraded');
-      } catch (error) {
-        setHealthStatus('offline');
-      }
-    };
-    checkHealth();
-  }, [fetchProductions, fetchJurisdictions]);
+  return (
+    <div className="rounded-xl border border-card-border bg-card-bg p-6 shadow-sm">
+      <h3 className="text-base font-semibold text-gray-900 mb-4">
+        Recent Activity
+      </h3>
+      <div className="space-y-4">
+        {activities.map((a, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${a.bgColor}`}>
+              <a.icon className={`h-4 w-4 ${a.color}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900">{a.action}</p>
+              <p className="text-xs text-gray-500">
+                {a.project} &bull; {a.time}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-  const handleZoomIn = () => {
-    if (zoomIndex < ZOOM_LEVELS.length - 1) {
-      const newZoom = ZOOM_LEVELS[zoomIndex + 1];
-      setZoomLevel(newZoom);
-      localStorage.setItem('dashboard-zoom', newZoom.toString());
-    }
-  };
+// ─── Quick Production List ──────────────────────────────────────
+function QuickProductionList() {
+  const { productions, selectProduction } = useAppStore();
+  const navigate = useNavigate();
 
-  const handleZoomOut = () => {
-    if (zoomIndex > 0) {
-      const newZoom = ZOOM_LEVELS[zoomIndex - 1];
-      setZoomLevel(newZoom);
-      localStorage.setItem('dashboard-zoom', newZoom.toString());
-    }
-  };
-
-  const handleZoomReset = () => {
-    setZoomLevel(1);
-    localStorage.setItem('dashboard-zoom', '1');
-  };
-
-  const handleViewProduction = (id: string) => {
-    const prod = productions.find(p => p.id === id);
+  const handleView = (id: string) => {
+    const prod = productions.find((p) => p.id === id);
     if (prod) {
       selectProduction(prod);
       navigate('/productions');
     }
   };
 
+  return (
+    <div className="rounded-xl border border-card-border bg-card-bg p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-semibold text-gray-900">
+          Top Productions
+        </h3>
+        <button
+          type="button"
+          onClick={() => navigate('/productions')}
+          className="text-xs font-semibold text-accent-blue hover:text-accent-blue/80 transition-colors"
+        >
+          View All
+        </button>
+      </div>
+      <div className="space-y-2">
+        {productions.slice(0, 5).map((prod) => (
+          <div
+            key={prod.id}
+            className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:border-accent-blue/40 hover:bg-accent-blue/5 transition-all cursor-pointer group"
+            onClick={() => handleView(prod.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleView(prod.id); }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-sm font-bold text-gray-500">
+                {prod.title.charAt(0)}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{prod.title}</p>
+                <p className="text-[11px] text-gray-500">{prod.productionCompany || 'No company'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-bold text-gray-900">
+                  ${((prod.budgetTotal || prod.budget || 0) / 1000).toFixed(0)}k
+                </p>
+                <p className="text-[10px] uppercase font-bold text-gray-400">Budget</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-accent-blue transition-colors" />
+            </div>
+          </div>
+        ))}
+        {productions.length === 0 && (
+          <p className="py-8 text-center text-sm text-gray-400">
+            No productions found
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Dashboard ─────────────────────────────────────────────
+export default function Dashboard() {
+  const {
+    productions,
+    jurisdictions,
+    fetchProductions,
+    fetchJurisdictions,
+    isLoading,
+  } = useAppStore();
+
+  useEffect(() => {
+    fetchProductions();
+    fetchJurisdictions();
+  }, [fetchProductions, fetchJurisdictions]);
+
+  const stats: MetricProps[] = useMemo(() => {
+    const totalBudget = productions.reduce(
+      (acc, p) => acc + (p.budgetTotal || p.budget || 0),
+      0
+    );
+    const estimatedCredits = totalBudget * 0.4;
+
+    return [
+      {
+        label: 'Total Productions',
+        value: productions.length.toString(),
+        icon: Clapperboard,
+        color: 'text-accent-blue',
+        bgColor: 'bg-blue-50',
+        trend: '+12%',
+        trendUp: true,
+      },
+      {
+        label: 'Total Jurisdictions',
+        value: jurisdictions.length.toString(),
+        icon: Globe,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+        trend: '+3',
+        trendUp: true,
+      },
+      {
+        label: 'Total Expenses',
+        value: totalBudget >= 1000000
+          ? `$${(totalBudget / 1000000).toFixed(1)}M`
+          : `$${(totalBudget / 1000).toFixed(0)}K`,
+        icon: DollarSign,
+        color: 'text-accent-teal',
+        bgColor: 'bg-teal-50',
+        trend: '+8.2%',
+        trendUp: true,
+      },
+      {
+        label: 'Credits Awarded',
+        value: estimatedCredits >= 1000000
+          ? `$${(estimatedCredits / 1000000).toFixed(1)}M`
+          : `$${(estimatedCredits / 1000).toFixed(0)}K`,
+        icon: Award,
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+        trend: '+5.4%',
+        trendUp: true,
+      },
+    ];
+  }, [productions, jurisdictions]);
+
   if (isLoading && productions.length === 0) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex h-full items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
 
-  const stats = [
-    { label: 'Active Productions', value: productions.filter(p => p.status === 'PRODUCTION').length.toString(), icon: BarChart3, color: 'text-accent-blue', trend: '+12%', trendUp: true },
-    { label: 'Total Budget', value: `$${(productions.reduce((acc, p) => acc + (p.budgetTotal || p.budget || 0), 0) / 1000000).toFixed(1)}M`, icon: Users, color: 'text-accent-teal', trend: '+5%', trendUp: true },
-    { label: 'Jurisdictions', value: jurisdictions.length.toString(), icon: Globe, color: 'text-purple-500', trend: '0%', trendUp: true },
-    { label: 'Compliance Rate', value: '98.2%', icon: CheckCircle2, color: 'text-status-active', trend: '+0.5%', trendUp: true }
-  ];
-
   return (
-    <div className="relative min-h-screen">
-      {/* Zoom controls — fixed position, outside any transform */}
-      <div className="fixed top-20 right-6 z-50 flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1">
-        <button
-          onClick={handleZoomOut}
-          disabled={zoomIndex === 0}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          title="Zoom out"
-        >
-          <ZoomOut className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-        <div className="px-2 text-[10px] font-bold text-gray-400 min-w-[40px] text-center">
-          {Math.round(zoomLevel * 100)}%
+    <div className="flex flex-col h-full">
+      <TopBar
+        title="Dashboard"
+        subtitle={`Monitoring ${productions.length} production${productions.length !== 1 ? 's' : ''} across ${jurisdictions.length} jurisdiction${jurisdictions.length !== 1 ? 's' : ''}`}
+      />
+
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+        {/* ── Row 1: Metric cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {stats.map((stat) => (
+            <MetricCard key={stat.label} {...stat} />
+          ))}
         </div>
-        <button
-          onClick={handleZoomIn}
-          disabled={zoomIndex === ZOOM_LEVELS.length - 1}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          title="Zoom in"
-        >
-          <ZoomIn className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-        <button
-          onClick={handleZoomReset}
-          className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-1 border-l border-gray-200 dark:border-gray-600 pl-2"
-          title="Reset zoom"
-        >
-          <RotateCcw className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-        </button>
-      </div>
 
-      {/* Dashboard content — uses CSS zoom (does not create stacking context like transform) */}
-      <div style={{ zoom: zoomLevel }} className="transition-all duration-300">
-        <div className="space-y-3 px-8 py-2">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 pr-36">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-                Dashboard
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-                Monitoring {productions.length} production{productions.length !== 1 ? 's' : ''} across {jurisdictions.length} jurisdiction{jurisdictions.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-            <SystemHealth
-              status={healthStatus}
-            />
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/productions')} icon={Plus} size="sm">
-                New Production
-              </Button>
-            </div>
+        {/* ── Row 2: Charts + Compliance ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2">
+            <MonthlyBarChart />
           </div>
+          <ComplianceCard />
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((stat, index) => (
-              <Card key={index} className="overflow-hidden group">
-                <div className="flex items-start justify-between">
-                  <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-900 group-hover:scale-110 transition-transform">
-                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                  <div className={`flex items-center gap-1 text-[10px] font-bold ${stat.trendUp ? 'text-status-active' : 'text-status-error'}`}>
-                    {stat.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                    {stat.trend}
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white mt-1">{stat.value}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card title="Quick Overview" className="lg:col-span-2">
-              <div className="space-y-3">
-                {productions.slice(0, 5).map((prod) => (
-                  <div 
-                    key={prod.id} 
-                    className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-accent-blue/50 hover:bg-accent-blue/5 transition-all cursor-pointer group"
-                    onClick={() => handleViewProduction(prod.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-bold text-gray-500">
-                        {prod.title.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm text-gray-900 dark:text-white">{prod.title}</p>
-                        <p className="text-xs text-gray-500">{prod.productionCompany}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right hidden sm:block">
-                        <p className="font-bold text-sm text-gray-900 dark:text-white">${((prod.budgetTotal || prod.budget || 0) / 1000).toFixed(0)}k</p>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Budget</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-accent-blue transition-colors" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
-                <Button variant="outline" size="sm" onClick={() => navigate('/productions')}>
-                  View All Productions
-                </Button>
-              </div>
-            </Card>
-
-            <div className="space-y-4">
-              <Card title="Recent Activity">
-                <div className="space-y-4">
-                  {[
-                    { action: 'Audit Completed', project: 'Project Phoenix', time: '2h ago', icon: CheckCircle2, color: 'text-status-active' },
-                    { action: 'Incentive Updated', project: 'Desert Storm', time: '4h ago', icon: Clock, color: 'text-accent-blue' },
-                    { action: 'Flag Raised', project: 'Neon Nights', time: '6h ago', icon: AlertCircle, color: 'text-status-error' }
-                  ].map((activity, i) => (
-                    <div key={i} className="flex gap-3 items-start">
-                      <div className={`mt-0.5 p-1 rounded-full ${activity.color} bg-current opacity-10`}>
-                        <activity.icon className={`h-3 w-3 ${activity.color}`} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-gray-900 dark:text-white">{activity.action}</p>
-                        <p className="text-[10px] text-gray-500">{activity.project} &bull; {activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-accent-blue to-blue-700 text-white border-none shadow-blue-200">
-                <p className="text-xs font-bold uppercase tracking-widest opacity-80">System Compliance</p>
-                <div className="mt-4 flex items-end gap-2">
-                  <p className="text-4xl font-black">98.2%</p>
-                  <ArrowUpRight className="h-6 w-6 mb-1 text-green-300" />
-                </div>
-                <p className="text-xs mt-2 opacity-80">Up 0.5% from last month. Keep it up!</p>
-                <button 
-                  onClick={() => navigate('/reports')}
-                  className="mt-6 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-colors backdrop-blur-sm"
-                >
-                  View Full Report
-                </button>
-              </Card>
-            </div>
-          </div>
+        {/* ── Row 3: Donut chart + Activity + Productions ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <ExpenseDonutChart />
+          <RecentActivity />
+          <QuickProductionList />
         </div>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

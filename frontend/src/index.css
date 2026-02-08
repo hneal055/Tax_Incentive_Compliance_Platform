@@ -1,60 +1,130 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  /* Brand colors */
+  --color-pilotforge-blue: #2c5aa0;
+  --color-pilotforge-green: #28a745;
+  --color-pilotforge-gold: #ffc107;
 
-:root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  
-  /* Light mode colors */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f9fafb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-border: #e5e7eb;
+  /* Modern data-tech palette */
+  --color-primary-base: #1a2332;
+  --color-charcoal: #2d3748;
+  --color-accent-teal: #14b8a6;
+  --color-accent-blue: #3b82f6;
+  --color-accent-emerald: #10b981;
+
+  /* Semantic colors */
+  --color-status-active: #22c55e;
+  --color-status-warning: #f59e0b;
+  --color-status-error: #ef4444;
+
+  /* Sidebar */
+  --color-sidebar-bg: #0f1724;
+  --color-sidebar-hover: #1a2438;
+  --color-sidebar-active: #1e3a5f;
+  --color-sidebar-text: #94a3b8;
+  --color-sidebar-text-active: #ffffff;
+  --color-sidebar-border: #1e293b;
+
+  /* Dashboard */
+  --color-dashboard-bg: #f1f5f9;
+  --color-card-bg: #ffffff;
+  --color-card-border: #e2e8f0;
+
+  /* Font */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Animations */
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-pulse-soft: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.dark {
-  /* Dark mode colors */
-  --color-bg-primary: #1a2332;
-  --color-bg-secondary: #2d3748;
-  --color-text-primary: #f9fafb;
-  --color-text-secondary: #d1d5db;
-  --color-border: #374151;
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--color-dashboard-bg);
+  color: #1e293b;
+  line-height: 1.6;
 }
 
-/* Smooth transitions for theme switching */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Stagger fade-in animation for list items */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-  opacity: 0;
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Recharts tooltip customization */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Chart animation */
+.recharts-bar-rectangle {
+  transition: opacity 0.2s ease;
+}
+
+.recharts-sector {
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+/* Sidebar transition */
+.sidebar-nav-item {
+  transition: all 0.2s ease;
+}
+
+.sidebar-nav-item:hover {
+  transform: translateX(4px);
+}
+
+/* Metric card hover */
+.metric-card {
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Tab button */
+.tab-active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  box-shadow: 0 2px 8px rgb(59 130 246 / 0.3);
 }
