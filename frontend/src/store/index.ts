@@ -45,6 +45,7 @@ interface AppState {
   refreshAll: () => Promise<void>;
   selectProduction: (production: Production | null) => void;
   createProduction: (data: Partial<Production>) => Promise<void>;
+  updateProduction: (id: string, data: Partial<Production>) => Promise<void>;
   setError: (error: string | null) => void;
 }
 
@@ -171,7 +172,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       const jId = prod.jurisdictionId;
       if (jId && rulesByJurisdiction[jId]?.length) {
         const rules = rulesByJurisdiction[jId];
-        const bestRule = rules.reduce((best, rule) =>
+        // Prefer the production's selected rule, fall back to best available
+        const selectedRule = prod.preferredRuleId
+          ? rules.find((r) => r.id === prod.preferredRuleId)
+          : undefined;
+        const bestRule = selectedRule || rules.reduce((best, rule) =>
           (rule.percentage || 0) > (best.percentage || 0) ? rule : best
         , rules[0]);
         const rate = (bestRule.percentage || 0) / 100;
@@ -256,6 +261,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       }));
     } catch {
       set({ error: 'Failed to create production', isLoading: false });
+    }
+  },
+
+  updateProduction: async (id, data) => {
+    try {
+      const updated = await api.productions.update(id, data);
+      set((state) => ({
+        productions: state.productions.map((p) => (p.id === id ? updated : p)),
+        selectedProduction:
+          state.selectedProduction?.id === id ? updated : state.selectedProduction,
+      }));
+      get().computeDashboardMetrics();
+    } catch {
+      set({ error: 'Failed to update production' });
     }
   },
 

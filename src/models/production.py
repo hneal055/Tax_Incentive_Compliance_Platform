@@ -11,6 +11,7 @@ class ProductionBase(BaseModel):
     title: str = Field(..., description="Production title")
     productionType: str = Field(..., description="Type: feature, tv_series, commercial, documentary")
     jurisdictionId: str = Field(..., description="Jurisdiction ID where production is based")
+    preferredRuleId: Optional[str] = Field(None, description="Preferred incentive rule ID for this production")
     budgetTotal: float = Field(..., description="Total production budget in USD")
     budgetQualifying: Optional[float] = Field(None, description="Qualifying budget for incentives")
     startDate: datetime = Field(..., description="Production start date")
@@ -37,6 +38,7 @@ class ProductionQuickCreate(BaseModel):
     title: str = Field(..., description="Production title")
     budget: float = Field(..., description="Total production budget in USD")
     jurisdictionId: Optional[str] = Field(None, description="Jurisdiction ID (auto-selects first if not provided)")
+    preferredRuleId: Optional[str] = Field(None, description="Preferred incentive rule ID")
     productionType: Optional[str] = Field(None, description="Type: feature, tv_series, commercial, documentary")
     productionCompany: Optional[str] = Field(None, description="Production company name")
     startDate: Optional[date] = Field(None, description="Production start date (defaults to today)")
@@ -48,6 +50,7 @@ class ProductionUpdate(BaseModel):
     title: Optional[str] = None
     productionType: Optional[str] = None
     jurisdictionId: Optional[str] = None
+    preferredRuleId: Optional[str] = None
     budgetTotal: Optional[float] = None
     budgetQualifying: Optional[float] = None
     startDate: Optional[date] = None

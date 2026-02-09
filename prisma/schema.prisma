@@ -59,6 +59,7 @@ model Production {
   productionType    String
   jurisdictionId    String
   jurisdiction      Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  preferredRuleId   String?
   budgetTotal       Float
   budgetQualifying  Float?
   startDate         DateTime

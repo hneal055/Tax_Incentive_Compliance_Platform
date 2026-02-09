@@ -4,6 +4,7 @@ export interface Production {
   budget?: number;
   productionType?: string;
   jurisdictionId?: string;
+  preferredRuleId?: string;
   budgetTotal?: number;
   budgetQualifying?: number;
   startDate?: string;
