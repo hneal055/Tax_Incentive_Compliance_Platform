@@ -2,7 +2,7 @@
 Scheduler Service - Background task scheduler for monitoring sources
 """
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -26,10 +26,11 @@ class SchedulerService:
         if self.scheduler is None:
             self.scheduler = AsyncIOScheduler()
             
-            # Add job to check all active sources
+            # Poll loop -- runs every 60s, but each source is only
+            # fetched when its own checkInterval has elapsed.
             self.scheduler.add_job(
                 self.check_all_sources,
-                IntervalTrigger(seconds=300),  # Check every 5 minutes
+                IntervalTrigger(seconds=60),
                 id='check_all_sources',
                 name='Check all monitoring sources',
                 replace_existing=True
@@ -47,23 +48,37 @@ class SchedulerService:
             logger.info("🛑 Scheduler service shut down")
     
     async def check_all_sources(self):
-        """Check all active monitoring sources"""
+        """Check all active monitoring sources that are due based on their checkInterval"""
         try:
             # Ensure monitoring service is initialized
             if not monitoring_service.session:
                 await monitoring_service.initialize()
-            
+
             # Get all active sources
             sources = await prisma.monitoringsource.find_many(
                 where={'active': True},
                 include={'jurisdiction': True}
             )
-            
-            logger.info(f"🔍 Checking {len(sources)} active monitoring sources")
-            
+
+            now = datetime.now(timezone.utc)
+            due_sources = []
             for source in sources:
+                # Always check sources that have never been checked
+                if source.lastCheckedAt is None:
+                    due_sources.append(source)
+                    continue
+                # Check if enough time has elapsed since last check
+                interval = timedelta(seconds=source.checkInterval)
+                if now >= source.lastCheckedAt + interval:
+                    due_sources.append(source)
+
+            logger.info(
+                f"🔍 {len(due_sources)}/{len(sources)} monitoring sources due for check"
+            )
+
+            for source in due_sources:
                 await self.check_source(source)
-                
+
         except Exception as e:
             logger.error(f"Error in check_all_sources: {e}")
     
