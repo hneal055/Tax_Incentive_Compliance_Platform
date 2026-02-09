@@ -6,60 +6,49 @@ import {
   Award,
   ShieldCheck,
   ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  Clock,
   CheckCircle2,
+  Clock,
   AlertCircle,
+  TrendingUp,
   ChevronRight,
+  Info,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import TopBar from '../components/TopBar';
+import MetricCard from '../components/MetricCard';
 import MonthlyBarChart from '../components/MonthlyBarChart';
 import ExpenseDonutChart from '../components/ExpenseDonutChart';
 import Spinner from '../components/Spinner';
 
-// ─── Metric Card ────────────────────────────────────────────────
-interface MetricProps {
-  label: string;
-  value: string;
-  icon: React.ElementType;
-  color: string;
-  bgColor: string;
-  trend: string;
-  trendUp: boolean;
+const DONUT_COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
+
+// ─── Helpers ─────────────────────────────────────────────────
+function formatCurrency(value: number): string {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${value}`;
 }
 
-function MetricCard({ label, value, icon: Icon, color, bgColor, trend, trendUp }: MetricProps) {
-  return (
-    <div className="metric-card rounded-xl border border-card-border bg-card-bg p-5 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${bgColor}`}>
-          <Icon className={`h-5 w-5 ${color}`} />
-        </div>
-        <div
-          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-            trendUp
-              ? 'bg-green-50 text-status-active'
-              : 'bg-red-50 text-status-error'
-          }`}
-        >
-          {trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {trend}
-        </div>
-      </div>
-      <p className="mt-4 text-2xl font-extrabold text-gray-900">{value}</p>
-      <p className="mt-1 text-xs font-medium uppercase tracking-wider text-gray-500">
-        {label}
-      </p>
-    </div>
-  );
+function relativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  const diffD = Math.floor(diffH / 24);
+  return `${diffD}d ago`;
 }
 
-// ─── Compliance Card ────────────────────────────────────────────
-function ComplianceCard() {
+// ─── Compliance Card ────────────────────────────────────────
+function ComplianceCard({ rate }: { rate: number | null }) {
   const navigate = useNavigate();
+  const displayRate = rate !== null ? rate.toFixed(1) : 'N/A';
+  const barWidth = rate !== null ? `${rate}%` : '0%';
+
   return (
     <div className="rounded-xl bg-gradient-to-br from-accent-blue via-blue-600 to-blue-700 p-6 text-white shadow-md">
       <div className="flex items-center gap-2 mb-4">
@@ -69,20 +58,27 @@ function ComplianceCard() {
         </p>
       </div>
       <div className="flex items-end gap-3">
-        <p className="text-5xl font-black leading-none">98.2%</p>
-        <div className="mb-1 flex items-center gap-1 text-green-300">
-          <ArrowUpRight className="h-4 w-4" />
-          <span className="text-sm font-bold">+0.5%</span>
-        </div>
+        <p className="text-5xl font-black leading-none">
+          {rate !== null ? `${displayRate}%` : 'N/A'}
+        </p>
+        {rate !== null && rate >= 90 && (
+          <div className="mb-1 flex items-center gap-1 text-green-300">
+            <ArrowUpRight className="h-4 w-4" />
+            <span className="text-sm font-bold">Good</span>
+          </div>
+        )}
       </div>
       <p className="mt-2 text-sm text-blue-200/80">
-        All productions are meeting compliance thresholds
+        {rate === null
+          ? 'No productions with assigned jurisdictions yet'
+          : rate >= 90
+            ? 'All productions are meeting compliance thresholds'
+            : 'Some productions may not meet minimum spend requirements'}
       </p>
-      {/* Mini progress bar */}
       <div className="mt-4 h-2 rounded-full bg-white/20">
         <div
           className="h-2 rounded-full bg-white/80 transition-all duration-700"
-          style={{ width: '98.2%' }}
+          style={{ width: barWidth }}
         />
       </div>
       <button
@@ -96,40 +92,63 @@ function ComplianceCard() {
   );
 }
 
-// ─── Recent Activity ────────────────────────────────────────────
+// ─── Recent Activity ────────────────────────────────────────
 function RecentActivity() {
-  const activities = [
-    { action: 'Audit Completed', project: 'Project Phoenix', time: '2h ago', icon: CheckCircle2, color: 'text-status-active', bgColor: 'bg-green-50' },
-    { action: 'Incentive Updated', project: 'Desert Storm', time: '4h ago', icon: Clock, color: 'text-accent-blue', bgColor: 'bg-blue-50' },
-    { action: 'Flag Raised', project: 'Neon Nights', time: '6h ago', icon: AlertCircle, color: 'text-status-error', bgColor: 'bg-red-50' },
-    { action: 'Budget Approved', project: 'Arctic Venture', time: '8h ago', icon: TrendingUp, color: 'text-accent-teal', bgColor: 'bg-teal-50' },
-  ];
+  const { monitoringEvents } = useAppStore();
+
+  const iconMap: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
+    rate_change: { icon: TrendingUp, color: 'text-accent-teal', bgColor: 'bg-teal-50' },
+    new_program: { icon: CheckCircle2, color: 'text-status-active', bgColor: 'bg-green-50' },
+    expiring_soon: { icon: Clock, color: 'text-accent-blue', bgColor: 'bg-blue-50' },
+    compliance_alert: { icon: AlertCircle, color: 'text-status-error', bgColor: 'bg-red-50' },
+  };
+
+  const severityMap: Record<string, { color: string; bgColor: string }> = {
+    info: { color: 'text-accent-blue', bgColor: 'bg-blue-50' },
+    warning: { color: 'text-status-warning', bgColor: 'bg-amber-50' },
+    critical: { color: 'text-status-error', bgColor: 'bg-red-50' },
+  };
+
+  const events = monitoringEvents.slice(0, 5);
 
   return (
     <div className="rounded-xl border border-card-border bg-card-bg p-6 shadow-sm">
       <h3 className="text-base font-semibold text-gray-900 mb-4">
         Recent Activity
       </h3>
-      <div className="space-y-4">
-        {activities.map((a, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${a.bgColor}`}>
-              <a.icon className={`h-4 w-4 ${a.color}`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">{a.action}</p>
-              <p className="text-xs text-gray-500">
-                {a.project} &bull; {a.time}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+      {events.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+          <Info className="h-8 w-8 mb-2 opacity-40" />
+          <p className="text-sm">No recent activity</p>
+          <p className="text-xs mt-1">Monitoring events will appear here</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {events.map((event) => {
+            const mapping = iconMap[event.eventType] || severityMap[event.severity] || { color: 'text-gray-500', bgColor: 'bg-gray-50' };
+            const IconComp = iconMap[event.eventType]?.icon || Info;
+            return (
+              <div key={event.id} className="flex items-start gap-3">
+                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${mapping.bgColor}`}>
+                  <IconComp className={`h-4 w-4 ${mapping.color}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{event.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {event.summary ? `${event.summary.slice(0, 50)}${event.summary.length > 50 ? '...' : ''}` : event.eventType}
+                    {' '}&bull; {relativeTime(event.detectedAt)}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Quick Production List ──────────────────────────────────────
+// ─── Quick Production List ──────────────────────────────────
 function QuickProductionList() {
   const { productions, selectProduction } = useAppStore();
   const navigate = useNavigate();
@@ -196,71 +215,179 @@ function QuickProductionList() {
   );
 }
 
-// ─── Main Dashboard ─────────────────────────────────────────────
+// ─── Main Dashboard ─────────────────────────────────────────
 export default function Dashboard() {
   const {
     productions,
     jurisdictions,
-    fetchProductions,
-    fetchJurisdictions,
+    dashboardMetrics,
+    rulesByJurisdiction,
+    unreadEventCount,
+    refreshAll,
     isLoading,
   } = useAppStore();
 
   useEffect(() => {
-    fetchProductions();
-    fetchJurisdictions();
-  }, [fetchProductions, fetchJurisdictions]);
+    refreshAll();
+  }, [refreshAll]);
 
-  const stats: MetricProps[] = useMemo(() => {
-    const totalBudget = productions.reduce(
-      (acc, p) => acc + (p.budgetTotal || p.budget || 0),
-      0
-    );
-    const estimatedCredits = totalBudget * 0.4;
+  // Compute chart data from real productions
+  const monthlyChartData = useMemo(() => {
+    if (productions.length === 0) return undefined;
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthMap: Record<string, { expenses: number; credits: number }> = {};
+    monthNames.forEach((m) => { monthMap[m] = { expenses: 0, credits: 0 }; });
 
-    return [
-      {
-        label: 'Total Productions',
-        value: productions.length.toString(),
-        icon: Clapperboard,
-        color: 'text-accent-blue',
-        bgColor: 'bg-blue-50',
-        trend: '+12%',
-        trendUp: true,
-      },
-      {
-        label: 'Total Jurisdictions',
-        value: jurisdictions.length.toString(),
-        icon: Globe,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50',
-        trend: '+3',
-        trendUp: true,
-      },
-      {
-        label: 'Total Expenses',
-        value: totalBudget >= 1000000
-          ? `$${(totalBudget / 1000000).toFixed(1)}M`
-          : `$${(totalBudget / 1000).toFixed(0)}K`,
-        icon: DollarSign,
-        color: 'text-accent-teal',
-        bgColor: 'bg-teal-50',
-        trend: '+8.2%',
-        trendUp: true,
-      },
-      {
-        label: 'Credits Awarded',
-        value: estimatedCredits >= 1000000
-          ? `$${(estimatedCredits / 1000000).toFixed(1)}M`
-          : `$${(estimatedCredits / 1000).toFixed(0)}K`,
-        icon: Award,
-        color: 'text-amber-600',
-        bgColor: 'bg-amber-50',
-        trend: '+5.4%',
-        trendUp: true,
-      },
-    ];
+    productions.forEach((prod) => {
+      const dateStr = prod.createdAt || prod.created_at;
+      const budget = prod.budgetTotal || prod.budget || 0;
+      if (dateStr) {
+        const monthIdx = new Date(dateStr).getMonth();
+        const month = monthNames[monthIdx];
+        monthMap[month].expenses += budget;
+        // Compute credits using real rule rate
+        const jId = prod.jurisdictionId;
+        if (jId && rulesByJurisdiction[jId]?.length) {
+          const bestRule = rulesByJurisdiction[jId].reduce((best, rule) =>
+            (rule.percentage || 0) > (best.percentage || 0) ? rule : best
+          , rulesByJurisdiction[jId][0]);
+          monthMap[month].credits += budget * ((bestRule.percentage || 0) / 100);
+        }
+      }
+    });
+
+    const result = monthNames.map((name) => ({
+      name,
+      expenses: Math.round(monthMap[name].expenses),
+      credits: Math.round(monthMap[name].credits),
+    }));
+    // Only return if we have actual data
+    return result.some((d) => d.expenses > 0) ? result : undefined;
+  }, [productions, rulesByJurisdiction]);
+
+  // Compute donut data from real productions
+  const donutJurisdictionData = useMemo(() => {
+    if (productions.length === 0) return undefined;
+    const jMap: Record<string, { name: string; code: string; value: number }> = {};
+    productions.forEach((prod) => {
+      const budget = prod.budgetTotal || prod.budget || 0;
+      const jId = prod.jurisdictionId;
+      if (jId) {
+        const jur = jurisdictions.find((j) => j.id === jId);
+        const key = jId;
+        if (!jMap[key]) {
+          jMap[key] = { name: jur?.name || 'Unknown', code: jur?.code || '??', value: 0 };
+        }
+        jMap[key].value += budget;
+      }
+    });
+    const entries = Object.values(jMap).sort((a, b) => b.value - a.value);
+    if (entries.length === 0) return undefined;
+    return entries.map((e, i) => ({
+      ...e,
+      fill: ['#3b82f6', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'][i % 6],
+    }));
   }, [productions, jurisdictions]);
+
+  const donutStatusData = useMemo(() => {
+    if (productions.length === 0) return undefined;
+    const statusMap: Record<string, number> = {};
+    productions.forEach((prod) => {
+      const status = prod.status || 'Unknown';
+      statusMap[status] = (statusMap[status] || 0) + (prod.budgetTotal || prod.budget || 0);
+    });
+    const entries = Object.entries(statusMap).sort((a, b) => b[1] - a[1]);
+    if (entries.length === 0) return undefined;
+    return entries.map(([name, value], i) => ({
+      name: name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      value,
+      code: name.slice(0, 4).toUpperCase(),
+      fill: DONUT_COLORS[i % DONUT_COLORS.length],
+    }));
+  }, [productions]);
+
+  // Format metric values
+  const { totalBudget, estimatedCredits, complianceRate } = dashboardMetrics;
+
+  const formattedExpenses = totalBudget >= 1000000
+    ? `$${(totalBudget / 1000000).toFixed(1)}M`
+    : `$${(totalBudget / 1000).toFixed(0)}K`;
+
+  const formattedCredits = estimatedCredits >= 1000000
+    ? `$${(estimatedCredits / 1000000).toFixed(1)}M`
+    : estimatedCredits > 0
+      ? `$${(estimatedCredits / 1000).toFixed(0)}K`
+      : '$0';
+
+  // Detail content for each metric card
+  const productionDetailContent = (
+    <div className="space-y-3">
+      {productions.length === 0 ? (
+        <p className="text-sm text-gray-500">No productions yet.</p>
+      ) : (
+        productions.map((prod) => (
+          <div key={prod.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{prod.title}</p>
+              <p className="text-xs text-gray-500">{prod.productionCompany || 'No company'}</p>
+            </div>
+            <p className="text-sm font-bold text-gray-900">
+              {formatCurrency(prod.budgetTotal || prod.budget || 0)}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const jurisdictionDetailContent = (
+    <div className="space-y-3">
+      {jurisdictions.map((jur) => {
+        const rules = rulesByJurisdiction[jur.id];
+        const bestRate = rules?.reduce((best, r) => Math.max(best, r.percentage || 0), 0) || 0;
+        return (
+          <div key={jur.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{jur.name}</p>
+              <p className="text-xs text-gray-500">{jur.code} - {jur.country}</p>
+            </div>
+            {bestRate > 0 ? (
+              <span className="text-lg font-black text-accent-blue">{bestRate}%</span>
+            ) : (
+              <span className="text-xs text-gray-400">No rules</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const creditsDetailContent = (
+    <div className="space-y-3">
+      {productions.filter((p) => p.jurisdictionId && rulesByJurisdiction[p.jurisdictionId]?.length).length === 0 ? (
+        <p className="text-sm text-gray-500">No productions with assigned jurisdiction rules.</p>
+      ) : (
+        productions.map((prod) => {
+          const budget = prod.budgetTotal || prod.budget || 0;
+          const jId = prod.jurisdictionId;
+          const rules = jId ? rulesByJurisdiction[jId] : undefined;
+          if (!rules?.length) return null;
+          const bestRule = rules.reduce((best, r) => (r.percentage || 0) > (best.percentage || 0) ? r : best, rules[0]);
+          const credit = budget * ((bestRule.percentage || 0) / 100);
+          const jur = jurisdictions.find((j) => j.id === jId);
+          return (
+            <div key={prod.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{prod.title}</p>
+                <p className="text-xs text-gray-500">{jur?.name} ({bestRule.percentage}%)</p>
+              </div>
+              <p className="text-sm font-bold text-status-active">{formatCurrency(credit)}</p>
+            </div>
+          );
+        }).filter(Boolean)
+      )}
+    </div>
+  );
 
   if (isLoading && productions.length === 0) {
     return (
@@ -275,27 +402,53 @@ export default function Dashboard() {
       <TopBar
         title="Dashboard"
         subtitle={`Monitoring ${productions.length} production${productions.length !== 1 ? 's' : ''} across ${jurisdictions.length} jurisdiction${jurisdictions.length !== 1 ? 's' : ''}`}
+        onRefresh={refreshAll}
+        unreadCount={unreadEventCount}
       />
 
       <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-        {/* ── Row 1: Metric cards ── */}
+        {/* Row 1: Metric cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-          {stats.map((stat) => (
-            <MetricCard key={stat.label} {...stat} />
-          ))}
+          <MetricCard
+            title="Total Productions"
+            value={productions.length}
+            icon={Clapperboard}
+            detailContent={productionDetailContent}
+          />
+          <MetricCard
+            title="Total Jurisdictions"
+            value={jurisdictions.length}
+            icon={Globe}
+            detailContent={jurisdictionDetailContent}
+          />
+          <MetricCard
+            title="Total Expenses"
+            value={formattedExpenses}
+            icon={DollarSign}
+            detailContent={productionDetailContent}
+          />
+          <MetricCard
+            title="Credits Awarded"
+            value={formattedCredits}
+            icon={Award}
+            detailContent={creditsDetailContent}
+          />
         </div>
 
-        {/* ── Row 2: Charts + Compliance ── */}
+        {/* Row 2: Charts + Compliance */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2">
-            <MonthlyBarChart />
+            <MonthlyBarChart monthlyData={monthlyChartData} />
           </div>
-          <ComplianceCard />
+          <ComplianceCard rate={complianceRate} />
         </div>
 
-        {/* ── Row 3: Donut chart + Activity + Productions ── */}
+        {/* Row 3: Donut chart + Activity + Productions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <ExpenseDonutChart />
+          <ExpenseDonutChart
+            jurisdictionData={donutJurisdictionData}
+            statusData={donutStatusData}
+          />
           <RecentActivity />
           <QuickProductionList />
         </div>

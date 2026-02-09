@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   PieChart,
   Pie,
@@ -7,11 +7,18 @@ import {
   Legend,
 } from 'recharts';
 
-type ViewMode = 'jurisdiction' | 'state';
+type ViewMode = 'jurisdiction' | 'status';
+type DonutDataPoint = { name: string; value: number; code: string; fill: string };
 
 const COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
 
-const jurisdictionData = [
+interface ExpenseDonutChartProps {
+  jurisdictionData?: DonutDataPoint[];
+  statusData?: DonutDataPoint[];
+}
+
+// Fallback sample data
+const defaultJurisdictionData: DonutDataPoint[] = [
   { name: 'California', value: 1850000, code: 'CA', fill: COLORS[0] },
   { name: 'New York', value: 1420000, code: 'NY', fill: COLORS[1] },
   { name: 'Georgia', value: 980000, code: 'GA', fill: COLORS[2] },
@@ -20,7 +27,7 @@ const jurisdictionData = [
   { name: 'Other', value: 880000, code: 'OT', fill: COLORS[5] },
 ];
 
-const stateData = [
+const defaultStatusData: DonutDataPoint[] = [
   { name: 'Pre-Production', value: 1200000, code: 'PRE', fill: COLORS[0] },
   { name: 'Production', value: 2800000, code: 'PROD', fill: COLORS[1] },
   { name: 'Post-Production', value: 1650000, code: 'POST', fill: COLORS[2] },
@@ -57,14 +64,28 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   );
 }
 
-export default function ExpenseDonutChart() {
+export default function ExpenseDonutChart({ jurisdictionData, statusData }: ExpenseDonutChartProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('jurisdiction');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const data = viewMode === 'jurisdiction' ? jurisdictionData : stateData;
+  const usingRealData = !!(
+    (jurisdictionData && jurisdictionData.length > 0) ||
+    (statusData && statusData.length > 0)
+  );
+
+  const jData = useMemo(() => {
+    if (jurisdictionData && jurisdictionData.length > 0) return jurisdictionData;
+    return defaultJurisdictionData;
+  }, [jurisdictionData]);
+
+  const sData = useMemo(() => {
+    if (statusData && statusData.length > 0) return statusData;
+    return defaultStatusData;
+  }, [statusData]);
+
+  const data = viewMode === 'jurisdiction' ? jData : sData;
   const total = data.reduce((acc, d) => acc + d.value, 0);
 
-  // Compute center label from hovered item or show total
   const centerLabel = hoveredIndex !== null && data[hoveredIndex]
     ? { name: data[hoveredIndex].name, value: formatCurrency(data[hoveredIndex].value), percent: ((data[hoveredIndex].value / total) * 100).toFixed(1) + '%' }
     : { name: 'Total', value: formatCurrency(total), percent: '100%' };
@@ -79,6 +100,11 @@ export default function ExpenseDonutChart() {
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
             Total: {formatCurrency(total)}
+            {!usingRealData && (
+              <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-semibold">
+                Sample Data
+              </span>
+            )}
           </p>
         </div>
         {/* View toggle */}
@@ -96,21 +122,20 @@ export default function ExpenseDonutChart() {
           </button>
           <button
             type="button"
-            onClick={() => { setViewMode('state'); setHoveredIndex(null); }}
+            onClick={() => { setViewMode('status'); setHoveredIndex(null); }}
             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-              viewMode === 'state'
+              viewMode === 'status'
                 ? 'tab-active'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            States
+            Status
           </button>
         </div>
       </div>
 
       {/* Donut chart with center label */}
       <div className="h-64 relative">
-        {/* Center text overlay */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ marginBottom: 24 }}>
           <div className="text-center">
             <p className="text-sm font-bold text-gray-900">{centerLabel.name}</p>

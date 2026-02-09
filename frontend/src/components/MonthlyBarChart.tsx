@@ -12,8 +12,14 @@ import {
 
 type TimePeriod = 'week' | 'month' | 'year';
 
-// Sample data generators — replace with real API data when available
-function generateWeeklyData() {
+type ChartDataPoint = { name: string; expenses: number; credits: number };
+
+interface MonthlyBarChartProps {
+  monthlyData?: ChartDataPoint[];
+}
+
+// Fallback sample data generators
+function generateWeeklyData(): ChartDataPoint[] {
   return [
     { name: 'Mon', expenses: 45000, credits: 18000 },
     { name: 'Tue', expenses: 52000, credits: 22000 },
@@ -25,7 +31,7 @@ function generateWeeklyData() {
   ];
 }
 
-function generateMonthlyData() {
+function generateMonthlyData(): ChartDataPoint[] {
   return [
     { name: 'Jan', expenses: 320000, credits: 128000 },
     { name: 'Feb', expenses: 280000, credits: 112000 },
@@ -42,7 +48,7 @@ function generateMonthlyData() {
   ];
 }
 
-function generateYearlyData() {
+function generateYearlyData(): ChartDataPoint[] {
   return [
     { name: '2020', expenses: 2800000, credits: 1120000 },
     { name: '2021', expenses: 3500000, credits: 1400000 },
@@ -86,10 +92,12 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
-export default function MonthlyBarChart() {
+export default function MonthlyBarChart({ monthlyData }: MonthlyBarChartProps) {
   const [period, setPeriod] = useState<TimePeriod>('month');
+  const usingRealData = !!monthlyData && monthlyData.length > 0;
 
   const data = useMemo(() => {
+    if (usingRealData && period === 'month') return monthlyData;
     switch (period) {
       case 'week':
         return generateWeeklyData();
@@ -98,7 +106,7 @@ export default function MonthlyBarChart() {
       default:
         return generateMonthlyData();
     }
-  }, [period]);
+  }, [period, monthlyData, usingRealData]);
 
   const tabs: { key: TimePeriod; label: string }[] = [
     { key: 'week', label: 'Week' },
@@ -116,6 +124,11 @@ export default function MonthlyBarChart() {
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
             Expenses vs Credits Awarded
+            {!usingRealData && (
+              <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-semibold">
+                Sample Data
+              </span>
+            )}
           </p>
         </div>
         {/* Period tabs */}

@@ -5,9 +5,12 @@ import SystemHealth from './SystemHealth';
 interface TopBarProps {
   title?: string;
   subtitle?: string;
+  onRefresh?: () => Promise<void>;
+  unreadCount?: number;
 }
 
-export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
+export default function TopBar({ title = 'Dashboard', subtitle, onRefresh, unreadCount }: TopBarProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return document.documentElement.classList.contains('dark');
   });
@@ -90,16 +93,26 @@ export default function TopBar({ title = 'Dashboard', subtitle }: TopBarProps) {
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-status-error text-[10px] font-bold text-white">
-            3
-          </span>
+          {(unreadCount ?? 0) > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-status-error text-[10px] font-bold text-white">
+              {unreadCount! > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
 
         {/* Refresh */}
         <button
           type="button"
-          onClick={refreshHealth}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+          onClick={async () => {
+            setIsRefreshing(true);
+            await Promise.all([
+              refreshHealth(),
+              onRefresh?.(),
+            ]);
+            setIsRefreshing(false);
+          }}
+          disabled={isRefreshing}
+          className={`flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
           aria-label="Refresh data"
         >
           <RefreshCw className="h-4 w-4" />

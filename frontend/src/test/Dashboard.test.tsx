@@ -10,6 +10,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 const mockSelectProduction = vi.fn();
+const mockRefreshAll = vi.fn().mockResolvedValue(undefined);
 vi.mock('../store', () => ({
   useAppStore: vi.fn(() => ({
     productions: [
@@ -20,6 +21,23 @@ vi.mock('../store', () => ({
       { id: 'j1', code: 'CA', name: 'California' },
       { id: 'j2', code: 'GA', name: 'Georgia' },
     ],
+    dashboardMetrics: {
+      totalBudget: 40000000,
+      estimatedCredits: 8000000,
+      complianceRate: 100,
+      lastUpdated: new Date(),
+    },
+    rulesByJurisdiction: {
+      j1: [{ id: 'r1', jurisdictionId: 'j1', ruleName: 'CA Film Credit', percentage: 20, minSpend: 1000000 }],
+      j2: [{ id: 'r2', jurisdictionId: 'j2', ruleName: 'GA Film Credit', percentage: 20, minSpend: 0 }],
+    },
+    monitoringEvents: [
+      { id: 'e1', title: 'Audit Completed', summary: 'Audit done', eventType: 'audit', severity: 'info', detectedAt: new Date().toISOString(), jurisdictionId: 'j1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'e2', title: 'Incentive Updated', summary: 'Rate changed', eventType: 'rate_change', severity: 'warning', detectedAt: new Date().toISOString(), jurisdictionId: 'j2', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+      { id: 'e3', title: 'Flag Raised', summary: 'Review needed', eventType: 'compliance', severity: 'critical', detectedAt: new Date().toISOString(), jurisdictionId: 'j1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    ],
+    unreadEventCount: 3,
+    refreshAll: mockRefreshAll,
     fetchProductions: vi.fn().mockResolvedValue([]),
     fetchJurisdictions: vi.fn().mockResolvedValue([]),
     selectProduction: mockSelectProduction,
@@ -52,32 +70,22 @@ describe('Dashboard Page', () => {
     it('renders metric cards', async () => {
       renderDashboard()
       await waitFor(() => {
-        expect(screen.getByText('Active Productions')).toBeInTheDocument()
-        expect(screen.getByText('Jurisdictions')).toBeInTheDocument()
-        expect(screen.getByText('Compliance Rate')).toBeInTheDocument()
-        expect(screen.getByText('Total Budget')).toBeInTheDocument()
+        expect(screen.getByText('Total Productions')).toBeInTheDocument()
+        expect(screen.getByText('Total Jurisdictions')).toBeInTheDocument()
+        expect(screen.getByText('Total Expenses')).toBeInTheDocument()
+        expect(screen.getByText('Credits Awarded')).toBeInTheDocument()
       })
     })
 
-    it('shows correct monitoring count', async () => {
+    it('shows correct monitoring subtitle', async () => {
       renderDashboard()
       await waitFor(() => {
-        expect(screen.getByText(/Monitoring/)).toBeInTheDocument()
-        expect(screen.getByText(/2 production/)).toBeInTheDocument()
+        expect(screen.getByText(/Monitoring 2 productions across 2 jurisdictions/)).toBeInTheDocument()
       })
     })
   })
 
   describe('Navigation & Quick Actions', () => {
-    it('navigates to productions when New Production is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => {
-        const button = screen.getByText('New Production')
-        fireEvent.click(button)
-        expect(mockNavigate).toHaveBeenCalledWith('/productions')
-      })
-    })
-
     it('navigates to reports from compliance card', async () => {
       renderDashboard()
       await waitFor(() => {
@@ -90,7 +98,7 @@ describe('Dashboard Page', () => {
     it('navigates to productions from View All button', async () => {
       renderDashboard()
       await waitFor(() => {
-        const button = screen.getByText('View All Productions')
+        const button = screen.getByText('View All')
         fireEvent.click(button)
         expect(mockNavigate).toHaveBeenCalledWith('/productions')
       })
@@ -98,7 +106,7 @@ describe('Dashboard Page', () => {
   })
 
   describe('Recent Activity', () => {
-    it('renders recent activity items', async () => {
+    it('renders recent activity items from monitoring events', async () => {
       renderDashboard()
       await waitFor(() => {
         expect(screen.getByText('Audit Completed')).toBeInTheDocument()
@@ -130,38 +138,22 @@ describe('Dashboard Page', () => {
     })
   })
 
-  describe('Zoom Controls', () => {
-    it('renders zoom controls with default 100%', async () => {
+  describe('Compliance Card', () => {
+    it('renders the compliance status', async () => {
       renderDashboard()
       await waitFor(() => {
-        expect(screen.getByText('100%')).toBeInTheDocument()
-        expect(screen.getByTitle('Zoom in')).toBeInTheDocument()
-        expect(screen.getByTitle('Zoom out')).toBeInTheDocument()
-        expect(screen.getByTitle('Reset zoom')).toBeInTheDocument()
+        expect(screen.getByText('Compliance Status')).toBeInTheDocument()
+        expect(screen.getByText('100.0%')).toBeInTheDocument()
       })
-    })
-
-    it('changes zoom display when zoom in is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => { expect(screen.getByText('100%')).toBeInTheDocument() })
-      fireEvent.click(screen.getByTitle('Zoom in'))
-      // ZOOM_LEVELS: [0.75, 0.85, 1, 1.15, 1.25] - from 100% (index 2) zoom in goes to 115% (index 3)
-      await waitFor(() => { expect(screen.getByText('115%')).toBeInTheDocument() })
-    })
-
-    it('changes zoom display when zoom out is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => { expect(screen.getByText('100%')).toBeInTheDocument() })
-      fireEvent.click(screen.getByTitle('Zoom out'))
-      // ZOOM_LEVELS: [0.75, 0.85, 1, 1.15, 1.25] - from 100% (index 2) zoom out goes to 85% (index 1)
-      await waitFor(() => { expect(screen.getByText('85%')).toBeInTheDocument() })
     })
   })
 
-  describe('System Health', () => {
-    it('renders the system health indicator', async () => {
+  describe('Data Refresh', () => {
+    it('calls refreshAll on mount', async () => {
       renderDashboard()
-      await waitFor(() => { expect(screen.getByText('Healthy')).toBeInTheDocument() })
+      await waitFor(() => {
+        expect(mockRefreshAll).toHaveBeenCalled()
+      })
     })
   })
 })
