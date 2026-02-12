@@ -72,6 +72,8 @@ async def get_incentive_rule(rule_id: str):
         )
     
     return rule
+
+
 @router.post("/", response_model=IncentiveRuleResponse, status_code=status.HTTP_201_CREATED, summary="Create incentive rule")
 async def create_incentive_rule(rule: IncentiveRuleCreate):
     """Create a new incentive rule."""
