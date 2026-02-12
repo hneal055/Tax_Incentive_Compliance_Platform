@@ -17,6 +17,7 @@ from src.utils.database import prisma
 from src.api.routes import router
 from src.services.monitoring_service import monitoring_service
 from src.services.scheduler_service import scheduler_service
+from src.services.rate_limit_service import rate_limit_service
 
 
 # Configure logging
@@ -51,6 +52,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
     
+    # Initialize rate limiting service
+    try:
+        redis_url = settings.REDIS_URL if hasattr(settings, 'REDIS_URL') else "redis://localhost:6379"
+        await rate_limit_service.initialize(redis_url)
+    except Exception as e:
+        logger.warning(f"⚠️  Rate limiting service initialization failed: {e}")
+    
     yield
     
     # Shutdown
@@ -63,6 +71,12 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Monitoring services shut down")
     except Exception as e:
         logger.error(f"❌ Monitoring service shutdown failed: {e}")
+    
+    # Shutdown rate limiting service
+    try:
+        await rate_limit_service.shutdown()
+    except Exception as e:
+        logger.error(f"❌ Rate limiting service shutdown failed: {e}")
     
     # Shutdown database
     try:

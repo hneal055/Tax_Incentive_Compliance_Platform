@@ -64,14 +64,65 @@ model ApiKey {
   name           String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    String[]     @default(["read", "write"]) // Scoped permissions: read, write, admin
   lastUsedAt     DateTime?
   expiresAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  
+  auditLogs      AuditLog[]
+  usageRecords   ApiKeyUsage[]
 
   @@index([organizationId])
   @@index([key])
   @@map("api_keys")
+}
+
+model AuditLog {
+  id             String    @id @default(uuid())
+  apiKeyId       String?
+  apiKey         ApiKey?   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  organizationId String
+  action         String    // create, delete, rotate, revoke, update
+  actorId        String?   // User ID who performed the action
+  metadata       String?   // JSON string with additional details
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime  @default(now())
+
+  @@index([apiKeyId])
+  @@index([organizationId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model ApiKeyUsage {
+  id             String    @id @default(uuid())
+  apiKeyId       String
+  apiKey         ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  endpoint       String
+  method         String
+  statusCode     Int
+  responseTime   Int       // milliseconds
+  timestamp      DateTime  @default(now())
+
+  @@index([apiKeyId])
+  @@index([timestamp])
+  @@map("api_key_usage")
+}
+
+model WebhookConfig {
+  id             String    @id @default(uuid())
+  organizationId String
+  url            String
+  events         String[]  // api_key_expiring, api_key_expired, api_key_created, api_key_revoked
+  secret         String?   // For webhook signature verification
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("webhook_configs")
 }
 
 // ──────────────────────────────────────────────────────────────
