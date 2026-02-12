@@ -60,3 +60,19 @@ export interface HealthStatus {
   version?: string;
   database?: string;
 }
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  organizationId: string;
+  prefix: string;
+  permissions: string[];
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiKeyCreated extends ApiKey {
+  plaintext_key: string;
+}

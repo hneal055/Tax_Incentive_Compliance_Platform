@@ -10,6 +10,7 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  Code,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,6 +19,7 @@ const navItems = [
   { path: '/productions', label: 'Productions', icon: Clapperboard },
   { path: '/jurisdictions', label: 'Jurisdictions', icon: Globe },
   { path: '/calculator', label: 'Calculator', icon: Calculator },
+  { path: '/developer-portal', label: 'Developer Portal', icon: Code },
   { path: '/reports', label: 'Reports', icon: FileBarChart },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
