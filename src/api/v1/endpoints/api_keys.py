@@ -352,8 +352,13 @@ async def rotate_api_key(
     )
     
     # Send webhook notification
-    # Note: Using a custom webhook event for rotation
-    # The webhook service should handle this appropriately
+    await webhook_service.notify_key_rotated(
+        organization_id=organization.id,
+        api_key_id=key_id,
+        api_key_name=old_key.name,
+        old_prefix=old_key.prefix,
+        new_prefix=new_prefix
+    )
     
     # Return with new plaintext key (only time it's shown!)
     return ApiKeyCreatedResponse(

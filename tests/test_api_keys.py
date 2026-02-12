@@ -169,7 +169,7 @@ async def test_rotate_api_key(client, test_org, test_user):
     from src.core.auth import get_current_organization_from_jwt
     
     key_id = "test-api-key-id"
-    old_prefix = "old_pref"
+    old_prefix = "oldprefi"  # 8-character prefix matching standard format
     
     # Mock existing API key
     mock_old_key = MagicMock()
@@ -219,7 +219,7 @@ async def test_rotate_api_key(client, test_org, test_user):
         with patch('src.api.v1.endpoints.api_keys.prisma.apikey.find_first', mock_find_first), \
              patch('src.api.v1.endpoints.api_keys.prisma.apikey.update', mock_update), \
              patch('src.api.v1.endpoints.api_keys.audit_log_service.log_action', AsyncMock()), \
-             patch('src.api.v1.endpoints.api_keys.webhook_service.notify_key_created', AsyncMock()):
+             patch('src.api.v1.endpoints.api_keys.webhook_service.notify_key_rotated', AsyncMock()):
             
             # Authenticate
             token = create_test_jwt(test_user)
