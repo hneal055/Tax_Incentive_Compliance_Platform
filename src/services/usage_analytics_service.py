@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 class UsageAnalyticsService:
     """Service for tracking and analyzing API key usage"""
     
+    RECENT_ACTIVITY_LIMIT = 10  # Number of recent activities to return
+    
     @staticmethod
     async def record_usage(
         api_key_id: str,
@@ -101,8 +103,8 @@ class UsageAnalyticsService:
         for record in usage_records:
             requests_by_method[record.method] = requests_by_method.get(record.method, 0) + 1
         
-        # Get recent activity (last 10 requests)
-        recent_activity = usage_records[:10]
+        # Get recent activity (last N requests)
+        recent_activity = usage_records[:UsageAnalyticsService.RECENT_ACTIVITY_LIMIT]
         
         return {
             "totalRequests": total_requests,

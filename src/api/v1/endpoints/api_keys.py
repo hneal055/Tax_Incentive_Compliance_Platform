@@ -319,27 +319,39 @@ async def bulk_revoke_expired_keys(
     
     revoked_count = len(expired_keys)
     
-    # Delete each expired key and log it
+    if revoked_count == 0:
+        return {
+            "message": "No expired API keys found",
+            "count": 0
+        }
+    
+    # Collect key IDs for bulk delete
+    key_ids = [key.id for key in expired_keys]
+    key_info = [{" name": key.name} for key in expired_keys]
+    
+    # Bulk delete expired keys
+    await prisma.apikey.delete_many(
+        where={
+            "id": {"in": key_ids}
+        }
+    )
+    
+    # Batch audit logging
+    await audit_log_service.log_action(
+        organization_id=organization.id,
+        action="bulk_revoke",
+        metadata=json.dumps({"count": revoked_count, "keys": key_info}),
+        ip_address=req.client.host if req.client else None,
+        user_agent=req.headers.get("user-agent")
+    )
+    
+    # Send webhook notifications for each key (async, non-blocking)
     for key in expired_keys:
-        # Log audit event
-        await audit_log_service.log_action(
-            organization_id=organization.id,
-            action="revoke",
-            api_key_id=key.id,
-            metadata=json.dumps({"name": key.name, "reason": "expired"}),
-            ip_address=req.client.host if req.client else None,
-            user_agent=req.headers.get("user-agent")
-        )
-        
-        # Send webhook notification
         await webhook_service.notify_key_expired(
             organization_id=organization.id,
             api_key_id=key.id,
             api_key_name=key.name
         )
-        
-        # Delete the key
-        await prisma.apikey.delete(where={"id": key.id})
     
     return {
         "message": f"Successfully revoked {revoked_count} expired API key(s)",
@@ -506,7 +518,6 @@ async def create_webhook_config(
         organizationId=webhook.organizationId,
         url=webhook.url,
         events=webhook.events,
-        secret=webhook.secret,
         active=webhook.active,
         createdAt=webhook.createdAt,
         updatedAt=webhook.updatedAt
@@ -531,7 +542,6 @@ async def list_webhook_configs(
             organizationId=w.organizationId,
             url=w.url,
             events=w.events,
-            secret=w.secret,
             active=w.active,
             createdAt=w.createdAt,
             updatedAt=w.updatedAt
@@ -594,7 +604,6 @@ async def update_webhook_config(
         organizationId=updated_webhook.organizationId,
         url=updated_webhook.url,
         events=updated_webhook.events,
-        secret=updated_webhook.secret,
         active=updated_webhook.active,
         createdAt=updated_webhook.createdAt,
         updatedAt=updated_webhook.updatedAt

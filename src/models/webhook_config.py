@@ -27,7 +27,6 @@ class WebhookConfigResponse(BaseModel):
     organizationId: str
     url: str
     events: list[str]
-    secret: Optional[str]
     active: bool
     createdAt: datetime
     updatedAt: datetime

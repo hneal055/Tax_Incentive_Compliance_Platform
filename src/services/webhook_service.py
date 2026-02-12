@@ -17,8 +17,23 @@ logger = logging.getLogger(__name__)
 class WebhookService:
     """Service for sending webhook notifications"""
     
-    @staticmethod
+    def __init__(self):
+        self._client: Optional[httpx.AsyncClient] = None
+    
+    async def get_client(self) -> httpx.AsyncClient:
+        """Get or create HTTP client for webhook requests"""
+        if self._client is None:
+            self._client = httpx.AsyncClient(timeout=10.0)
+        return self._client
+    
+    async def close(self):
+        """Close HTTP client"""
+        if self._client:
+            await self._client.close()
+            self._client = None
+    
     async def send_webhook(
+        self,
         organization_id: str,
         event: str,
         payload: dict
@@ -47,14 +62,14 @@ class WebhookService:
             return
         
         # Send to each webhook
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            for webhook in relevant_webhooks:
-                try:
-                    await WebhookService._send_single_webhook(
-                        client, webhook, event, payload
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to send webhook to {webhook.url}: {e}")
+        client = await self.get_client()
+        for webhook in relevant_webhooks:
+            try:
+                await self._send_single_webhook(
+                    client, webhook, event, payload
+                )
+            except Exception as e:
+                logger.error(f"Failed to send webhook to {webhook.url}: {e}")
     
     @staticmethod
     async def _send_single_webhook(
@@ -97,15 +112,15 @@ class WebhookService:
         else:
             logger.info(f"Webhook sent successfully to {webhook.url}")
     
-    @staticmethod
     async def notify_key_expiring(
+        self,
         organization_id: str,
         api_key_id: str,
         api_key_name: str,
         expires_at: datetime
     ):
         """Notify about an API key that is expiring soon"""
-        await WebhookService.send_webhook(
+        await self.send_webhook(
             organization_id,
             "api_key_expiring",
             {
@@ -115,14 +130,14 @@ class WebhookService:
             }
         )
     
-    @staticmethod
     async def notify_key_expired(
+        self,
         organization_id: str,
         api_key_id: str,
         api_key_name: str
     ):
         """Notify about an API key that has expired"""
-        await WebhookService.send_webhook(
+        await self.send_webhook(
             organization_id,
             "api_key_expired",
             {
@@ -131,14 +146,14 @@ class WebhookService:
             }
         )
     
-    @staticmethod
     async def notify_key_created(
+        self,
         organization_id: str,
         api_key_id: str,
         api_key_name: str
     ):
         """Notify about a new API key creation"""
-        await WebhookService.send_webhook(
+        await self.send_webhook(
             organization_id,
             "api_key_created",
             {
@@ -147,14 +162,14 @@ class WebhookService:
             }
         )
     
-    @staticmethod
     async def notify_key_revoked(
+        self,
         organization_id: str,
         api_key_id: str,
         api_key_name: str
     ):
         """Notify about an API key revocation"""
-        await WebhookService.send_webhook(
+        await self.send_webhook(
             organization_id,
             "api_key_revoked",
             {

@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 import time
 
 from src.utils.database import prisma
-from src.core.auth import verify_api_key
 from src.services.rate_limit_service import rate_limit_service
 from src.services.usage_analytics_service import usage_analytics_service
 
@@ -108,11 +107,8 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
                 response_time=response_time
             )
             
-            # Update lastUsedAt
-            await prisma.apikey.update(
-                where={"id": api_key_record.id},
-                data={"lastUsedAt": datetime.now(timezone.utc)}
-            )
+            # Note: lastUsedAt is updated via usage analytics service
+            # to avoid adding a database write to every request
             
             return response
             
