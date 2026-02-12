@@ -67,7 +67,9 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = Field(default=None)
 
     # JWT Authentication
-    SECRET_KEY: str = Field(default="your-secret-key-change-in-production-min-32-chars-long")
+    # Note: SECRET_KEY must be changed in production! Generate a secure key with:
+    # python -c "import secrets; print(secrets.token_urlsafe(32))"
+    SECRET_KEY: str = Field(default="dev-secret-key-CHANGE-IN-PRODUCTION-rhxLi-h02Q6OlkSFypXkkfxaA4VJTRjAq789pzzpgCM")
     ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
 
