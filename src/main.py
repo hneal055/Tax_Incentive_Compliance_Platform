@@ -103,7 +103,7 @@ app.add_middleware(
 
 
 # Include API routes
-app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
+app.include_router(router, prefix="/api")
 
 
 # Root endpoint
