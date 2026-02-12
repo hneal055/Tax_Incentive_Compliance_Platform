@@ -60,7 +60,7 @@ enum Role {
 model ApiKey {
   id             String       @id @default(uuid())
   key            String       @unique // hashed value
-  prefix         String       // first 8 chars of plaintext key for UI display
+  prefix         String       // First 8 chars of original key (for display)
   name           String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -68,6 +68,10 @@ model ApiKey {
   expiresAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([key])
+  @@map("api_keys")
 }
 
 // ──────────────────────────────────────────────────────────────
