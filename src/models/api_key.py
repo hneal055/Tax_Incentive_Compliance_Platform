@@ -47,7 +47,9 @@ class ApiKeyWithPrefix(ApiKeyResponse):
 
 class ApiKeyCreatedResponse(ApiKeyWithPrefix):
     """Response when creating a new key - INCLUDES the plaintext key."""
-    plaintextKey: str = Field(..., description="Store this immediately - it won't be shown again!")
+    plaintext_key: str = Field(..., description="Store this immediately - it won't be shown again!")
+    
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 # ---------- Internal Helper ----------
