@@ -18,6 +18,7 @@ from src.api.routes import router
 from src.services.monitoring_service import monitoring_service
 from src.services.scheduler_service import scheduler_service
 from src.services.rate_limit_service import rate_limit_service
+from src.core.api_key_middleware import ApiKeyMiddleware
 
 
 # Configure logging
@@ -114,6 +115,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add API key rate limiting and permission middleware
+app.add_middleware(ApiKeyMiddleware)
 
 
 # Include API routes
