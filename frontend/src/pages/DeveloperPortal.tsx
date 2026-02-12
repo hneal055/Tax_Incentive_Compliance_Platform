@@ -221,15 +221,8 @@ export default function DeveloperPortal() {
             icon={Key}
             title="No API keys yet"
             description="Create your first API key to get started with the PilotForge API"
-            action={
-              <Button
-                variant="primary"
-                icon={Plus}
-                onClick={() => setShowCreateModal(true)}
-              >
-                Create Your First API Key
-              </Button>
-            }
+            actionLabel="Create Your First API Key"
+            onAction={() => setShowCreateModal(true)}
           />
         ) : (
           <div className="space-y-4">
