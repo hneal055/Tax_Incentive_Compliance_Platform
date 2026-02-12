@@ -177,6 +177,26 @@ class WebhookService:
                 "api_key_name": api_key_name
             }
         )
+    
+    async def notify_key_rotated(
+        self,
+        organization_id: str,
+        api_key_id: str,
+        api_key_name: str,
+        old_prefix: str,
+        new_prefix: str
+    ):
+        """Notify about an API key rotation"""
+        await self.send_webhook(
+            organization_id,
+            "api_key_rotated",
+            {
+                "api_key_id": api_key_id,
+                "api_key_name": api_key_name,
+                "old_prefix": old_prefix,
+                "new_prefix": new_prefix
+            }
+        )
 
 
 # Singleton instance

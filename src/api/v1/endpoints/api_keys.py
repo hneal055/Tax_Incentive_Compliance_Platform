@@ -292,6 +292,89 @@ async def delete_api_key(
     return None
 
 
+@router.post("/{key_id}/rotate", response_model=ApiKeyCreatedResponse, status_code=status.HTTP_200_OK)
+async def rotate_api_key(
+    key_id: str,
+    req: Request,
+    organization = Depends(get_current_organization_from_jwt)
+):
+    """
+    Rotate an API key - generates a new key while preserving metadata.
+    
+    This replaces the old key with a new one, keeping the same name and permissions.
+    The old key is immediately invalidated.
+    
+    **IMPORTANT**: The new plaintext key is only shown once - store it securely!
+    """
+    # Verify key exists and belongs to user's organization
+    old_key = await prisma.apikey.find_first(
+        where={
+            "id": key_id,
+            "organizationId": organization.id
+        }
+    )
+    
+    if not old_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found"
+        )
+    
+    # Generate new plaintext key
+    new_plaintext_key = generate_api_key()
+    new_hashed_key = hash_api_key(new_plaintext_key)
+    new_prefix = get_key_prefix(new_plaintext_key)
+    
+    # Update the key record with new values
+    updated_key = await prisma.apikey.update(
+        where={"id": key_id},
+        data={
+            "key": new_hashed_key,
+            "prefix": new_prefix,
+            "updatedAt": datetime.now(timezone.utc),
+            # Reset lastUsedAt since this is a new key
+            "lastUsedAt": None
+        }
+    )
+    
+    # Log audit event
+    await audit_log_service.log_action(
+        organization_id=organization.id,
+        action="rotate",
+        api_key_id=key_id,
+        metadata=json.dumps({
+            "name": old_key.name,
+            "old_prefix": old_key.prefix,
+            "new_prefix": new_prefix
+        }),
+        ip_address=req.client.host if req.client else None,
+        user_agent=req.headers.get("user-agent")
+    )
+    
+    # Send webhook notification
+    await webhook_service.notify_key_rotated(
+        organization_id=organization.id,
+        api_key_id=key_id,
+        api_key_name=old_key.name,
+        old_prefix=old_key.prefix,
+        new_prefix=new_prefix
+    )
+    
+    # Return with new plaintext key (only time it's shown!)
+    return ApiKeyCreatedResponse(
+        id=updated_key.id,
+        name=updated_key.name,
+        organizationId=updated_key.organizationId,
+        permissions=updated_key.permissions,
+        prefix=updated_key.prefix,
+        lastUsedAt=updated_key.lastUsedAt,
+        expiresAt=updated_key.expiresAt,
+        createdAt=updated_key.createdAt,
+        updatedAt=updated_key.updatedAt,
+        plaintext_key=new_plaintext_key
+    )
+
+
 # ============================================================================
 # BULK OPERATIONS
 # ============================================================================
@@ -492,9 +575,9 @@ async def create_webhook_config(
     """
     Create a webhook configuration for API key events.
     
-    Events: api_key_expiring, api_key_expired, api_key_created, api_key_revoked
+    Events: api_key_expiring, api_key_expired, api_key_created, api_key_revoked, api_key_rotated
     """
-    valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked"}
+    valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked", "api_key_rotated"}
     if not all(e in valid_events for e in request.events):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -575,7 +658,7 @@ async def update_webhook_config(
     
     # Validate events if provided
     if request.events:
-        valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked"}
+        valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked", "api_key_rotated"}
         if not all(e in valid_events for e in request.events):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

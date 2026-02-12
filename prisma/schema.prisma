@@ -115,7 +115,7 @@ model WebhookConfig {
   id             String    @id @default(uuid())
   organizationId String
   url            String
-  events         String[]  // api_key_expiring, api_key_expired, api_key_created, api_key_revoked
+  events         String[]  // api_key_expiring, api_key_expired, api_key_created, api_key_revoked, api_key_rotated
   secret         String?   // For webhook signature verification
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now())
