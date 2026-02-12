@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     # Phase 2+ (optional for Phase 1)
     DATABASE_URL: Optional[str] = Field(default=None)
 
+    # JWT Authentication
+    SECRET_KEY: str = Field(default="your-secret-key-change-in-production-min-32-chars-long")
+    ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
