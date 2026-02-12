@@ -43,8 +43,8 @@ export default function CreateApiKeyModal({ isOpen, onClose, onCreate }: CreateA
   };
 
   const handleCopy = async () => {
-    if (createdKey?.plaintext_key) {
-      await navigator.clipboard.writeText(createdKey.plaintext_key);
+    if (createdKey?.plaintextKey) {
+      await navigator.clipboard.writeText(createdKey.plaintextKey);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -100,7 +100,7 @@ export default function CreateApiKeyModal({ isOpen, onClose, onCreate }: CreateA
                 </div>
                 <input
                   type="text"
-                  value={createdKey.plaintext_key}
+                  value={createdKey.plaintextKey}
                   readOnly
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm"
                 />

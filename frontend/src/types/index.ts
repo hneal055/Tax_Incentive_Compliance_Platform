@@ -74,5 +74,5 @@ export interface ApiKey {
 }
 
 export interface ApiKeyCreated extends ApiKey {
-  plaintext_key: string;
+  plaintextKey: string;
 }

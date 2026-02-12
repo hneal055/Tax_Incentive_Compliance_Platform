@@ -72,8 +72,8 @@ export default function DeveloperPortal() {
   };
 
   const handleCopyRotatedKey = async () => {
-    if (rotatedKey?.plaintext_key) {
-      await navigator.clipboard.writeText(rotatedKey.plaintext_key);
+    if (rotatedKey?.plaintextKey) {
+      await navigator.clipboard.writeText(rotatedKey.plaintextKey);
       setCopiedRotatedKey(true);
       setTimeout(() => setCopiedRotatedKey(false), 2000);
     }
@@ -118,7 +118,7 @@ export default function DeveloperPortal() {
                 <div className="mt-3 flex gap-2">
                   <input
                     type="text"
-                    value={rotatedKey.plaintext_key}
+                    value={rotatedKey.plaintextKey}
                     readOnly
                     className="flex-1 px-3 py-2 border border-green-300 dark:border-green-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm"
                   />
@@ -258,7 +258,7 @@ export default function DeveloperPortal() {
               <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 font-mono text-sm">
                 <div className="text-gray-600 dark:text-gray-400">Example request:</div>
                 <pre className="mt-2 text-gray-900 dark:text-gray-100">
-{`curl -X GET "http://localhost:8000/api/v1/productions/" \\
+{`curl -X GET "${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/productions/" \\
   -H "X-API-Key: your_api_key_here"`}
                 </pre>
               </div>
