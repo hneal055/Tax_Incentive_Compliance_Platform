@@ -12,7 +12,8 @@ from src.api.v1.endpoints import (
     jurisdictions,
     incentive_rules,
     excel,
-    rule_engine
+    rule_engine,
+    organizations
 )
 
 API_PREFIX = "/api/v1"
@@ -30,6 +31,7 @@ router.include_router(jurisdictions.router)
 router.include_router(incentive_rules.router)
 router.include_router(excel.router)
 router.include_router(rule_engine.router)
+router.include_router(organizations.router)
 
 
 @router.get("/", tags=["Meta"])
@@ -40,6 +42,7 @@ async def api_v1_root():
         "version": "1.0.0",
         "endpoints": {
             "api_keys": f"{API_PREFIX}/api-keys/",
+            "organizations": f"{API_PREFIX}/organizations/",
             "jurisdictions": f"{API_PREFIX}/jurisdictions/",
             "incentive_rules": f"{API_PREFIX}/incentive-rules/",
             "productions": f"{API_PREFIX}/productions/",
