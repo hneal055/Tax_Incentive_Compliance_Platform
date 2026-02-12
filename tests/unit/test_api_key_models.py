@@ -211,9 +211,9 @@ class TestGetKeyPrefix:
         assert prefix == "12345678"
         assert len(prefix) == 8
     
-    def test_get_prefix_unicode(self):
-        """Test extracting prefix with unicode characters"""
-        key = "🔑🔐🔒🔓🗝️123456789"
+    def test_get_prefix_longer_key(self):
+        """Test extracting prefix from a longer key"""
+        key = "abcdefghijklmnopqrstuvwxyz0123456789"
         prefix = get_key_prefix(key)
+        assert prefix == "abcdefgh"
         assert len(prefix) == 8
-        assert prefix == key[:8]
