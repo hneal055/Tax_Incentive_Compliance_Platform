@@ -21,7 +21,7 @@ router = APIRouter(prefix="/incentive-rules", tags=["Incentive Rules"])
 async def get_incentive_rules(
     jurisdiction_id: Optional[str] = None,
     incentive_type: Optional[str] = None,
-    active:  Optional[bool] = None,
+    active: Optional[bool] = None,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page")
 ):
@@ -42,7 +42,7 @@ async def get_incentive_rules(
     total_pages = math.ceil(total / page_size) if total > 0 else 1
     
     # Get paginated rules
-    rules = await prisma. incentiverule.find_many(
+    rules = await prisma.incentiverule.find_many(
         where=where if where else None,
         order={"ruleName": "asc"},
         skip=skip,
