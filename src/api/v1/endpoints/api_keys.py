@@ -103,7 +103,7 @@ async def create_api_key(
         expiresAt=api_key.expiresAt,
         createdAt=api_key.createdAt,
         updatedAt=api_key.updatedAt,
-        plaintextKey=plaintext_key
+        plaintext_key=plaintext_key
     )
 
 
