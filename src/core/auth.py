@@ -10,7 +10,7 @@ from prisma.models import Organization, User, ApiKey
 from src.utils.config import settings
 from src.db import get_db
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 security = HTTPBearer(auto_error=False)
@@ -124,7 +124,7 @@ async def get_organization_from_api_key(
     # Update last used timestamp
     await db.apikey.update(
         where={"id": key_record.id},
-        data={"lastUsedAt": datetime.utcnow()}
+        data={"lastUsedAt": datetime.now(timezone.utc)}
     )
     
     return key_record.organization
@@ -177,7 +177,7 @@ async def get_current_organization(
             # Update last used timestamp
             await db.apikey.update(
                 where={"id": key_record.id},
-                data={"lastUsedAt": datetime.utcnow()}
+                data={"lastUsedAt": datetime.now(timezone.utc)}
             )
             return key_record.organization
     
