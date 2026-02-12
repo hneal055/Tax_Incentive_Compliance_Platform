@@ -30,8 +30,8 @@ class MockOrg:
 class MockMembership:
     """Mock membership object for testing"""
     def __init__(self, user_id, org_id, organization):
-        self.userId = user_id
-        self.organizationId = org_id
+        self.user_id = user_id
+        self.organization_id = org_id
         self.organization = organization
 
 
@@ -82,7 +82,6 @@ async def test_create_api_key(client, test_org, test_user):
     
     # Track what prefix was used when creating the API key
     created_prefix = None
-    original_create = None
     
     async def mock_create(data):
         """Mock prisma.apikey.create and capture the prefix"""
