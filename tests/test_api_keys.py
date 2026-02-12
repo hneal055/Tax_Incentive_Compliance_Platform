@@ -161,3 +161,100 @@ async def test_api_key_authentication(client, test_org, monkeypatch):
         )
         assert response.status_code == 200
 
+
+@pytest.mark.asyncio
+async def test_rotate_api_key(client, test_org, test_user):
+    """Test rotating an API key via POST /api/v1/api-keys/{key_id}/rotate"""
+    from src.main import app
+    from src.core.auth import get_current_organization_from_jwt
+    
+    key_id = "test-api-key-id"
+    old_prefix = "old_pref"
+    
+    # Mock existing API key
+    mock_old_key = MagicMock()
+    mock_old_key.id = key_id
+    mock_old_key.name = "Test Key"
+    mock_old_key.organizationId = test_org.id
+    mock_old_key.permissions = ["read", "write"]
+    mock_old_key.prefix = old_prefix
+    mock_old_key.lastUsedAt = datetime.now(timezone.utc)
+    mock_old_key.expiresAt = None
+    mock_old_key.createdAt = datetime.now(timezone.utc)
+    mock_old_key.updatedAt = datetime.now(timezone.utc)
+    
+    # Track what new data was used when updating
+    updated_data = {}
+    
+    async def mock_find_first(where):
+        """Mock finding the existing key"""
+        return mock_old_key
+    
+    async def mock_update(where, data):
+        """Mock updating the key with new values"""
+        nonlocal updated_data
+        updated_data = data
+        
+        # Create updated key with new values
+        mock_new_key = MagicMock()
+        mock_new_key.id = key_id
+        mock_new_key.name = mock_old_key.name
+        mock_new_key.organizationId = mock_old_key.organizationId
+        mock_new_key.permissions = mock_old_key.permissions
+        mock_new_key.prefix = data.get('prefix', old_prefix)
+        mock_new_key.lastUsedAt = data.get('lastUsedAt')
+        mock_new_key.expiresAt = mock_old_key.expiresAt
+        mock_new_key.createdAt = mock_old_key.createdAt
+        mock_new_key.updatedAt = data.get('updatedAt', datetime.now(timezone.utc))
+        return mock_new_key
+    
+    # Override authentication dependency
+    async def mock_get_org():
+        return test_org
+    
+    app.dependency_overrides[get_current_organization_from_jwt] = mock_get_org
+    
+    try:
+        # Patch database and service functions
+        with patch('src.api.v1.endpoints.api_keys.prisma.apikey.find_first', mock_find_first), \
+             patch('src.api.v1.endpoints.api_keys.prisma.apikey.update', mock_update), \
+             patch('src.api.v1.endpoints.api_keys.audit_log_service.log_action', AsyncMock()), \
+             patch('src.api.v1.endpoints.api_keys.webhook_service.notify_key_created', AsyncMock()):
+            
+            # Authenticate
+            token = create_test_jwt(test_user)
+            
+            # Rotate the key
+            response = await client.post(
+                f"/api/v1/api-keys/{key_id}/rotate",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            # Verify we got a new plaintext key
+            assert "plaintext_key" in data
+            assert len(data["plaintext_key"]) > 8
+            
+            # Verify the prefix changed
+            assert data["prefix"] != old_prefix
+            assert data["prefix"] == data["plaintext_key"][:8]
+            
+            # Verify metadata stayed the same
+            assert data["name"] == "Test Key"
+            assert data["permissions"] == ["read", "write"]
+            assert data["id"] == key_id
+            
+            # Verify lastUsedAt was reset to None
+            assert data["lastUsedAt"] is None
+            
+            # Verify the update included new key hash and prefix
+            assert 'key' in updated_data
+            assert 'prefix' in updated_data
+            assert 'updatedAt' in updated_data
+            assert 'lastUsedAt' in updated_data
+    finally:
+        # Clean up
+        app.dependency_overrides.clear()
+
