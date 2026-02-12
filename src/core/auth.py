@@ -186,3 +186,41 @@ async def get_current_organization(
         status_code=401, 
         detail="Authentication required. Provide either a valid JWT token or API key."
     )
+
+
+# ---------- Role-based Authorization ----------
+async def require_admin_role(
+    user: User = Depends(get_current_user),
+    db: Prisma = Depends(get_db),
+) -> tuple[User, Organization]:
+    """
+    Require that the current user has ADMIN role in their organization
+    
+    Args:
+        user: Authenticated user from JWT
+        db: Database connection
+        
+    Returns:
+        tuple[User, Organization]: Authenticated user and their organization
+        
+    Raises:
+        HTTPException: If user is not an admin or not in any organization
+    """
+    membership = await db.membership.find_first(
+        where={"userId": user.id},
+        include={"organization": True}
+    )
+    
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not in any organization"
+        )
+    
+    if membership.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required for this operation"
+        )
+    
+    return user, membership.organization
