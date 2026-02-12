@@ -107,12 +107,18 @@ async def update_organization(
         data=update_data
     )
     
-    # Log audit event
+    # Log audit event (exclude datetime from metadata)
+    metadata_for_log = {k: v for k, v in update_data.items() if k != "updatedAt"}
+    if request.name is not None:
+        metadata_for_log["name"] = request.name
+    if request.slug is not None:
+        metadata_for_log["slug"] = request.slug
+    
     await audit_log_service.log_action(
         organization_id=organization_id,
         action="update_organization",
         actor_id=user.id,
-        metadata=json.dumps(update_data),
+        metadata=json.dumps(metadata_for_log),
         ip_address=req.client.host if req.client else None,
         user_agent=req.headers.get("user-agent")
     )
