@@ -186,6 +186,7 @@ Zustand stores provide centralized state for:
 - [Frontend Setup Guide](./FRONTEND_SETUP.md) - Complete frontend installation and development guide
 - [User Manual](./USER_MANUAL.md) - API and UI usage documentation
 - [API Examples](./API_EXAMPLES.md) - Code samples including frontend examples
+- [Organization Admin API](./ORGANIZATION_ADMIN_API.md) - Organization and member management endpoints
 
 ### **Development**
 - [Roadmap](./ROADMAP.md) - Project phases and future features
