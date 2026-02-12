@@ -575,9 +575,9 @@ async def create_webhook_config(
     """
     Create a webhook configuration for API key events.
     
-    Events: api_key_expiring, api_key_expired, api_key_created, api_key_revoked
+    Events: api_key_expiring, api_key_expired, api_key_created, api_key_revoked, api_key_rotated
     """
-    valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked"}
+    valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked", "api_key_rotated"}
     if not all(e in valid_events for e in request.events):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -658,7 +658,7 @@ async def update_webhook_config(
     
     # Validate events if provided
     if request.events:
-        valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked"}
+        valid_events = {"api_key_expiring", "api_key_expired", "api_key_created", "api_key_revoked", "api_key_rotated"}
         if not all(e in valid_events for e in request.events):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
