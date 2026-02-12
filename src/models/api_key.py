@@ -11,11 +11,13 @@ class ApiKeyCreate(BaseModel):
     """Create a new API key - only name is required."""
     name: str = Field(..., min_length=1, max_length=100, description="Human-readable key name")
     expiresAt: Optional[datetime] = Field(None, description="Optional expiration date")
+    permissions: list[str] = Field(default=["read", "write"], description="API key permissions (read, write, admin)")
 
 
 class ApiKeyUpdate(BaseModel):
     """Update API key metadata (currently just name)."""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
+    permissions: Optional[list[str]] = Field(None, description="Update permissions")
 
 
 class ApiKeyExpire(BaseModel):
@@ -29,6 +31,7 @@ class ApiKeyResponse(BaseModel):
     id: str
     name: str
     organizationId: str
+    permissions: list[str]
     lastUsedAt: Optional[datetime]
     expiresAt: Optional[datetime]
     createdAt: datetime
