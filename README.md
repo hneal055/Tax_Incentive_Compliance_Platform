@@ -75,6 +75,18 @@ npm run dev -- --port 5200
 
 Frontend UI: http://localhost:5200
 
+### Developer Portal
+
+```bash
+cd developer-portal
+npm install
+npm run dev
+```
+
+Developer Portal: http://localhost:3000
+
+The Developer Portal provides comprehensive API documentation with interactive Swagger UI and ReDoc interfaces.
+
 ---
 
 ## Technology Stack
@@ -128,6 +140,13 @@ Tax_Incentive_Compliance_Platform/
 │   │   ├── utils/         # Report generation utilities
 │   │   └── test/          # Vitest test suite
 │   └── vitest.config.ts
+├── developer-portal/       # Next.js API documentation portal
+│   ├── app/               # Next.js App Router pages
+│   │   ├── page.tsx       # Homepage with API overview
+│   │   ├── docs/          # Swagger UI documentation
+│   │   └── redoc/         # ReDoc documentation
+│   └── public/
+│       └── openapi.json   # OpenAPI 3.1 specification
 ├── prisma/                 # Database schema and migrations
 ├── rules/                  # Jurisdiction tax rule definitions (JSON)
 ├── tests/                  # Backend test suite
