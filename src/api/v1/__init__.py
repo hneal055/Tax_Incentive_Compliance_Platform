@@ -18,7 +18,7 @@ from src.api.v1.endpoints import (
 
 API_PREFIX = "/api/v1"
 
-router = APIRouter(prefix="/v1")
+router = APIRouter()
 
 # Include all v1 endpoint routers
 router.include_router(api_keys.router)
