@@ -9,6 +9,11 @@ from pathlib import Path
 from src.mmb_parser.parser import MMBParser
 
 
+# Jurisdiction-specific credit rate constants
+GEORGIA_BASE_RATE = 0.30  # 30% base credit
+GEORGIA_MUSIC_UPLIFT_RATE = 0.40  # 30% + 10% uplift for music scoring
+MUSIC_UPLIFT_MULTIPLIER = 1.1  # 10% potential increase
+
 router = APIRouter(prefix="/mmb", tags=["MMB Integration"])
 
 
@@ -47,12 +52,12 @@ async def upload_mmb_file(
         eligible_total = eligible_df["amount"].sum() if not eligible_df.empty else 0
         
         # Calculate estimated credit (simplified for demo)
-        credit_rate = 0.30  # 30% base for Georgia
+        credit_rate = GEORGIA_BASE_RATE
         if jurisdiction == "georgia":
             # Check for music uplift
             music_df = eligible_df[eligible_df["description"].str.contains("Scoring", na=False)]
             if not music_df.empty:
-                credit_rate = 0.40  # 30% + 10% uplift
+                credit_rate = GEORGIA_MUSIC_UPLIFT_RATE
         
         estimated_credit = eligible_total * credit_rate
         
@@ -62,7 +67,7 @@ async def upload_mmb_file(
             music_items = eligible_df[eligible_df["description"].str.contains("Music", na=False)]
             if not music_items.empty:
                 current_music = music_items["amount"].sum()
-                potential_music = current_music * 1.1  # 10% uplift potential
+                potential_music = current_music * MUSIC_UPLIFT_MULTIPLIER
                 optimization_opportunities.append({
                     "category": "Music Scoring",
                     "current": float(current_music),

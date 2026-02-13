@@ -109,7 +109,7 @@ class MMBParser:
         # Calculate summary - handle both 'Amount' and 'amount' column names
         amount_col = 'Amount' if 'Amount' in df.columns else 'amount'
         self.data["summary"] = {
-            "total": df[amount_col].sum() if amount_col in df.columns else 0,
+            "total": df[amount_col].sum(),
             "line_count": len(df)
         }
         

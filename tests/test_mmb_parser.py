@@ -36,8 +36,6 @@ def test_parse_mmb_budget(sample_mmb_file):
     # Check categories exist
     categories = root.find("Categories")
     assert len(categories.findall("Category")) == 5
-    
-    print("✅ MMB file parsed successfully")
 
 
 def test_extract_line_items(sample_mmb_file):
@@ -78,7 +76,6 @@ def test_extract_line_items(sample_mmb_file):
     
     # Verify we found all items
     assert len(line_items) > 0
-    print(f"✅ Extracted {len(line_items)} line items")
     
     # Check for music scoring (important for demo)
     music_items = [item for item in line_items if "Music" in str(item)]
