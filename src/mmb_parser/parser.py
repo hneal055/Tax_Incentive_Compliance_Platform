@@ -106,9 +106,10 @@ class MMBParser:
             "line_items": df.to_dict('records')
         }
         
-        # Calculate summary
+        # Calculate summary - handle both 'Amount' and 'amount' column names
+        amount_col = 'Amount' if 'Amount' in df.columns else 'amount'
         self.data["summary"] = {
-            "total": df["Amount"].sum(),
+            "total": df[amount_col].sum() if amount_col in df.columns else 0,
             "line_count": len(df)
         }
         
@@ -129,14 +130,17 @@ class MMBParser:
         # For demo, we'll use Georgia rules
         if jurisdiction == "georgia":
             # Georgia eligible categories
-            eligible = df[df["category"].isin([
+            eligible_mask = df["category"].isin([
                 "Below-the-Line", 
                 "Post-Production"
-            ])]
+            ])
             
-            # Add music scoring
-            music = df[df["description"].str.contains("Scoring", na=False)]
+            # Add music scoring items
+            music_mask = df["description"].str.contains("Scoring", na=False)
             
-            return pd.concat([eligible, music])
+            # Combine masks to avoid duplicates
+            combined_mask = eligible_mask | music_mask
+            
+            return df[combined_mask]
         
         return df

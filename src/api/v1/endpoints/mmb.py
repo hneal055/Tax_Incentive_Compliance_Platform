@@ -25,10 +25,10 @@ async def upload_mmb_file(
     """
     
     # Validate file type
-    if not file.filename.endswith(('.mmbx', '.csv', '.xlsx')):
+    if not file.filename.endswith(('.mmbx', '.csv')):
         raise HTTPException(
             status_code=400, 
-            detail="Unsupported file type. Supported formats: .mmbx, .csv, .xlsx"
+            detail="Unsupported file type. Supported formats: .mmbx, .csv"
         )
     
     # Save temporarily
@@ -96,7 +96,7 @@ async def mmb_info() -> Dict[str, Any]:
     return {
         "name": "Movie Magic Budgeting Integration",
         "description": "Upload and parse MMB files to analyze tax incentive eligibility",
-        "supported_formats": [".mmbx", ".csv", ".xlsx"],
+        "supported_formats": [".mmbx", ".csv"],
         "endpoints": {
             "upload": "/api/v1/mmb/upload"
         }
