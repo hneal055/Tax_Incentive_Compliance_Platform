@@ -37,7 +37,7 @@ class TestCompleteProductionWorkflow:
             "active": True
         }
         
-        juris_response = await async_client.post("/api/0.1.0/jurisdictions/", json=jurisdiction_data)
+        juris_response = await async_client.post("/api/jurisdictions/", json=jurisdiction_data)
         assert juris_response.status_code in (200, 201), f"Failed to create jurisdiction: {juris_response.text}"
         jurisdiction_id = juris_response.json()["id"]
         
@@ -72,7 +72,7 @@ class TestCompleteProductionWorkflow:
             "status": "pre_production"
         }
         
-        prod_response = await async_client.post("/api/0.1.0/productions/", json=production_data)
+        prod_response = await async_client.post("/api/productions/", json=production_data)
         assert prod_response.status_code in (200, 201), f"Failed to create production: {prod_response.text}"
         production_id = prod_response.json()["id"]
         production = prod_response.json()
@@ -92,7 +92,7 @@ class TestCompleteProductionWorkflow:
             ]
         }
         
-        expenses_response = await async_client.post(f"/api/0.1.0/expenses/", json=expenses_data)
+        expenses_response = await async_client.post(f"/api/expenses/", json=expenses_data)
         # Some implementations might not have this endpoint yet, so we allow 404
         if expenses_response.status_code not in (404, 405):
             assert expenses_response.status_code in (200, 201), f"Failed to add expenses: {expenses_response.text}"
@@ -100,9 +100,9 @@ class TestCompleteProductionWorkflow:
         # Step 5: Calculate tax incentive
         # Try different possible endpoints for calculation
         calculation_endpoints = [
-            "/api/0.1.0/calculator/calculate",
+            "/api/calculate/simple",
+            "/api/calculate/jurisdiction/{jurisdiction_id}",
             "/api/v1/calculator/calculate",
-            "/api/0.1.0/calculate",
             "/calculator/calculate"
         ]
         
@@ -130,7 +130,8 @@ class TestCompleteProductionWorkflow:
         
         # Step 6: Generate a report (if endpoint exists)
         report_endpoints = [
-            "/api/0.1.0/reports/",
+            "/api/reports/comparison",
+            "/api/reports/compliance",
             "/api/v1/reports/",
             "/reports/"
         ]
@@ -151,7 +152,7 @@ class TestCompleteProductionWorkflow:
                 continue
         
         # Verify we can retrieve the production
-        get_response = await async_client.get(f"/api/0.1.0/productions/{production_id}")
+        get_response = await async_client.get(f"/api/productions/{production_id}")
         if get_response.status_code == 200:
             retrieved_production = get_response.json()
             assert retrieved_production["id"] == production_id
@@ -181,7 +182,7 @@ class TestMultiJurisdictionWorkflow:
         
         for jdata in test_jurisdictions:
             jdata["active"] = True
-            response = await async_client.post("/api/0.1.0/jurisdictions/", json=jdata)
+            response = await async_client.post("/api/jurisdictions/", json=jdata)
             if response.status_code in (200, 201):
                 jurisdictions.append(response.json())
         
@@ -204,7 +205,7 @@ class TestMultiJurisdictionWorkflow:
                 "effectiveDate": datetime.now().isoformat()
             }
             
-            rule_response = await async_client.post("/api/0.1.0/incentive-rules/", json=rule_data)
+            rule_response = await async_client.post("/api/incentive-rules/", json=rule_data)
             if rule_response.status_code in (200, 201):
                 rules.append(rule_response.json())
         
@@ -212,7 +213,7 @@ class TestMultiJurisdictionWorkflow:
         assert len(rules) >= 1, "Failed to create any incentive rules"
         
         # List jurisdictions and verify our test jurisdictions are there
-        list_response = await async_client.get("/api/0.1.0/jurisdictions/")
+        list_response = await async_client.get("/api/jurisdictions/")
         if list_response.status_code == 200:
             all_jurisdictions = list_response.json()
             jurisdiction_codes = [j.get("code") for j in all_jurisdictions if isinstance(all_jurisdictions, list)]
@@ -244,9 +245,9 @@ class TestRuleEngineWorkflow:
         
         # Try different possible rule engine endpoints
         rule_engine_endpoints = [
-            "/api/0.1.0/rule-engine/evaluate",
             "/api/v1/rule-engine/evaluate",
-            "/rule-engine/evaluate"
+            "/rule-engine/evaluate",
+            "/api/rule-engine/evaluate"
         ]
         
         success = False
@@ -285,14 +286,14 @@ class TestJurisdictionDiscoveryWorkflow:
     async def test_jurisdiction_discovery(self, async_client):
         """Test discovering and filtering jurisdictions"""
         # Step 1: List all jurisdictions
-        list_response = await async_client.get("/api/0.1.0/jurisdictions/")
+        list_response = await async_client.get("/api/jurisdictions/")
         assert list_response.status_code == 200, f"Failed to list jurisdictions: {list_response.text}"
         
         jurisdictions = list_response.json()
         assert isinstance(jurisdictions, list) or isinstance(jurisdictions, dict), "Invalid response format"
         
         # Step 2: Filter by country (if filtering is supported)
-        filter_response = await async_client.get("/api/0.1.0/jurisdictions/?country=USA")
+        filter_response = await async_client.get("/api/jurisdictions/?country=USA")
         if filter_response.status_code == 200:
             filtered = filter_response.json()
             # Verify filtering worked
@@ -300,7 +301,7 @@ class TestJurisdictionDiscoveryWorkflow:
                 assert all(j.get("country") == "USA" for j in filtered if isinstance(j, dict))
         
         # Step 3: Filter by type
-        type_response = await async_client.get("/api/0.1.0/jurisdictions/?type=state")
+        type_response = await async_client.get("/api/jurisdictions/?type=state")
         if type_response.status_code == 200:
             type_filtered = type_response.json()
             if isinstance(type_filtered, list) and len(type_filtered) > 0:
@@ -310,7 +311,7 @@ class TestJurisdictionDiscoveryWorkflow:
         if isinstance(jurisdictions, list) and len(jurisdictions) > 0:
             first_jurisdiction = jurisdictions[0]
             if isinstance(first_jurisdiction, dict) and "id" in first_jurisdiction:
-                detail_response = await async_client.get(f"/api/0.1.0/jurisdictions/{first_jurisdiction['id']}")
+                detail_response = await async_client.get(f"/api/jurisdictions/{first_jurisdiction['id']}")
                 if detail_response.status_code == 200:
                     detail = detail_response.json()
                     assert detail["id"] == first_jurisdiction["id"]
@@ -327,7 +328,7 @@ class TestHealthAndStatus:
             "/health",
             "/api/health",
             "/api/v1/health",
-            "/api/0.1.0/health"
+            "/"
         ]
         
         success = False
