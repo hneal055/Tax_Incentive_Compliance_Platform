@@ -153,7 +153,7 @@ const Productions: React.FC = () => {
                     )}
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>Created</span></div>
-                      <span>{new Date(production.created_at || production.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(production.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">

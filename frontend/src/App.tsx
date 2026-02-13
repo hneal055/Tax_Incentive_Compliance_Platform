@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 const Productions = lazy(() => import('./pages/Productions'));
 const Jurisdictions = lazy(() => import('./pages/Jurisdictions'));
 const Calculator = lazy(() => import('./pages/Calculator'));
+const DeveloperPortal = lazy(() => import('./pages/DeveloperPortal'));
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route path="/productions" element={<Productions />} />
             <Route path="/jurisdictions" element={<Jurisdictions />} />
             <Route path="/calculator" element={<Calculator />} />
+            <Route path="/developer-portal" element={<DeveloperPortal />} />
           </Routes>
         </Suspense>
       </Layout>

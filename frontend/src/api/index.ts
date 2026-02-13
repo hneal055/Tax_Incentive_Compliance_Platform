@@ -5,7 +5,9 @@ import type {
   IncentiveRule, 
   Expense, 
   CalculationResult,
-  HealthStatus 
+  HealthStatus,
+  ApiKey,
+  ApiKeyCreated
 } from '../types';
 
 export const api = {
@@ -90,6 +92,33 @@ export const api = {
         production_id: productionId,
         jurisdiction_id: jurisdictionId,
       });
+      return response.data;
+    },
+  },
+
+  // API Keys
+  apiKeys: {
+    list: async (): Promise<ApiKey[]> => {
+      const response = await apiClient.get('/api-keys/');
+      return response.data;
+    },
+    get: async (id: string): Promise<ApiKey> => {
+      const response = await apiClient.get(`/api-keys/${id}`);
+      return response.data;
+    },
+    create: async (data: { name: string; permissions?: string[]; expiresAt?: string }): Promise<ApiKeyCreated> => {
+      const response = await apiClient.post('/api-keys/', data);
+      return response.data;
+    },
+    update: async (id: string, data: { name?: string; permissions?: string[] }): Promise<ApiKey> => {
+      const response = await apiClient.patch(`/api-keys/${id}`, data);
+      return response.data;
+    },
+    delete: async (id: string): Promise<void> => {
+      await apiClient.delete(`/api-keys/${id}`);
+    },
+    rotate: async (id: string): Promise<ApiKeyCreated> => {
+      const response = await apiClient.post(`/api-keys/${id}/rotate`);
       return response.data;
     },
   },
