@@ -183,7 +183,7 @@ Update API references in `app/page.tsx` if your backend runs on a different URL.
 
 ## License
 
-MIT License - Part of the PilotForge project
+**Proprietary and Confidential** - Copyright (c) 2026 PilotForge. All Rights Reserved. Part of the PilotForge project.
 
 ## Support
 

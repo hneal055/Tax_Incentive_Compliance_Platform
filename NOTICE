@@ -1,0 +1,68 @@
+PROPRIETARY SOFTWARE NOTICE
+
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform
+All Rights Reserved.
+
+================================================================================
+
+CONFIDENTIALITY NOTICE
+
+This repository and all its contents are PROPRIETARY and CONFIDENTIAL.
+
+This software, including all source code, documentation, data, algorithms, 
+and related materials (collectively, the "Software"), is the exclusive property 
+of PilotForge and is protected by copyright laws and international treaties.
+
+UNAUTHORIZED ACCESS, USE, COPYING, DISTRIBUTION, OR DISCLOSURE IS STRICTLY 
+PROHIBITED AND MAY RESULT IN SEVERE CIVIL AND CRIMINAL PENALTIES.
+
+================================================================================
+
+INTELLECTUAL PROPERTY RIGHTS
+
+All intellectual property rights in and to the Software, including but not 
+limited to:
+  - Source code and object code
+  - Algorithms and methodologies
+  - User interfaces and designs
+  - Documentation and specifications
+  - Database schemas and structures
+  - Trade secrets and proprietary information
+
+are owned exclusively by PilotForge.
+
+================================================================================
+
+RESTRICTIONS ON USE
+
+This Software may only be accessed and used by authorized personnel who have 
+been granted explicit written permission. Any use, modification, reproduction, 
+distribution, or disclosure of this Software without prior written authorization 
+is strictly prohibited.
+
+================================================================================
+
+THIRD-PARTY COMPONENTS
+
+This Software may incorporate third-party open-source components. Such 
+components are used in accordance with their respective licenses and remain 
+the property of their respective owners. The use of third-party components 
+does not affect the proprietary nature of this Software as a whole.
+
+A list of third-party components and their licenses can be found in:
+  - requirements.txt (Python dependencies)
+  - package.json (Node.js dependencies)
+
+================================================================================
+
+CONTACT INFORMATION
+
+For licensing inquiries or permission requests:
+  - Project: PilotForge - Tax Incentive Compliance Platform
+  - Contact: [Contact through official channels only]
+
+================================================================================
+
+This notice must remain intact and must not be removed or altered.
+
+Last Updated: February 13, 2026

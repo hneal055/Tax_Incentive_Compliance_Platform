@@ -889,9 +889,9 @@ Incentive rule data sourced from:
 
 ### License
 
-**Code:** MIT License (open source)  
-**Data:** Creative Commons BY-SA 4.0  
-**Documentation:** Creative Commons BY 4.0  
+**All Rights Reserved - Proprietary and Confidential**
+
+This software and all associated materials (code, data, and documentation) are proprietary and confidential. Unauthorized copying, distribution, modification, or use is strictly prohibited. See [LICENSE](./LICENSE) for full terms and restrictions.  
 
 ---
 
