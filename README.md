@@ -228,6 +228,118 @@ See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ---
 
+## Real-Time Monitoring System ✨ **NEW**
+
+### Overview
+
+PilotForge now includes a **real-time legislative monitoring system** that watches external sources for changes to tax incentive programs and pushes instant alerts to your dashboard.
+
+### Features
+
+- **WebSocket Live Updates** — Real-time event notifications via WebSocket connections
+- **NewsAPI Integration** — Automated monitoring of news sources for tax incentive changes
+- **LLM Summarization** — AI-powered summaries using OpenAI GPT-4o-mini
+- **Email/Slack Notifications** — Critical alerts sent via email and Slack
+- **Jurisdiction Tracking Dashboard** — Dedicated UI for monitoring all jurisdictions
+
+### Architecture
+
+```
+┌─────────────────────┐     ┌──────────────────────┐     ┌────────────────────┐
+│   Data Collection    │     │   Event Pipeline      │     │   Live Frontend    │
+│                      │     │                       │     │                    │
+│  • News API feeds    │────▶│  • FastAPI async      │────▶│  • WebSocket conn  │
+│  • RSS/Atom feeds    │     │  • PostgreSQL events   │     │  • Zustand events  │
+│  • Gov open data     │     │  • Change detection    │     │  • Notification UI │
+│  • Web scraping      │     │  • APScheduler cron    │     │  • Alert feed      │
+│  • LLM summarization │     │  • WebSocket push      │     │  • Toast alerts    │
+└─────────────────────┘     └──────────────────────┘     └────────────────────┘
+```
+
+### Setup
+
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Configure Environment Variables**:
+   ```bash
+   # NewsAPI (free tier: 100 requests/day)
+   NEWS_API_KEY=your-newsapi-key-here
+   MONITOR_INTERVAL_HOURS=4
+   
+   # OpenAI for LLM Summarization
+   OPENAI_API_KEY=your-openai-api-key-here
+   OPENAI_MODEL=gpt-4o-mini
+   
+   # Email Notifications (SMTP)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@example.com
+   SMTP_PASSWORD=your-app-password
+   NOTIFICATION_FROM_EMAIL=noreply@pilotforge.com
+   NOTIFICATION_TO_EMAILS=admin@example.com,alerts@example.com
+   
+   # Slack Notifications
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   SLACK_CHANNEL=#pilotforge-alerts
+   ```
+
+3. **Seed Monitoring Sources**:
+   ```bash
+   python seed_monitoring_sources.py
+   ```
+
+4. **Access Monitoring Dashboard**:
+   - Navigate to http://localhost:5200/monitoring
+   - View real-time events, unread count, and WebSocket connection status
+   - Click events to mark as read and view source links
+
+### API Endpoints
+
+- `GET /api/v1/monitoring/events` — List monitoring events with filters
+- `GET /api/v1/monitoring/events/unread` — Get unread event count
+- `PATCH /api/v1/monitoring/events/:id/read` — Mark event as read
+- `GET /api/v1/monitoring/sources` — List monitoring sources
+- `POST /api/v1/monitoring/sources` — Add new monitoring source
+- `WS /api/v1/monitoring/ws` — WebSocket endpoint for real-time updates
+
+### How It Works
+
+1. **Scheduled Monitoring**: APScheduler runs background tasks every 5 minutes (RSS/web) and 4 hours (NewsAPI)
+2. **Change Detection**: Each source is monitored via SHA-256 content hashing
+3. **Event Creation**: When changes are detected, events are created with AI-generated summaries
+4. **Real-Time Push**: Events are broadcast via WebSocket to connected frontend clients
+5. **Notifications**: Critical severity events trigger email/Slack notifications
+6. **User Actions**: Users can view, filter, and mark events as read in the dashboard
+
+### Event Types
+
+- **incentive_change** — Changes to existing tax credit programs
+- **new_program** — Launch of new incentive programs
+- **expiration** — Upcoming or past deadline alerts
+- **news** — General news articles about tax incentives
+
+### Severity Levels
+
+- **🚨 Critical** — Urgent deadlines, major changes requiring immediate action
+- **⚠️ Warning** — Important updates that may impact productions
+- **ℹ️ Info** — General news and minor updates
+
+### Cost Estimate
+
+| Service | Monthly Cost | Notes |
+|---------|--------------|-------|
+| NewsAPI (free tier) | $0 | 100 requests/day, sufficient for 4-hour intervals |
+| NewsAPI (paid) | $49 | 1,000 requests/day for higher frequency |
+| OpenAI GPT-4o-mini | $10–50 | ~100 summaries/day at current pricing |
+| Email (SMTP) | $0 | Use existing email provider |
+| Slack | $0 | Free webhook integration |
+| **Total** | **$10–100/mo** | Depends on volume and API tier |
+
+---
+
 ## Next Phase: Real-Time Jurisdiction Monitoring
 
 ### Vision

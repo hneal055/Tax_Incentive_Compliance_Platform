@@ -60,3 +60,31 @@ export interface HealthStatus {
   version?: string;
   database?: string;
 }
+
+export interface MonitoringEvent {
+  id: string;
+  jurisdictionId: string;
+  eventType: 'incentive_change' | 'new_program' | 'expiration' | 'news';
+  severity: 'info' | 'warning' | 'critical';
+  title: string;
+  summary: string;
+  sourceUrl?: string;
+  detectedAt: string;
+  readAt?: string;
+  metadata?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonitoringSource {
+  id: string;
+  jurisdictionId: string;
+  sourceType: 'rss' | 'api' | 'webpage';
+  url: string;
+  checkInterval: number;
+  lastCheckedAt?: string;
+  lastHash?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

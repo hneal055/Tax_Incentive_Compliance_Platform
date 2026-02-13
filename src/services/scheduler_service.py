@@ -10,6 +10,13 @@ from apscheduler.triggers.interval import IntervalTrigger
 from src.utils.database import prisma
 from src.services.monitoring_service import monitoring_service
 from src.services.event_processor import event_processor
+from src.services.news_monitor import news_monitor_service
+from src.services.llm_summarization import llm_summarization_service
+from src.services.notification_service import (
+    email_notification_service,
+    slack_notification_service
+)
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +33,22 @@ class SchedulerService:
         if self.scheduler is None:
             self.scheduler = AsyncIOScheduler()
             
-            # Add job to check all active sources
+            # Add job to check all active sources (RSS, webpage, API)
             self.scheduler.add_job(
                 self.check_all_sources,
                 IntervalTrigger(seconds=300),  # Check every 5 minutes
                 id='check_all_sources',
                 name='Check all monitoring sources',
+                replace_existing=True
+            )
+            
+            # Add job for news monitoring
+            monitor_interval_hours = int(os.getenv('MONITOR_INTERVAL_HOURS', '4'))
+            self.scheduler.add_job(
+                self.check_news_sources,
+                IntervalTrigger(hours=monitor_interval_hours),
+                id='check_news_sources',
+                name='Monitor news sources via NewsAPI',
                 replace_existing=True
             )
             
@@ -136,6 +153,25 @@ class SchedulerService:
                 
         except Exception as e:
             logger.error(f"Error checking source {source.id}: {e}")
+    
+    async def check_news_sources(self):
+        """Check news sources via NewsAPI"""
+        try:
+            logger.info("📰 Starting news monitoring cycle")
+            
+            # Initialize news monitor if needed
+            if not news_monitor_service.client:
+                await news_monitor_service.initialize()
+            
+            # Monitor all jurisdictions
+            results = await news_monitor_service.monitor_all_jurisdictions()
+            
+            total_events = sum(results.values())
+            if total_events > 0:
+                logger.info(f"✅ News monitoring complete: {total_events} events created")
+            
+        except Exception as e:
+            logger.error(f"Error in check_news_sources: {e}")
 
 
 # Global scheduler service instance

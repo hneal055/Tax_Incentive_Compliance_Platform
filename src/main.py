@@ -18,6 +18,12 @@ from src.api.routes import router
 from src.services.monitoring_service import monitoring_service
 from src.services.scheduler_service import scheduler_service
 from src.services.rate_limit_service import rate_limit_service
+from src.services.news_monitor import news_monitor_service
+from src.services.llm_summarization import llm_summarization_service
+from src.services.notification_service import (
+    email_notification_service,
+    slack_notification_service
+)
 from src.core.api_key_middleware import ApiKeyMiddleware
 
 
@@ -48,6 +54,10 @@ async def lifespan(app: FastAPI):
     # Initialize monitoring services
     try:
         await monitoring_service.initialize()
+        await news_monitor_service.initialize()
+        await llm_summarization_service.initialize()
+        await email_notification_service.initialize()
+        await slack_notification_service.initialize()
         await scheduler_service.initialize()
         logger.info("✅ Monitoring services initialized")
     except Exception as e:
@@ -69,6 +79,8 @@ async def lifespan(app: FastAPI):
     try:
         await scheduler_service.shutdown()
         await monitoring_service.shutdown()
+        await llm_summarization_service.shutdown()
+        await slack_notification_service.shutdown()
         logger.info("✅ Monitoring services shut down")
     except Exception as e:
         logger.error(f"❌ Monitoring service shutdown failed: {e}")
