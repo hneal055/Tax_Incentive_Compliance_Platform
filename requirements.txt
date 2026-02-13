@@ -6,6 +6,10 @@ annotated-doc==0.0.4
 annotated-types==0.7.0
 anthropic==0.72.0
 anyio==4.12.1
+apscheduler==3.10.4
+feedparser==6.0.11
+newsapi-python==0.2.7
+openai==1.58.1
 asgi-lifespan==2.1.0
 attrs==25.4.0
 bcrypt==3.2.2
