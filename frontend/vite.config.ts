@@ -32,4 +32,9 @@ export default defineConfig({
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
   },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: [],
+  },
 })
