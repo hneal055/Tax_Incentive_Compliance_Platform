@@ -13,7 +13,8 @@ from src.api.v1.endpoints import (
     incentive_rules,
     excel,
     rule_engine,
-    organizations
+    organizations,
+    mmb
 )
 
 API_PREFIX = "/api/v1"
@@ -32,6 +33,7 @@ router.include_router(incentive_rules.router)
 router.include_router(excel.router)
 router.include_router(rule_engine.router)
 router.include_router(organizations.router)
+router.include_router(mmb.router)
 
 
 @router.get("/", tags=["Meta"])
@@ -53,6 +55,7 @@ async def api_v1_root():
             "excel": f"{API_PREFIX}/excel",
             "monitoring_events": f"{API_PREFIX}/monitoring/events",
             "monitoring_sources": f"{API_PREFIX}/monitoring/sources",
+            "mmb_upload": f"{API_PREFIX}/mmb/upload",
             "health": "/health",
         },
     }

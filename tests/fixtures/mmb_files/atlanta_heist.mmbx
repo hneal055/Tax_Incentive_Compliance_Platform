@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Budget version="10.0">
+  <Header>
+    <Title>Atlanta Heist</Title>
+    <Producer>Example Productions</Producer>
+    <Director>Jane Filmmaker</Director>
+    <ShootDates>
+      <Start>2024-06-01</Start>
+      <End>2024-08-15</End>
+      <ShootDays>45</ShootDays>
+    </ShootDates>
+  </Header>
+  
+  <Summary>
+    <Total>2500000</Total>
+    <AboveLine>500000</AboveLine>
+    <BelowLine>1200000</BelowLine>
+    <Post>450000</Post>
+    <Fringes>250000</Fringes>
+    <Contingency>100000</Contingency>
+    <ShootWeeks>9</ShootWeeks>
+  </Summary>
+  
+  <Categories>
+    <Category name="Above-the-Line">
+      <Account name="Producer" amount="150000">
+        <SubAccount name="Executive Producer" amount="100000" units="1" rate="100000" weeks="20"/>
+        <SubAccount name="Co-Producer" amount="50000" units="1" rate="50000" weeks="20"/>
+      </Account>
+      <Account name="Director" amount="200000">
+        <SubAccount name="Director Fee" amount="200000" units="1" rate="200000" weeks="20"/>
+      </Account>
+      <Account name="Cast" amount="150000">
+        <SubAccount name="Lead Actor" amount="100000" units="1" rate="100000" weeks="10"/>
+        <SubAccount name="Supporting Cast" amount="50000" units="5" rate="10000" weeks="8"/>
+      </Account>
+    </Category>
+    
+    <Category name="Below-the-Line">
+      <Account name="Production Staff" amount="400000">
+        <SubAccount name="Production Manager" amount="80000" units="1" rate="4000" weeks="20"/>
+        <SubAccount name="1st AD" amount="70000" units="1" rate="3500" weeks="20"/>
+        <SubAccount name="Production Coordinators" amount="120000" units="3" rate="2000" weeks="20"/>
+        <SubAccount name="Production Assistants" amount="130000" units="10" rate="650" weeks="20"/>
+      </Account>
+      <Account name="Camera Department" amount="300000">
+        <SubAccount name="Director of Photography" amount="90000" units="1" rate="5000" weeks="18"/>
+        <SubAccount name="Camera Operators" amount="120000" units="2" rate="3000" weeks="20"/>
+        <SubAccount name="Camera Equipment Rental" amount="90000" units="9" rate="10000" weeks="9"/>
+      </Account>
+      <Account name="Grip &amp; Electric" amount="250000">
+        <SubAccount name="Gaffer" amount="60000" units="1" rate="3000" weeks="20"/>
+        <SubAccount name="Key Grip" amount="60000" units="1" rate="3000" weeks="20"/>
+        <SubAccount name="Grip/Electric Crew" amount="130000" units="8" rate="1625" weeks="10"/>
+      </Account>
+      <Account name="Set Construction" amount="250000">
+        <SubAccount name="Construction Coordinator" amount="50000" units="1" rate="2500" weeks="20"/>
+        <SubAccount name="Carpenters" amount="120000" units="6" rate="2000" weeks="10"/>
+        <SubAccount name="Materials" amount="80000" units="1" rate="80000" weeks="1"/>
+      </Account>
+    </Category>
+    
+    <Category name="Post-Production">
+      <Account name="Editorial" amount="200000">
+        <SubAccount name="Editor" amount="100000" units="1" rate="5000" weeks="20"/>
+        <SubAccount name="Assistant Editors" amount="60000" units="2" rate="1500" weeks="20"/>
+        <SubAccount name="Post Facilities" amount="40000" units="20" rate="2000" weeks="20"/>
+      </Account>
+      <Account name="Music" amount="150000">
+        <SubAccount name="Composer" amount="60000" units="1" rate="60000" weeks="12"/>
+        <SubAccount name="Music Scoring" amount="45000" units="3" rate="15000" weeks="1"/>
+        <SubAccount name="Music Licensing" amount="45000" units="1" rate="45000" weeks="1"/>
+      </Account>
+      <Account name="Sound" amount="100000">
+        <SubAccount name="Sound Designer" amount="40000" units="1" rate="2000" weeks="20"/>
+        <SubAccount name="Sound Mix" amount="60000" units="10" rate="6000" weeks="2"/>
+      </Account>
+    </Category>
+    
+    <Category name="Fringes">
+      <Account name="Payroll Taxes" amount="150000">
+        <SubAccount name="Federal Taxes" amount="90000" units="1" rate="90000" weeks="1"/>
+        <SubAccount name="State Taxes" amount="60000" units="1" rate="60000" weeks="1"/>
+      </Account>
+      <Account name="Benefits" amount="100000">
+        <SubAccount name="Health Insurance" amount="70000" units="1" rate="70000" weeks="1"/>
+        <SubAccount name="Workers Comp" amount="30000" units="1" rate="30000" weeks="1"/>
+      </Account>
+    </Category>
+    
+    <Category name="Contingency">
+      <Account name="Contingency" amount="100000">
+        <SubAccount name="General Contingency" amount="100000" units="1" rate="100000" weeks="1"/>
+      </Account>
+    </Category>
+  </Categories>
+</Budget>
