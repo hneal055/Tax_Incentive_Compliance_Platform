@@ -55,7 +55,7 @@ class TestCompleteProductionWorkflow:
             "active": True
         }
         
-        rule_response = await async_client.post("/api/0.1.0/incentive-rules/", json=rule_data)
+        rule_response = await async_client.post("/api/incentive-rules/", json=rule_data)
         assert rule_response.status_code in (200, 201), f"Failed to create rule: {rule_response.text}"
         rule_id = rule_response.json()["id"]
         
@@ -123,7 +123,7 @@ class TestCompleteProductionWorkflow:
                     # Verify calculation has expected fields
                     assert "incentiveAmount" in calculation_result or "total_incentive_amount" in calculation_result
                     break
-            except:
+            except Exception:
                 continue
         
         # Note: Calculation endpoint might not be implemented yet
@@ -148,7 +148,7 @@ class TestCompleteProductionWorkflow:
                 report_response = await async_client.post(endpoint, json=report_data)
                 if report_response.status_code in (200, 201):
                     break
-            except:
+            except Exception:
                 continue
         
         # Verify we can retrieve the production
@@ -265,7 +265,7 @@ class TestRuleEngineWorkflow:
                 elif response.status_code == 404:
                     # Try next endpoint
                     continue
-            except:
+            except Exception:
                 continue
         
         # At least one endpoint should work
@@ -341,7 +341,7 @@ class TestHealthAndStatus:
                     # Basic health check should return status
                     assert "status" in health_data or response.text == "OK"
                     break
-            except:
+            except Exception:
                 continue
         
         # Note: Health endpoint might not be implemented yet
