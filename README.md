@@ -49,7 +49,7 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 
 This starts:
 - Backend API: http://localhost:8000
-- Frontend UI: http://localhost:5200
+- Frontend UI: http://127.0.0.1:5200
 
 ### Backend Only
 
@@ -74,7 +74,7 @@ npm install
 npm run dev -- --port 5200
 ```
 
-Frontend UI: http://localhost:5200
+Frontend UI: http://127.0.0.1:5200
 
 ### Developer Portal
 
@@ -293,7 +293,7 @@ PilotForge now includes a **real-time legislative monitoring system** that watch
    ```
 
 4. **Access Monitoring Dashboard**:
-   - Navigate to http://localhost:5200/monitoring
+   - Navigate to http://127.0.0.1:5200/monitoring
    - View real-time events, unread count, and WebSocket connection status
    - Click events to mark as read and view source links
 
