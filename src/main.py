@@ -1,6 +1,11 @@
 """
 PilotForge - Tax Incentive Intelligence for Film & TV
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform
+All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+This software is proprietary and confidential. Unauthorized copying,
+distribution, modification, or use is strictly prohibited.
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """

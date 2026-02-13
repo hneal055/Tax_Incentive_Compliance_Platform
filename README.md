@@ -6,7 +6,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](./LICENSE)
+[![Status: Private](https://img.shields.io/badge/Status-Private-important.svg)]
 
 ---
 
@@ -508,9 +509,11 @@ feedparser>=6.0           # RSS/Atom feed parsing
 
 ## License
 
-MIT License — Copyright (c) 2025-2026 Howard Neal - PilotForge
+**Proprietary and Confidential**
 
-See [LICENSE](./docs/LICENSE) for full details.
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform. All Rights Reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use is strictly prohibited. See [LICENSE](./LICENSE) for full terms and restrictions.
 
 ## Support
 

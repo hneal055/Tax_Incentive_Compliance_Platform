@@ -1,3 +1,12 @@
+/**
+ * PilotForge - Tax Incentive Intelligence for Film & TV
+ * Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform
+ * All Rights Reserved.
+ * 
+ * PROPRIETARY AND CONFIDENTIAL
+ * This software is proprietary and confidential. Unauthorized copying,
+ * distribution, modification, or use is strictly prohibited.
+ */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import Layout from './components/Layout';
