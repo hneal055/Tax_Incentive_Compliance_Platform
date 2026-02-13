@@ -42,7 +42,6 @@ dulwich==0.24.10
 ecdsa==0.19.1
 elevenlabs==2.33.1
 # Editable install with no version control (enhancedbudgetpro==0.1.0)
--e c:\projects\new-enhancedbudgetpro
 et_xmlfile==2.0.0
 execnet==2.1.2
 Faker==40.1.2
@@ -118,7 +117,6 @@ pdfplumber==0.11.7
 pefile==2023.2.7
 pillow==11.3.0
 # Editable Git install with no remote (PilotForge-MMB-Connector==0.1.0)
--e c:\projects\pilotforge-mmb-connector
 pkginfo==1.12.1.2
 platformdirs==4.5.0
 plotly==6.3.1
@@ -182,7 +180,6 @@ safetensors==0.7.0
 scikit-learn==1.7.2
 scipy==1.16.2
 # Editable Git install with no remote (scriptera==0.1.0)
--e c:\projects\scriptera
 seaborn==0.13.2
 sentry-sdk==2.51.0
 setuptools==80.9.0
