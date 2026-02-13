@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Clapperboard } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -12,6 +13,7 @@ const Navbar: React.FC = () => {
     { path: '/productions', label: 'Productions' },
     { path: '/jurisdictions', label: 'Jurisdictions' },
     { path: '/calculator', label: 'Calculator' },
+    { path: '/monitoring', label: 'Monitoring' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -50,6 +52,7 @@ const Navbar: React.FC = () => {
 
           {/* Right side actions */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <ThemeToggle />
             
             {/* Mobile menu button */}
