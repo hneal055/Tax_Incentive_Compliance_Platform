@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import type { MonitoringEvent } from '../types';
 import wsManager from '../utils/wsClient';
 
+// API base URL configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 interface MonitoringState {
   // Events
   events: MonitoringEvent[];
@@ -34,7 +37,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   fetchEvents: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('http://localhost:8000/api/v1/monitoring/events?page_size=50');
+      const response = await fetch(`${API_BASE_URL}/api/v1/monitoring/events?page_size=50`);
       if (!response.ok) throw new Error('Failed to fetch events');
       
       const data = await response.json();
@@ -49,7 +52,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
 
   fetchUnreadCount: async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/monitoring/events/unread');
+      const response = await fetch(`${API_BASE_URL}/api/v1/monitoring/events/unread`);
       if (!response.ok) throw new Error('Failed to fetch unread count');
       
       const data = await response.json();
@@ -62,7 +65,7 @@ export const useMonitoringStore = create<MonitoringState>((set, get) => ({
   markEventAsRead: async (eventId: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/monitoring/events/${eventId}/read`,
+        `${API_BASE_URL}/api/v1/monitoring/events/${eventId}/read`,
         { method: 'PATCH' }
       );
       
