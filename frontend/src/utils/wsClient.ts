@@ -22,7 +22,11 @@ class WebSocketManager {
   private statusListeners: Set<(status: WebSocketConnectionStatus) => void> = new Set();
   private currentStatus: WebSocketConnectionStatus = 'disconnected';
 
-  constructor(private baseUrl: string = 'ws://localhost:8000') {}
+  private baseUrl: string;
+
+  constructor(baseUrl: string = 'ws://localhost:8000') {
+    this.baseUrl = baseUrl;
+  }
 
   /**
    * Connect to WebSocket server

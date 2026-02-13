@@ -15,9 +15,9 @@ def test_v1_router_structure():
         from src.api.v1 import router as v1_router
         from src.api.routes import router as main_router
         
-        # Verify v1 router exists and has the correct prefix
+        # Verify v1 router exists (prefix is now empty since it's added in main.py)
         assert v1_router is not None
-        assert v1_router.prefix == "/v1"
+        assert v1_router.prefix == ""
         
         # Verify main router includes v1 router
         assert main_router is not None

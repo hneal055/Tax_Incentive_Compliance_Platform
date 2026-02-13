@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -32,9 +33,10 @@ export default defineConfig({
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
   },
+  // @ts-expect-error - vitest config
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: [],
+    setupFiles: ['./src/test/setup.ts'],
   },
 })
