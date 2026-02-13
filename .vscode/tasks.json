@@ -1,0 +1,161 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup: Install All Dependencies",
+      "type": "shell",
+      "command": "pip install -r requirements.txt && cd frontend && npm install && cd ../developer-portal && npm install",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Backend: Install Dependencies",
+      "type": "shell",
+      "command": "pip install -r requirements.txt",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Frontend: Install Dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Database: Generate Prisma Client",
+      "type": "shell",
+      "command": "python -m prisma generate",
+      "problemMatcher": []
+    },
+    {
+      "label": "Database: Migrate",
+      "type": "shell",
+      "command": "python -m prisma migrate deploy",
+      "problemMatcher": []
+    },
+    {
+      "label": "Database: Studio",
+      "type": "shell",
+      "command": "python -m prisma studio",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Backend: Run Server",
+      "type": "shell",
+      "command": "python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000",
+      "problemMatcher": [],
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Frontend: Dev Server",
+      "type": "shell",
+      "command": "npm run dev -- --port 5200",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "isBackground": true,
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Developer Portal: Dev Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/developer-portal"
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "Full Stack: Start All",
+      "dependsOn": [
+        "Backend: Run Server",
+        "Frontend: Dev Server"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Backend: Run Tests",
+      "type": "shell",
+      "command": "pytest -v",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Backend: Run Tests with Coverage",
+      "type": "shell",
+      "command": "pytest --cov=src --cov-report=html --cov-report=term-missing",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Frontend: Run Tests",
+      "type": "shell",
+      "command": "npx vitest run",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Frontend: Run Tests (Watch)",
+      "type": "shell",
+      "command": "npx vitest",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "isBackground": true,
+      "group": "test"
+    },
+    {
+      "label": "Frontend: Build",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Linting: Python (Flake8)",
+      "type": "shell",
+      "command": "flake8 src/ tests/",
+      "problemMatcher": []
+    },
+    {
+      "label": "Formatting: Python (Black)",
+      "type": "shell",
+      "command": "black src/ tests/",
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend: Lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
