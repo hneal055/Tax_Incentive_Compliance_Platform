@@ -1,0 +1,48 @@
+{
+  "recommendations": [
+    // Python
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.isort",
+    
+    // JavaScript/TypeScript
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    
+    // React
+    "dsznajder.es7-react-js-snippets",
+    
+    // Prisma
+    "prisma.prisma",
+    
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+    
+    // Database
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    
+    // Utilities
+    "editorconfig.editorconfig",
+    "mikestead.dotenv",
+    "yzhang.markdown-all-in-one",
+    "streetsidesoftware.code-spell-checker",
+    
+    // Git
+    "eamodio.gitlens",
+    
+    // Testing
+    "littlefoxteam.vscode-python-test-adapter",
+    "hbenl.vscode-test-explorer",
+    
+    // REST API
+    "humao.rest-client",
+    
+    // Docker (if using Docker)
+    "ms-azuretools.vscode-docker",
+    
+    // Code Coverage
+    "ryanluker.vscode-coverage-gutters"
+  ]
+}

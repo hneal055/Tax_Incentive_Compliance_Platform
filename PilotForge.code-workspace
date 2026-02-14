@@ -1,0 +1,410 @@
+{
+  "folders": [
+    {
+      "name": "Root",
+      "path": "."
+    },
+    {
+      "name": "Backend (Python)",
+      "path": "."
+    },
+    {
+      "name": "Frontend (React)",
+      "path": "frontend"
+    },
+    {
+      "name": "Developer Portal (Next.js)",
+      "path": "developer-portal"
+    }
+  ],
+  "settings": {
+    // Python settings
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+      }
+    },
+    
+    // TypeScript/JavaScript settings
+    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[javascriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    
+    // JSON settings
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    
+    // Editor settings
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.rulers": [80, 120],
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    
+    // File associations
+    "files.associations": {
+      "*.css": "tailwindcss",
+      ".env.example": "dotenv",
+      ".env.txt": "dotenv"
+    },
+    
+    // Tailwind CSS
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+      ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+    
+    // Files to exclude from explorer
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/node_modules": true,
+      "**/.venv": false,
+      "**/venv": true
+    },
+    
+    // Search excludes
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.venv": true,
+      "**/venv": true,
+      "**/__pycache__": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.git": true,
+      "**/backup_*": true
+    },
+    
+    // Terminal settings
+    "terminal.integrated.env.linux": {
+      "PYTHONPATH": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.osx": {
+      "PYTHONPATH": "${workspaceFolder}"
+    },
+    "terminal.integrated.env.windows": {
+      "PYTHONPATH": "${workspaceFolder}"
+    },
+    
+    // Git settings
+    "git.ignoreLimitWarning": true,
+    
+    // ESLint
+    "eslint.workingDirectories": [
+      "frontend",
+      "developer-portal"
+    ],
+    
+    // Prisma
+    "prisma.showPrismaDataPlatformNotification": false,
+    
+    // Coverage Gutters (if installed)
+    "coverage-gutters.coverageFileNames": [
+      "coverage/lcov.info",
+      "htmlcov/index.html"
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      // Python
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-python.black-formatter",
+      "ms-python.isort",
+      
+      // JavaScript/TypeScript
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      
+      // React
+      "dsznajder.es7-react-js-snippets",
+      
+      // Prisma
+      "prisma.prisma",
+      
+      // Tailwind CSS
+      "bradlc.vscode-tailwindcss",
+      
+      // Database
+      "mtxr.sqltools",
+      "mtxr.sqltools-driver-pg",
+      
+      // Utilities
+      "editorconfig.editorconfig",
+      "mikestead.dotenv",
+      "yzhang.markdown-all-in-one",
+      "streetsidesoftware.code-spell-checker",
+      
+      // Git
+      "eamodio.gitlens",
+      
+      // Testing
+      "littlefoxteam.vscode-python-test-adapter",
+      "hbenl.vscode-test-explorer",
+      
+      // REST API
+      "humao.rest-client",
+      
+      // Docker (if using Docker)
+      "ms-azuretools.vscode-docker",
+      
+      // Code Coverage
+      "ryanluker.vscode-coverage-gutters"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: FastAPI Backend",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "src.main:app",
+          "--reload",
+          "--host",
+          "0.0.0.0",
+          "--port",
+          "8000"
+        ],
+        "jinja": true,
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env",
+        "console": "integratedTerminal",
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "name": "Python: Current File",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${file}",
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env"
+      },
+      {
+        "name": "Python: Pytest Current File",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "args": [
+          "${file}",
+          "-v"
+        ],
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env"
+      },
+      {
+        "name": "Python: Pytest All Tests",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "pytest",
+        "args": [
+          "tests/",
+          "-v"
+        ],
+        "console": "integratedTerminal",
+        "justMyCode": false,
+        "envFile": "${workspaceFolder}/.env"
+      }
+    ],
+    "compounds": []
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Setup: Install All Dependencies",
+        "type": "shell",
+        "command": "pip install -r requirements.txt && cd frontend && npm install && cd ../developer-portal && npm install",
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "Backend: Install Dependencies",
+        "type": "shell",
+        "command": "pip install -r requirements.txt",
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "Frontend: Install Dependencies",
+        "type": "shell",
+        "command": "npm install",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "Database: Generate Prisma Client",
+        "type": "shell",
+        "command": "python -m prisma generate",
+        "problemMatcher": []
+      },
+      {
+        "label": "Database: Migrate",
+        "type": "shell",
+        "command": "python -m prisma migrate deploy",
+        "problemMatcher": []
+      },
+      {
+        "label": "Database: Studio",
+        "type": "shell",
+        "command": "python -m prisma studio",
+        "problemMatcher": [],
+        "isBackground": true
+      },
+      {
+        "label": "Backend: Run Server",
+        "type": "shell",
+        "command": "python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000",
+        "problemMatcher": [],
+        "isBackground": true,
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        }
+      },
+      {
+        "label": "Frontend: Dev Server",
+        "type": "shell",
+        "command": "npm run dev -- --port 5200",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": [],
+        "isBackground": true,
+        "group": {
+          "kind": "build",
+          "isDefault": false
+        }
+      },
+      {
+        "label": "Developer Portal: Dev Server",
+        "type": "shell",
+        "command": "npm run dev",
+        "options": {
+          "cwd": "${workspaceFolder}/developer-portal"
+        },
+        "problemMatcher": [],
+        "isBackground": true
+      },
+      {
+        "label": "Full Stack: Start All",
+        "dependsOn": [
+          "Backend: Run Server",
+          "Frontend: Dev Server"
+        ],
+        "problemMatcher": [],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "label": "Backend: Run Tests",
+        "type": "shell",
+        "command": "pytest -v",
+        "problemMatcher": [],
+        "group": "test"
+      },
+      {
+        "label": "Backend: Run Tests with Coverage",
+        "type": "shell",
+        "command": "pytest --cov=src --cov-report=html --cov-report=term-missing",
+        "problemMatcher": [],
+        "group": "test"
+      },
+      {
+        "label": "Frontend: Run Tests",
+        "type": "shell",
+        "command": "npx vitest run",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": [],
+        "group": "test"
+      },
+      {
+        "label": "Frontend: Run Tests (Watch)",
+        "type": "shell",
+        "command": "npx vitest",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": [],
+        "isBackground": true,
+        "group": "test"
+      },
+      {
+        "label": "Frontend: Build",
+        "type": "shell",
+        "command": "npm run build",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": [],
+        "group": "build"
+      },
+      {
+        "label": "Linting: Python (Flake8)",
+        "type": "shell",
+        "command": "flake8 src/ tests/",
+        "problemMatcher": []
+      },
+      {
+        "label": "Formatting: Python (Black)",
+        "type": "shell",
+        "command": "black src/ tests/",
+        "problemMatcher": []
+      },
+      {
+        "label": "Frontend: Lint",
+        "type": "shell",
+        "command": "npm run lint",
+        "options": {
+          "cwd": "${workspaceFolder}/frontend"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

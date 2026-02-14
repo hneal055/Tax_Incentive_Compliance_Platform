@@ -7,7 +7,6 @@ env/
 .venv
 .env
 .env.local
-.vscode/
 .idea/
 *.swp
 .DS_Store

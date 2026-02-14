@@ -34,6 +34,33 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 - **Python 3.11+**
 - **Node.js 20+** and **npm 10+**
 - **PostgreSQL 16**
+- **Visual Studio Code** (recommended) - See [VS Code Setup Guide](./VSCODE_SETUP.md)
+
+### Getting Started with VS Code
+
+For the best development experience, we recommend using Visual Studio Code:
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/hneal055/Tax_Incentive_Compliance_Platform.git
+   cd Tax_Incentive_Compliance_Platform
+   ```
+
+2. **Open in VS Code**:
+   ```bash
+   code PilotForge.code-workspace
+   ```
+
+3. **Install recommended extensions** when prompted
+
+4. **Follow the setup wizard** in the [VS Code Setup Guide](./VSCODE_SETUP.md)
+
+The workspace includes pre-configured:
+- ✅ Python debugging and testing
+- ✅ TypeScript/React IntelliSense
+- ✅ Integrated tasks for build, test, and run
+- ✅ Code formatting and linting
+- ✅ Database management with Prisma
 
 **OR** use **Docker** (recommended for quick setup):
 - **Docker** version 20.10+
@@ -506,6 +533,7 @@ feedparser>=6.0           # RSS/Atom feed parsing
 
 ## Documentation
 
+- **[VS Code Setup Guide](./VSCODE_SETUP.md)** — Getting started with Visual Studio Code (recommended)
 - **[Frontend Setup Guide](./docs/FRONTEND_SETUP.md)** — Complete frontend development guide
 - **[Backend Architecture](./docs/README.md)** — Backend setup and architecture
 - **[Deployment Guide](./docs/DEPLOYMENT.md)** — Production deployment instructions
