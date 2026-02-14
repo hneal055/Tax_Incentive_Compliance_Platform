@@ -9,10 +9,13 @@ distribution, modification, or use is strictly prohibited.
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
-from contextlib import asynccontextmanager
+import os
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI
+from typing import Dict, Any
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,16 +23,23 @@ from fastapi.staticfiles import StaticFiles
 from src.utils.config import settings
 from src.utils.database import prisma
 from src.api.routes import router
-from src.services.monitoring_service import monitoring_service
-from src.services.scheduler_service import scheduler_service
-from src.services.rate_limit_service import rate_limit_service
-from src.services.news_monitor import news_monitor_service
-from src.services.llm_summarization import llm_summarization_service
-from src.services.notification_service import (
-    email_notification_service,
-    slack_notification_service
-)
 from src.core.api_key_middleware import ApiKeyMiddleware
+
+# Optional services - only import if enabled
+try:
+    from src.services.monitoring_service import monitoring_service
+    from src.services.scheduler_service import scheduler_service
+    from src.services.rate_limit_service import rate_limit_service
+    from src.services.news_monitor import news_monitor_service
+    from src.services.llm_summarization import llm_summarization_service
+    from src.services.notification_service import (
+        email_notification_service,
+        slack_notification_service
+    )
+    OPTIONAL_SERVICES_AVAILABLE = True
+except ImportError as e:
+    OPTIONAL_SERVICES_AVAILABLE = False
+    logging.warning(f"Optional services not available: {e}")
 
 
 # Configure logging
@@ -43,219 +53,332 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Lifespan context manager for startup and shutdown events
+    Lifespan context manager for startup and shutdown events.
+    Handles graceful startup with optional service initialization.
     """
-    # Startup
-    logger.info("🎬 Starting PilotForge")
-    logger.info("   Tax Incentive Intelligence for Film & TV")
+    # ============================================================================
+    # STARTUP
+    # ============================================================================
+    logger.info("=" * 70)
+    logger.info("🎬  PilotForge - Tax Incentive Intelligence for Film & TV")
+    logger.info("=" * 70)
+    
+    # 1. Database Connection (CRITICAL - but don't crash if it fails)
     try:
         await prisma.connect()
         logger.info("✅ Database connected")
     except Exception as e:
         logger.warning(f"⚠️  Database connection failed: {e}")
-        logger.warning("   Application will run with limited functionality")
-        # Don't raise in case we're running tests or without a database
+        logger.warning("   Application will continue with limited functionality")
+        logger.warning("   Some API endpoints may not work without database")
     
-    # Initialize monitoring services
-    try:
-        await monitoring_service.initialize()
-        await news_monitor_service.initialize()
-        await llm_summarization_service.initialize()
-        await email_notification_service.initialize()
-        await slack_notification_service.initialize()
-        await scheduler_service.initialize()
-        logger.info("✅ Monitoring services initialized")
-    except Exception as e:
-        logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
+    # 2. Optional Monitoring Services (only if enabled via environment)
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_MONITORING', False):
+        try:
+            logger.info("Initializing monitoring services...")
+            await monitoring_service.initialize()
+            await news_monitor_service.initialize()
+            await llm_summarization_service.initialize()
+            await email_notification_service.initialize()
+            await slack_notification_service.initialize()
+            await scheduler_service.initialize()
+            logger.info("✅ Monitoring services initialized")
+        except Exception as e:
+            logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
+            logger.warning("   Application will continue without monitoring")
+    else:
+        logger.info("ℹ️  Monitoring services disabled")
+        logger.info("   Set ENABLE_MONITORING=true to enable real-time monitoring")
     
-    # Initialize rate limiting service
-    try:
-        redis_url = settings.REDIS_URL if hasattr(settings, 'REDIS_URL') else "redis://localhost:6379"
-        await rate_limit_service.initialize(redis_url)
-    except Exception as e:
-        logger.warning(f"⚠️  Rate limiting service initialization failed: {e}")
+    # 3. Optional Rate Limiting (only if Redis is configured)
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_RATE_LIMITING', False):
+        try:
+            redis_url = getattr(settings, 'REDIS_URL', 'redis://localhost:6379')
+            await rate_limit_service.initialize(redis_url)
+            logger.info("✅ Rate limiting initialized")
+        except Exception as e:
+            logger.warning(f"⚠️  Rate limiting initialization failed: {e}")
+            logger.warning("   Application will continue without rate limiting")
+    else:
+        logger.info("ℹ️  Rate limiting disabled")
+    
+    logger.info("=" * 70)
+    logger.info(f"🚀 PilotForge API ready at /api/{settings.API_VERSION}")
+    logger.info(f"📚 Documentation available at /docs")
+    logger.info("=" * 70)
     
     yield
     
-    # Shutdown
+    # ============================================================================
+    # SHUTDOWN
+    # ============================================================================
+    logger.info("=" * 70)
     logger.info("🛑 Shutting down PilotForge")
+    logger.info("=" * 70)
     
-    # Shutdown monitoring services
-    try:
-        await scheduler_service.shutdown()
-        await monitoring_service.shutdown()
-        await llm_summarization_service.shutdown()
-        await slack_notification_service.shutdown()
-        logger.info("✅ Monitoring services shut down")
-    except Exception as e:
-        logger.error(f"❌ Monitoring service shutdown failed: {e}")
+    # 1. Shutdown monitoring services
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_MONITORING', False):
+        try:
+            await scheduler_service.shutdown()
+            await monitoring_service.shutdown()
+            await llm_summarization_service.shutdown()
+            await slack_notification_service.shutdown()
+            logger.info("✅ Monitoring services shut down")
+        except Exception as e:
+            logger.error(f"❌ Monitoring service shutdown failed: {e}")
     
-    # Shutdown rate limiting service
-    try:
-        await rate_limit_service.shutdown()
-    except Exception as e:
-        logger.error(f"❌ Rate limiting service shutdown failed: {e}")
+    # 2. Shutdown rate limiting service
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_RATE_LIMITING', False):
+        try:
+            await rate_limit_service.shutdown()
+            logger.info("✅ Rate limiting shut down")
+        except Exception as e:
+            logger.error(f"❌ Rate limiting shutdown failed: {e}")
     
-    # Shutdown database
+    # 3. Disconnect from database
     try:
         if prisma.is_connected():
             await prisma.disconnect()
             logger.info("✅ Database disconnected")
     except Exception as e:
         logger.error(f"❌ Database disconnection failed: {e}")
+    
+    logger.info("=" * 70)
+    logger.info("👋 PilotForge shutdown complete")
+    logger.info("=" * 70)
 
 
-# Create FastAPI app
+# ============================================================================
+# CREATE FASTAPI APPLICATION
+# ============================================================================
+
 app = FastAPI(
     title="PilotForge API",
     description="Tax Incentive Intelligence for Film & TV Productions",
-    version="v1",
+    version=settings.API_VERSION,
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    openapi_url=f"/api/{settings.API_VERSION}/openapi.json"
 )
 
 
-# Configure CORS
+# ============================================================================
+# MIDDLEWARE CONFIGURATION
+# ============================================================================
+
+# 1. CORS Middleware - Allow cross-origin requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5200",
         "http://localhost:8000",
-        "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5200",
-        "*"
+        "http://127.0.0.1:8000",
+        "https://*.onrender.com",  # Render deployments
+        "*"  # Allow all origins (restrict in production if needed)
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Add API key rate limiting and permission middleware
+# 2. API Key Middleware - Rate limiting and permissions
 app.add_middleware(ApiKeyMiddleware)
 
 
-# Include API routes
+# ============================================================================
+# API ROUTES
+# ============================================================================
+
+# Include all API routes with /api prefix
 app.include_router(router, prefix="/api")
 
 
-# Root endpoint
+# ============================================================================
+# HEALTH CHECK ENDPOINTS
+# ============================================================================
+
+@app.get("/health", tags=["Health"], response_model=Dict[str, str])
+async def health_check():
+    """
+    Simple health check endpoint for deployment platforms.
+    
+    Always returns 200 OK to indicate the service is running.
+    Does NOT check database or other services to avoid blocking.
+    
+    Use /health/detailed for comprehensive health information.
+    """
+    return {
+        "status": "healthy",
+        "service": "pilotforge",
+        "version": settings.API_VERSION
+    }
+
+
+@app.get("/health/detailed", tags=["Health"])
+async def detailed_health_check() -> Dict[str, Any]:
+    """
+    Detailed health check with database and service status.
+    
+    This endpoint checks:
+    - Database connectivity
+    - Monitoring service status
+    - Rate limiting status
+    
+    Use this for monitoring dashboards, not for deployment health checks.
+    """
+    health_status = {
+        "status": "healthy",
+        "service": "pilotforge",
+        "version": settings.API_VERSION,
+        "environment": getattr(settings, 'ENVIRONMENT', 'development'),
+        "database": "unknown",
+        "monitoring": "disabled",
+        "rate_limiting": "disabled"
+    }
+    
+    # Check database connection
+    try:
+        await prisma.query_raw("SELECT 1")
+        health_status["database"] = "connected"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        health_status["database"] = "disconnected"
+        health_status["status"] = "degraded"
+    
+    # Check monitoring service
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_MONITORING', False):
+        try:
+            health_status["monitoring"] = "active" if scheduler_service._is_running else "inactive"
+        except Exception:
+            health_status["monitoring"] = "error"
+    
+    # Check rate limiting
+    if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_RATE_LIMITING', False):
+        health_status["rate_limiting"] = "active"
+    
+    return health_status
+
+
+# ============================================================================
+# ROOT ENDPOINT
+# ============================================================================
+
 @app.get("/", tags=["Root"])
 async def root():
     """
-    Root endpoint - API information
+    Root endpoint - API information and navigation.
     """
     return {
         "message": "Welcome to PilotForge",
         "tagline": "Tax Incentive Intelligence for Film & TV",
         "version": settings.API_VERSION,
         "status": "running",
-        "docs": "/docs",
-        "api": f"/api/{settings.API_VERSION}"
+        "endpoints": {
+            "documentation": "/docs",
+            "redoc": "/redoc",
+            "api": f"/api/{settings.API_VERSION}",
+            "health": "/health",
+            "detailed_health": "/health/detailed"
+        }
     }
 
 
-# Health check endpoint
-@app.get("/health", tags=["Health"])
-async def health_check():
-    """
-    Health check endpoint
-    """
-    try:
-        # Check database connection
-        await prisma.query_raw("SELECT 1")
-        db_status = "connected"
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        db_status = "disconnected"
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "unhealthy",
-                "database": db_status,
-                "error": str(e)
-            }
-        )
-    
-    # Check monitoring service
-    monitoring_status = "active" if scheduler_service._is_running else "inactive"
-    
-    return {
-        "status": "healthy",
-        "database": db_status,
-        "monitoring": monitoring_status,
-        "version": settings.API_VERSION,
-        "environment": "production"
-    }
+# ============================================================================
+# ERROR HANDLERS
+# ============================================================================
 
-
-# Error handlers
 @app.exception_handler(404)
-async def not_found_handler(request, exc):
-    """Handle 404 errors"""
+async def not_found_handler(request: Request, exc: Exception):
+    """Handle 404 Not Found errors"""
     return JSONResponse(
         status_code=404,
         content={
             "detail": "Resource not found",
-            "path": str(request.url.path)
+            "path": str(request.url.path),
+            "method": request.method
         }
     )
 
 
 @app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    """Handle 500 errors"""
-    logger.error(f"Internal error: {exc}")
+async def internal_error_handler(request: Request, exc: Exception):
+    """Handle 500 Internal Server errors"""
+    logger.error(f"Internal error on {request.method} {request.url.path}: {exc}")
     return JSONResponse(
         status_code=500,
         content={
             "detail": "Internal server error",
-            "message": "An unexpected error occurred"
+            "message": "An unexpected error occurred. Please try again later."
         }
     )
 
 
-# Mount frontend static files if build exists
+# ============================================================================
+# STATIC FILE SERVING (FRONTEND)
+# ============================================================================
+
+# Serve frontend static files from the build directory
+# This must be LAST to avoid catching API routes
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
-if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+
+if frontend_dist.exists() and frontend_dist.is_dir():
+    # Production build exists - serve it
+    app.mount(
+        "/",
+        StaticFiles(directory=str(frontend_dist), html=True),
+        name="frontend"
+    )
+    logger.info(f"✅ Frontend static files mounted from {frontend_dist}")
 else:
-    # Fallback to old static directory
+    # Fallback to legacy static directory if it exists
     static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-        logger.info(f"✅ Static files mounted from {static_dir}")
+    if static_dir.exists() and static_dir.is_dir():
+        app.mount(
+            "/",
+            StaticFiles(directory=str(static_dir), html=True),
+            name="static"
+        )
+        logger.info(f"⚠️  Serving legacy static files from {static_dir}")
+    else:
+        logger.warning("⚠️  No frontend build found - API-only mode")
+        logger.warning(f"   Expected: {frontend_dist}")
+        logger.warning("   Run: cd frontend && npm run build")
 
 
+# ============================================================================
+# DEVELOPMENT SERVER (OPTIONAL)
+# ============================================================================
 
-
-# Startup banner
-@app.on_event("startup")
-async def startup_banner():
-    """Display startup banner"""
-    print("\n" + "=" * 70)
-    print("🎬  PilotForge")
-    print("   Tax Incentive Intelligence for Film & TV")
-    print("=" * 70)
-    print(f"📊 API Version: {settings.API_VERSION}")
-    print(f"🌍 Environment: {settings.ENVIRONMENT}")
-    print(f"🔗 Docs: http://{settings.HOST}:{settings.PORT}/docs")
-    print(f"🚀 API: http://{settings.HOST}:{settings.PORT}/api/{settings.API_VERSION}")
-    print("=" * 70 + "\n")
-
-
-# Development server (optional - for direct python execution)
 if __name__ == "__main__":
+    """
+    Development server entry point.
+    
+    For production deployment, use:
+        uvicorn src.main:app --host 0.0.0.0 --port $PORT --workers 1
+    
+    For local development, run:
+        python -m uvicorn src.main:app --reload
+    """
     import uvicorn
+    
+    # Read PORT from environment (Render, Railway, etc.) or default to 8000
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    
+    # Development mode settings
+    reload = os.environ.get("RELOAD", "true").lower() == "true"
+    log_level = os.environ.get("LOG_LEVEL", "info").lower()
+    
+    logger.info(f"Starting development server on {host}:{port}")
     
     uvicorn.run(
         "src.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.RELOAD,
-        log_level=settings.LOG_LEVEL.lower()
+        host=host,
+        port=port,
+        reload=reload,
+        log_level=log_level
     )
-
