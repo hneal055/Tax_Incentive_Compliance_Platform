@@ -1,26 +1,219 @@
+# ============================================================================
+# PilotForge - Render Deployment Configuration
+# ============================================================================
+# This file defines the infrastructure for deploying PilotForge to Render.
+# 
+# Components:
+# - Web Service (FastAPI backend + React frontend)
+# - PostgreSQL Database
+# ============================================================================
+
 services:
+  # ==========================================================================
+  # WEB SERVICE - FastAPI Backend + React Frontend
+  # ==========================================================================
   - type: web
-    name: pilotforge-backend
+    name: pilotforge
+    runtime: python
     env: python
     region: oregon
     plan: free
+    branch: main
+    
+    # ROOT DIRECTORY
+    # Leave blank to use repository root
+    rootDir: .
+    
+    # BUILD COMMAND
+    # Runs once during deployment to prepare the application
     buildCommand: |
+      set -e  # Exit on any error
+      
+      echo "======================================================================="
+      echo "🎬 PilotForge Build Process Starting"
+      echo "======================================================================="
+      
+      # Display environment info
+      echo ""
+      echo "=== System Information ==="
+      python --version
+      node --version
+      npm --version
+      echo "Working directory: $(pwd)"
+      echo ""
+      
+      # 1. Install Python dependencies
+      echo "=== Step 1/4: Installing Python Dependencies ==="
       pip install --upgrade pip
       pip install -r requirements.txt
+      echo "✅ Python dependencies installed"
+      echo ""
+      
+      # 2. Generate Prisma Client (Python version)
+      echo "=== Step 2/4: Generating Prisma Client (Python) ==="
+      which prisma
+      prisma --version
       prisma generate
-      cd frontend && npm install && npm run build && cd ..
-    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+      echo "✅ Prisma client generated"
+      echo ""
+      
+      # 3. Install frontend dependencies
+      echo "=== Step 3/4: Installing Frontend Dependencies ==="
+      cd frontend
+      npm ci --prefer-offline --no-audit
+      echo "✅ Frontend dependencies installed"
+      echo ""
+      
+      # 4. Build frontend production bundle
+      echo "=== Step 4/4: Building Frontend ==="
+      npm run build
+      echo ""
+      echo "Build artifacts:"
+      ls -lh dist/ | head -20
+      echo ""
+      
+      # Verify critical files exist
+      if [ ! -f "dist/index.html" ]; then
+        echo "❌ ERROR: dist/index.html not found!"
+        exit 1
+      fi
+      echo "✅ Frontend build verified"
+      
+      cd ..
+      echo ""
+      echo "======================================================================="
+      echo "✅ Build Complete"
+      echo "======================================================================="
+    
+    # START COMMAND
+    # Command to start the application server
+    # CRITICAL: Must use $PORT environment variable (Render assigns this dynamically)
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT --workers 1 --log-level info
+    
+    # HEALTH CHECK
+    # Render calls this endpoint to verify the service is healthy
+    # Our /health endpoint returns 200 OK immediately without DB checks
+    healthCheckPath: /health
+    
+    # AUTO DEPLOY
+    # Automatically deploy when changes are pushed to the main branch
+    autoDeploy: true
+    
+    # ENVIRONMENT VARIABLES
+    # Configuration values available to the application at runtime
     envVars:
+      # Python version (must match .python-version in repo)
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      
+      # Node.js version for frontend build
+      - key: NODE_VERSION
+        value: "20"
+      
+      # Database connection (auto-populated from linked database)
       - key: DATABASE_URL
         fromDatabase:
           name: pilotforge-db
           property: connectionString
-      - key: PYTHON_VERSION
-        value: 3.12.0
+      
+      # API Configuration
+      - key: API_VERSION
+        value: "v1"
+      
+      # Environment identifier
+      - key: ENVIRONMENT
+        value: "production"
+      
+      # Application host (0.0.0.0 for container)
+      - key: HOST
+        value: "0.0.0.0"
+      
+      # Disable auto-reload in production
+      - key: RELOAD
+        value: "false"
+      
+      # Logging level
+      - key: LOG_LEVEL
+        value: "info"
+      
+      # Optional Features (disabled initially for stability)
+      # Enable these after successful deployment by setting to "true"
+      
+      # Real-time monitoring service (requires NewsAPI, OpenAI, Redis)
+      - key: ENABLE_MONITORING
+        value: "false"
+      
+      # Rate limiting service (requires Redis)
+      - key: ENABLE_RATE_LIMITING
+        value: "false"
+      
+      # Monitoring API Keys (add these when enabling monitoring)
+      # - key: NEWS_API_KEY
+      #   sync: false
+      # - key: OPENAI_API_KEY
+      #   sync: false
+      # - key: SLACK_WEBHOOK_URL
+      #   sync: false
+      
+      # Redis URL (add when enabling rate limiting or monitoring)
+      # - key: REDIS_URL
+      #   value: "redis://localhost:6379"
 
+# ============================================================================
+# DATABASE - PostgreSQL
+# ============================================================================
 databases:
   - name: pilotforge-db
     databaseName: pilotforge
     user: pilotforge
     plan: free
     region: oregon
+    
+    # Database will be accessible via environment variable:
+    # DATABASE_URL=postgresql://pilotforge:password@host/pilotforge
+
+# ============================================================================
+# DEPLOYMENT NOTES
+# ============================================================================
+# 
+# First Deployment:
+# 1. Go to Render Dashboard → New + → Blueprint
+# 2. Connect GitHub repository: Tax_Incentive_Compliance_Platform
+# 3. Click "Apply"
+# 4. Wait ~8 minutes for build and deploy
+# 5. Verify deployment at: https://pilotforge-xxxxx.onrender.com/health
+# 
+# Subsequent Deployments:
+# - Automatic on push to main branch (autoDeploy: true)
+# - Manual: Click "Manual Deploy" in Render dashboard
+# 
+# Monitoring & Logs:
+# - View logs: Render Dashboard → pilotforge → Logs
+# - Health check: https://your-url.onrender.com/health
+# - Detailed health: https://your-url.onrender.com/health/detailed
+# - API docs: https://your-url.onrender.com/docs
+# 
+# Troubleshooting:
+# - If build fails: Check build logs for specific error
+# - If health check fails: Check startup logs
+# - If database connection fails: Verify DATABASE_URL in Environment tab
+# - If frontend doesn't load: Verify dist/ directory exists after build
+# 
+# Enabling Optional Features:
+# 1. Set ENABLE_MONITORING=true or ENABLE_RATE_LIMITING=true
+# 2. Add required API keys (NEWS_API_KEY, OPENAI_API_KEY, etc.)
+# 3. Add REDIS_URL if using rate limiting
+# 4. Redeploy (automatic or manual)
+# 
+# Cost Estimate (Free Tier):
+# - Web Service: Free (750 hours/month)
+# - PostgreSQL: Free (90 days, then $7/month for 256MB)
+# - Bandwidth: Free (100GB/month)
+# 
+# Upgrade Considerations:
+# - Paid plan ($7/month) for:
+#   * Always-on service (free tier spins down after 15min inactivity)
+#   * Custom domain
+#   * More resources (512MB RAM vs 256MB)
+# 
+# ============================================================================
