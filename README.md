@@ -35,6 +35,27 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 - **Node.js 20+** and **npm 10+**
 - **PostgreSQL 16**
 
+**OR** use **Docker** (recommended for quick setup):
+- **Docker** version 20.10+
+- **Docker Compose** version 2.0+
+
+### 🐳 Docker (Easiest - Recommended)
+
+```bash
+# Build and start all services (database, backend, frontend)
+docker compose up --build -d
+
+# Or use the test script
+./docker-test.sh
+```
+
+This starts:
+- Frontend: http://localhost
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+See [README-DOCKER.md](./README-DOCKER.md) for detailed Docker documentation.
+
 ### Full Stack (Recommended)
 
 **Windows:**
