@@ -23,7 +23,7 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 - **Dashboard** — Modern React interface with real-time metrics and zoom controls
 - **PDF & Excel Reports** — Professional documentation for stakeholders
 - **Type-Safe** — Full TypeScript coverage for reliability
-- **Comprehensive Testing** — 51 frontend tests + 127 backend tests passing
+- **Comprehensive Testing** — 15 frontend tests (100% passing) + 168 backend tests (64% passing)
 
 ---
 
