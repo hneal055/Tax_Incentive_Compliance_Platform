@@ -2,11 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Node.js
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -22,11 +24,11 @@ COPY . .
 # Generate Prisma Client
 RUN prisma generate
 
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-
-USER appuser
+# For now, run as root to avoid Prisma cache permission issues
+# In production, consider using a custom Prisma binary path
+# RUN useradd -m -u 1000 appuser && \
+#     chown -R appuser:appuser /app
+# USER appuser
 
 # Expose the port
 EXPOSE 8000
