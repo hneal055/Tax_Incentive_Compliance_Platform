@@ -88,7 +88,6 @@ async def lifespan(app: FastAPI):
             logger.warning("   Application will continue without monitoring")
     else:
         logger.info("ℹ️  Monitoring services disabled")
-        logger.info("   Set ENABLE_MONITORING=true to enable real-time monitoring")
     
     # 3. Optional Rate Limiting (only if Redis is configured)
     if OPTIONAL_SERVICES_AVAILABLE and getattr(settings, 'ENABLE_RATE_LIMITING', False):
