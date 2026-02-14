@@ -158,11 +158,11 @@ npm install
 npm run dev -- --port 5200
 ```
 
-Frontend runs at: http://localhost:5200
+Frontend runs at: http://127.0.0.1:5200/
 
 ### 8. Access Monitoring Dashboard
 
-Navigate to: http://localhost:5200/monitoring
+Navigate to: http://127.0.0.1:5200/monitoring
 
 ## 🧪 Testing
 
