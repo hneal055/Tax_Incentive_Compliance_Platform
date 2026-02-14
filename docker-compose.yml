@@ -74,5 +74,4 @@ volumes:
 
 networks:
   tax-incentive-network:
-    name: tax-incentive-network
     driver: bridge
