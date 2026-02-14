@@ -51,7 +51,7 @@ jobs:
           DATABASE_URL: postgresql://pilotforge_user:pilotforge_pass@localhost:5432/pilotforge_test
         run: |
           python -m prisma generate
-          python -m prisma migrate deploy
+          python -m prisma db push --skip-generate
 
       - name: 🧪 Run tests with coverage
         env:
@@ -101,7 +101,51 @@ jobs:
         run: flake8 src/ tests/ --max-line-length=120
         continue-on-error: true
 
-  # Job 3: Security Scan
+  # Job 3: Frontend Tests & Build
+  frontend:
+    name: Frontend Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install root dependencies
+        run: npm install
+
+      - name: 📦 Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: 🔍 Run ESLint
+        working-directory: ./frontend
+        run: npm run lint
+        continue-on-error: true
+
+      - name: 🧪 Run frontend tests
+        working-directory: ./frontend
+        run: npm run test:run
+
+      - name: 📊 Run tests with coverage
+        working-directory: ./frontend
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: 🏗️ Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: ✅ Frontend summary
+        run: |
+          echo "## 🎉 Frontend Build & Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Frontend tests and build completed successfully!" >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: Security Scan
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -123,10 +167,10 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-  # Job 4: Build & Deploy to Render (on main branch)
+  # Job 5: Build & Deploy to Render (on main branch)
   deploy:
     name: Deploy to Production
-    needs: [test, lint]
+    needs: [test, lint, frontend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -145,7 +189,7 @@ jobs:
           echo "PilotForge has been deployed to production" >> $GITHUB_STEP_SUMMARY
           echo "🌐 URL: https://pilotforge.onrender.com" >> $GITHUB_STEP_SUMMARY
 
-  # Job 5: Create Release (on version tags)
+  # Job 6: Create Release (on version tags)
   release:
     name: Create Release
     runs-on: ubuntu-latest
