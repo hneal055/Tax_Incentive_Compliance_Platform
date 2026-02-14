@@ -1,0 +1,78 @@
+# Core FastAPI dependencies
+fastapi==0.128.0
+uvicorn==0.23.2
+starlette==0.50.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
+
+# Database
+prisma==0.15.0
+psycopg2-binary==2.9.11
+SQLAlchemy==2.0.45
+alembic==1.18.3
+
+# API and HTTP
+httpx==0.28.1
+httpcore==1.0.9
+h11==0.16.0
+requests==2.32.5
+python-multipart==0.0.6
+
+# Authentication & Security
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==3.2.2
+python-dotenv==1.0.0
+
+# Monitoring & Background Tasks
+apscheduler==3.10.4
+feedparser==6.0.11
+newsapi-python==0.2.7
+openai==1.58.1
+
+# PDF and Excel Generation
+reportlab==4.4.4
+openpyxl==3.1.5
+PyPDF2==3.0.1
+python-docx==1.2.0
+pypdfium2==4.30.0
+pdfplumber==0.11.7
+pdfminer.six==20250506
+
+# Data Processing
+pandas==2.3.3
+numpy==2.3.5
+python-dateutil==2.9.0.post0
+
+# Web Scraping
+beautifulsoup4==4.14.3
+lxml==6.0.2
+
+# Testing (optional for production, but keeping for now)
+pytest==9.0.2
+pytest-cov==7.0.0
+pytest-mock==3.15.1
+httptools==0.7.1
+watchfiles==1.1.1
+websockets==15.0.1
+
+# Redis & Caching
+redis==5.0.1
+limits==5.7.0
+
+# Logging & Monitoring
+sentry-sdk==2.51.0
+prometheus-fastapi-instrumentator==7.1.0
+prometheus_client==0.24.1
+
+# Common dependencies
+aiofiles==23.2.1
+anyio==4.12.1
+certifi==2025.11.12
+charset-normalizer==3.4.4
+click==8.3.1
+idna==3.11
+sniffio==1.3.1
+typing_extensions==4.15.0
+urllib3==2.5.0
+aiohttp==3.9.5
