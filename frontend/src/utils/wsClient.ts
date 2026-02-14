@@ -6,7 +6,7 @@ export type WebSocketMessage = {
   type: 'connection' | 'monitoring_event' | 'pong';
   status?: string;
   subscriptions?: string[];
-  event?: any;
+  event?: Record<string, unknown>;
 };
 
 export type WebSocketConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -96,7 +96,7 @@ class WebSocketManager {
   /**
    * Send a message to the server
    */
-  send(message: any): void {
+  send(message: string | Record<string, unknown>): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(typeof message === 'string' ? message : JSON.stringify(message));
     } else {
