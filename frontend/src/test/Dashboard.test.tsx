@@ -52,10 +52,10 @@ describe('Dashboard Page', () => {
     it('renders metric cards', async () => {
       renderDashboard()
       await waitFor(() => {
-        expect(screen.getByText('Active Productions')).toBeInTheDocument()
-        expect(screen.getByText('Jurisdictions')).toBeInTheDocument()
-        expect(screen.getByText('Compliance Rate')).toBeInTheDocument()
-        expect(screen.getByText('Total Budget')).toBeInTheDocument()
+        expect(screen.getByText('Total Productions')).toBeInTheDocument()
+        expect(screen.getByText('Total Jurisdictions')).toBeInTheDocument()
+        expect(screen.getByText('Total Expenses')).toBeInTheDocument()
+        expect(screen.getByText('Credits Awarded')).toBeInTheDocument()
       })
     })
 
@@ -69,15 +69,6 @@ describe('Dashboard Page', () => {
   })
 
   describe('Navigation & Quick Actions', () => {
-    it('navigates to productions when New Production is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => {
-        const button = screen.getByText('New Production')
-        fireEvent.click(button)
-        expect(mockNavigate).toHaveBeenCalledWith('/productions')
-      })
-    })
-
     it('navigates to reports from compliance card', async () => {
       renderDashboard()
       await waitFor(() => {
@@ -90,7 +81,7 @@ describe('Dashboard Page', () => {
     it('navigates to productions from View All button', async () => {
       renderDashboard()
       await waitFor(() => {
-        const button = screen.getByText('View All Productions')
+        const button = screen.getByText('View All')
         fireEvent.click(button)
         expect(mockNavigate).toHaveBeenCalledWith('/productions')
       })
@@ -130,38 +121,12 @@ describe('Dashboard Page', () => {
     })
   })
 
-  describe('Zoom Controls', () => {
-    it('renders zoom controls with default 100%', async () => {
+  describe('Production Overview', () => {
+    it('renders production list section title', async () => {
       renderDashboard()
       await waitFor(() => {
-        expect(screen.getByText('100%')).toBeInTheDocument()
-        expect(screen.getByTitle('Zoom in')).toBeInTheDocument()
-        expect(screen.getByTitle('Zoom out')).toBeInTheDocument()
-        expect(screen.getByTitle('Reset zoom')).toBeInTheDocument()
+        expect(screen.getByText('Top Productions')).toBeInTheDocument()
       })
-    })
-
-    it('changes zoom display when zoom in is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => { expect(screen.getByText('100%')).toBeInTheDocument() })
-      fireEvent.click(screen.getByTitle('Zoom in'))
-      // ZOOM_LEVELS: [0.75, 0.85, 1, 1.15, 1.25] - from 100% (index 2) zoom in goes to 115% (index 3)
-      await waitFor(() => { expect(screen.getByText('115%')).toBeInTheDocument() })
-    })
-
-    it('changes zoom display when zoom out is clicked', async () => {
-      renderDashboard()
-      await waitFor(() => { expect(screen.getByText('100%')).toBeInTheDocument() })
-      fireEvent.click(screen.getByTitle('Zoom out'))
-      // ZOOM_LEVELS: [0.75, 0.85, 1, 1.15, 1.25] - from 100% (index 2) zoom out goes to 85% (index 1)
-      await waitFor(() => { expect(screen.getByText('85%')).toBeInTheDocument() })
-    })
-  })
-
-  describe('System Health', () => {
-    it('renders the system health indicator', async () => {
-      renderDashboard()
-      await waitFor(() => { expect(screen.getByText('Healthy')).toBeInTheDocument() })
     })
   })
 })

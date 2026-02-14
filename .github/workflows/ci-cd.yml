@@ -67,6 +67,8 @@ jobs:
           file: ./coverage.xml
           flags: unittests
           name: pilotforge-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
       - name: ✅ Test summary
         run: |
