@@ -1,0 +1,36 @@
+# PilotForge Code Owners
+
+# Global default
+*                                    @hneal055
+
+# API routes - critical paths
+/src/api/                            @hneal055
+/src/api/routes.py                   @hneal055
+
+# Database schema - structural changes
+/prisma/                             @hneal055
+/prisma/schema.prisma                @hneal055
+
+# Security-critical code
+/src/utils/security.py               @hneal055
+/src/utils/exceptions.py             @hneal055
+/src/utils/logging_config.py         @hneal055
+
+# Deployment configurations
+/Dockerfile                          @hneal055
+/docker-compose*.yml                 @hneal055
+/k8s-deployment.yaml                 @hneal055
+
+# CI/CD pipeline
+/.github/workflows/                  @hneal055
+/.github/                            @hneal055
+
+# Configuration
+/.env.example                        @hneal055
+/pytest.ini                          @hneal055
+/requirements*.txt                   @hneal055
+
+# Documentation
+/DEPLOYMENT_GUIDE.md                 @hneal055
+/GIT_WORKFLOW.md                     @hneal055
+/GITHUB_SETUP.md                     @hneal055
