@@ -96,3 +96,121 @@ model Expense {
   @@index([expenseDate])
   @@map("expenses")
 }
+
+model Budget {
+  id                  String   @id @default(uuid())
+  projectTitle        String
+  productionType      String
+  totalBudget         Float
+  startDate           DateTime
+  endDate             DateTime
+  productionCompany   String
+  primaryJurisdiction String
+  jurisdictions       String[]
+  status              String   @default("active")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  accounts         BudgetAccount[]
+  analyses         IncentiveAnalysis[]
+  complianceChecks ComplianceCheck[]
+  syncLogs         SyncLog[]
+
+  @@index([primaryJurisdiction])
+  @@index([createdAt])
+  @@map("budgets")
+}
+
+model BudgetAccount {
+  id                    String  @id @default(uuid())
+  budgetId              String
+  accountNumber         String
+  category              String
+  subcategory           String?
+  description           String
+  amount                Float
+  eligibleForIncentives Boolean @default(true)
+  notes                 String?
+
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@index([category])
+  @@map("budget_accounts")
+}
+
+model IncentiveAnalysis {
+  id                    String   @id @default(uuid())
+  budgetId              String
+  analysisDate          DateTime @default(now())
+  totalEstimatedBenefit Float    @default(0)
+  status                String   @default("processing")
+
+  budget   Budget             @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  programs IncentiveProgram[]
+
+  @@index([budgetId])
+  @@index([analysisDate])
+  @@map("incentive_analyses")
+}
+
+model IncentiveProgram {
+  id                String @id @default(uuid())
+  analysisId        String
+  jurisdiction      String
+  programName       String
+  eligibleSpend     Float
+  creditRate        Float
+  estimatedBenefit  Float
+  eligibilityStatus String
+  requirements      String[]
+  deadlines         Json?
+
+  analysis IncentiveAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([jurisdiction])
+  @@map("incentive_programs")
+}
+
+model ComplianceCheck {
+  id            String   @id @default(uuid())
+  budgetId      String
+  checkDate     DateTime @default(now())
+  overallStatus String
+  details       Json?
+
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@index([checkDate])
+  @@map("compliance_checks")
+}
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  budgetId  String
+  syncDate  DateTime @default(now())
+  source    String
+  syncType  String
+  status    String
+  conflicts Json?
+
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([budgetId])
+  @@index([syncDate])
+  @@map("sync_logs")
+}
+
+model WebhookRegistration {
+  id        String   @id @default(uuid())
+  url       String
+  events    String[]
+  secret    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("webhook_registrations")
+}
