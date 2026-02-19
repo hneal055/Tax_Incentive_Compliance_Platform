@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     # Phase 2+ (optional for Phase 1)
     DATABASE_URL: Optional[str] = Field(default=None)
 
+    # Authentication (JWT)
+    JWT_SECRET: str = Field(default="change-me-in-production-use-a-long-random-secret")
+    JWT_ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+
+    # API keys for connector authentication (comma-separated)
+    VALID_API_KEYS: str = Field(default="")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

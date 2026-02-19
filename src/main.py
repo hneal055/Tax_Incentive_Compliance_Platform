@@ -55,12 +55,13 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="PilotForge API",
-    description="Tax Incentive Intelligence for Film & TV Productions",
-    version="v1",
+    title="PilotForge Tax Incentive Platform API",
+    description="API for MMB Connector integration and tax incentive analysis",
+    version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
 )
 
 
