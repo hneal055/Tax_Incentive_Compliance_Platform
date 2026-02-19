@@ -1,0 +1,38 @@
+
+File	 	statements	missing	excluded	 	coverage
+src \ __init__.py	 	0	0	0	 	100.00%
+src \ api \ __init__.py	 	0	0	0	 	100.00%
+src \ api \ calculator.py	 	353	334	0	 	5.38%
+src \ api \ excel.py	 	138	123	0	 	10.87%
+src \ api \ expenses.py	 	120	120	0	 	0.00%
+src \ api \ incentive_rules.py	 	27	16	0	 	40.74%
+src \ api \ jurisdictions.py	 	46	24	0	 	47.83%
+src \ api \ productions.py	 	55	38	0	 	30.91%
+src \ api \ reports.py	 	140	125	0	 	10.71%
+src \ api \ routes.py	 	18	0	0	 	100.00%
+src \ api \ rule_engine.py	 	27	27	0	 	0.00%
+src \ check_reportlab.py	 	3	3	0	 	0.00%
+src \ force_reset_database.py	 	120	120	0	 	0.00%
+src \ init_db_tables.py	 	29	29	0	 	0.00%
+src \ main.py	 	74	38	0	 	48.65%
+src \ models \ __init__.py	 	0	0	0	 	100.00%
+src \ models \ calculator.py	 	157	0	0	 	100.00%
+src \ models \ expense.py	 	14	14	0	 	0.00%
+src \ models \ incentive_rule.py	 	107	31	6	 	71.03%
+src \ models \ jurisdiction.py	 	30	0	0	 	100.00%
+src \ models \ production.py	 	42	0	0	 	100.00%
+src \ models \ report.py	 	23	0	0	 	100.00%
+src \ rule_engine \ __init__.py	 	3	0	0	 	100.00%
+src \ rule_engine \ engine.py	 	119	19	0	 	84.03%
+src \ rule_engine \ models.py	 	56	0	0	 	100.00%
+src \ rule_engine \ registry.py	 	43	7	0	 	83.72%
+src \ setup_database.py	 	31	31	0	 	0.00%
+src \ utils \ __init__.py	 	0	0	0	 	100.00%
+src \ utils \ config.py	 	48	17	0	 	64.58%
+src \ utils \ database.py	 	6	2	0	 	66.67%
+src \ utils \ excel_generator.py	 	212	6	0	 	97.17%
+src \ utils \ money.py	 	6	6	0	 	0.00%
+src \ utils \ pdf_generator.py	 	124	1	0	 	99.19%
+src \ utils \ startup_banner.py	 	6	6	0	 	0.00%
+Total	 	2177	1137	6	 	47.77%
+coverage.py v7.13.1, created at 2026-01-22 11:26 -0600

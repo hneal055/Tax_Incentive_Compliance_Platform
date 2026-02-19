@@ -1,0 +1,6 @@
+# Add to: $PROFILE (open with: notepad $PROFILE)
+function dev {
+    Set-Location "C:\path\to\PilotForge"  # Update this path
+    .\.venv\Scripts\Activate.ps1
+    Write-Host "Ready to code!" -ForegroundColor Green
+}
