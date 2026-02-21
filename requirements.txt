@@ -138,7 +138,6 @@ pyogrio==0.12.1
 pyparsing==3.2.5
 PyPDF2==3.0.1
 pypdfium2==4.30.0
-pypiwin32==223
 pyproj==3.7.2
 pyproject_hooks==1.2.0
 pytest==9.0.2
