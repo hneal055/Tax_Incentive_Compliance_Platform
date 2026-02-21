@@ -1,29 +1,22 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from routes import router
 from fastapi import APIRouter
+from src.api.jurisdictions import router as jurisdictions_router
+from src.api.productions import router as productions_router
+from src.api.calculator import router as calculator_router
+from src.api.expenses import router as expenses_router
 from src.api.incentive_rules import router as incentive_rules_router
-# Add other routers as needed
-
-app = FastAPI(
-    title="Tax Incentive Compliance Platform API",
-    description="API for managing tax incentive compliance for film and TV productions",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Only here should you include the router
-app.include_router(router, prefix="/api/v1")
+from src.api.reports import router as reports_router
+from src.api.excel import router as excel_router
+from src.api.monitoring import router as monitoring_router
+from src.api.rule_engine import router as rule_engine_router
 
 router = APIRouter()
+
+router.include_router(jurisdictions_router, prefix="/jurisdictions", tags=["Jurisdictions"])
+router.include_router(productions_router, prefix="/productions", tags=["Productions"])
+router.include_router(calculator_router, prefix="/calculator", tags=["Calculator"])
+router.include_router(expenses_router, prefix="/expenses", tags=["Expenses"])
 router.include_router(incentive_rules_router, prefix="/incentive-rules", tags=["Incentive Rules"])
+router.include_router(reports_router, prefix="/reports", tags=["Reports"])
+router.include_router(excel_router, prefix="/excel", tags=["Excel"])
+router.include_router(monitoring_router, prefix="/monitoring", tags=["Monitoring"])
+router.include_router(rule_engine_router, prefix="/rule-engine", tags=["Rule Engine"])
