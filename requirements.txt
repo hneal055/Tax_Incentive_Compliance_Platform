@@ -209,3 +209,4 @@ zipp==3.23.0
 zstandard==0.25.0
 aiohttp==3.9.5
 feedparser==6.0.11
+apscheduler==3.10.4
