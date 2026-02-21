@@ -1,6 +1,6 @@
-// Prisma schema for PilotForge monitoring system
+// PilotForge – Production + Monitoring + Multi‑Tenancy
 generator client {
-  provider = "prisma-client-py"
+  provider             = "prisma-client-py"
   interface            = "asyncio"
   recursive_type_depth = 5
 }
@@ -10,13 +10,132 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ──────────────────────────────────────────────────────────────
+// 1. TENANCY & AUTHENTICATION
+// ──────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     Membership[]
+  productions Production[]
+  expenses    Expense[]
+  apiKeys     ApiKey[]
+  // Add other tenant‑owned models here (e.g. Calculation, Report, etc.)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  // Add password hash, etc. if needed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+}
+
+model Membership {
+  id             String       @id @default(uuid())
+  role           Role         @default(MEMBER)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model ApiKey {
+  id             String       @id @default(uuid())
+  key            String       @unique // hashed value
+  prefix         String       // First 8 chars of original key (for display)
+  name           String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    String[]     @default(["read", "write"]) // Scoped permissions: read, write, admin
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  auditLogs      AuditLog[]
+  usageRecords   ApiKeyUsage[]
+
+  @@index([organizationId])
+  @@index([key])
+  @@map("api_keys")
+}
+
+model AuditLog {
+  id             String    @id @default(uuid())
+  apiKeyId       String?
+  apiKey         ApiKey?   @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  organizationId String
+  action         String    // create, delete, rotate, revoke, update
+  actorId        String?   // User ID who performed the action
+  metadata       String?   // JSON string with additional details
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime  @default(now())
+
+  @@index([apiKeyId])
+  @@index([organizationId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+model ApiKeyUsage {
+  id             String    @id @default(uuid())
+  apiKeyId       String
+  apiKey         ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  endpoint       String
+  method         String
+  statusCode     Int
+  responseTime   Int       // milliseconds
+  timestamp      DateTime  @default(now())
+
+  @@index([apiKeyId])
+  @@index([timestamp])
+  @@map("api_key_usage")
+}
+
+model WebhookConfig {
+  id             String    @id @default(uuid())
+  organizationId String
+  url            String
+  events         String[]  // api_key_expiring, api_key_expired, api_key_created, api_key_revoked, api_key_rotated
+  secret         String?   // For webhook signature verification
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("webhook_configs")
+}
+
+// ──────────────────────────────────────────────────────────────
+// 2. GLOBAL TAX INCENTIVE DATA (UNCHANGED, NO TENANCY)
+// ──────────────────────────────────────────────────────────────
+
 model Jurisdiction {
   id               String             @id @default(uuid())
   name             String
   code             String             @unique
   country          String
   type             String
-  description      String? 
+  description      String?
   website          String?
   active           Boolean            @default(true)
   createdAt        DateTime           @default(now())
@@ -25,18 +144,16 @@ model Jurisdiction {
   productions      Production[]
   monitoringSources MonitoringSource[]
   monitoringEvents MonitoringEvent[]
-
-  @@map("jurisdictions")
 }
 
 model IncentiveRule {
   id               String       @id @default(uuid())
   jurisdictionId   String
-  jurisdiction     Jurisdiction @relation(fields:  [jurisdictionId], references: [id], onDelete: Cascade)
+  jurisdiction     Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
   ruleName         String
   ruleCode         String       @unique
   incentiveType    String
-  percentage       Float? 
+  percentage       Float?
   fixedAmount      Float?
   minSpend         Float?
   maxCredit        Float?
@@ -44,17 +161,24 @@ model IncentiveRule {
   excludedExpenses String[]
   effectiveDate    DateTime
   expirationDate   DateTime?
-  requirements     String? 
+  requirements     String?
   active           Boolean      @default(true)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
   @@index([jurisdictionId])
-  @@map("incentive_rules")
 }
+
+// ──────────────────────────────────────────────────────────────
+// 3. USER‑OWNED, TENANT‑SCOPED DATA
+// ──────────────────────────────────────────────────────────────
 
 model Production {
   id                String       @id @default(uuid())
+  // 👇 NEW: tenancy field
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   title             String
   productionType    String
   jurisdictionId    String
@@ -65,21 +189,26 @@ model Production {
   endDate           DateTime?
   productionCompany String
   status            String
-  contact           String? 
+  contact           String?
   metadata          String?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+
   expenses          Expense[]
 
+  @@index([organizationId])
   @@index([jurisdictionId])
   @@index([status])
-  @@map("productions")
 }
 
 model Expense {
   id             String     @id @default(uuid())
+  // 👇 NEW: tenancy field (optional, but simplifies direct scoping)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   productionId   String
-  production     Production @relation(fields:  [productionId], references: [id], onDelete: Cascade)
+  production     Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
   category       String
   subcategory    String?
   description    String
@@ -91,14 +220,18 @@ model Expense {
   vendorName     String?
   vendorLocation String?
   receiptNumber  String?
-  invoiceNumber  String? 
+  invoiceNumber  String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
+  @@index([organizationId])
   @@index([productionId])
   @@index([expenseDate])
-  @@map("expenses")
 }
+
+// ──────────────────────────────────────────────────────────────
+// 4. MONITORING SYSTEM (GLOBAL – NO TENANCY)
+// ──────────────────────────────────────────────────────────────
 
 model MonitoringSource {
   id             String            @id @default(uuid())
@@ -113,10 +246,6 @@ model MonitoringSource {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   events         MonitoringEvent[]
-
-  @@index([jurisdictionId])
-  @@index([active])
-  @@map("monitoring_sources")
 }
 
 model MonitoringEvent {
@@ -135,13 +264,5 @@ model MonitoringEvent {
   metadata       String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-
-  @@index([jurisdictionId])
-  @@index([sourceId])
-  @@index([eventType])
-  @@index([severity])
-  @@index([detectedAt])
-  @@index([readAt])
-  @@map("monitoring_events")
 }
 

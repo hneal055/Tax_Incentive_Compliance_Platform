@@ -100,6 +100,20 @@ class EventProcessor:
             # Classify the entry
             event_type, severity = EventProcessor.classify_event(f"{title} {summary}")
             
+            # Enhance summary with LLM if available
+            try:
+                from src.services.llm_summarization import llm_summarization_service
+                if llm_summarization_service.client:
+                    enhanced_summary = await llm_summarization_service.summarize_tax_incentive_change(
+                        title=title,
+                        content=summary or title,
+                        source_url=link
+                    )
+                    if enhanced_summary:
+                        summary = enhanced_summary
+            except Exception as e:
+                logger.debug(f"LLM summarization not available: {e}")
+            
             try:
                 event = await prisma.monitoringevent.create(
                     data={
@@ -118,6 +132,10 @@ class EventProcessor:
                 
                 # Broadcast via WebSocket
                 await EventProcessor._broadcast_event(event)
+                
+                # Send notifications for critical events
+                if severity == 'critical':
+                    await EventProcessor._send_notifications(event, jurisdiction_id)
                 
             except Exception as e:
                 logger.error(f"Error creating event from RSS entry: {e}")
@@ -155,6 +173,20 @@ class EventProcessor:
         if len(content) > 300:
             summary += "..."
         
+        # Enhance summary with LLM if available
+        try:
+            from src.services.llm_summarization import llm_summarization_service
+            if llm_summarization_service.client:
+                enhanced_summary = await llm_summarization_service.summarize_tax_incentive_change(
+                    title=title,
+                    content=content,
+                    source_url=source_url
+                )
+                if enhanced_summary:
+                    summary = enhanced_summary
+        except Exception as e:
+            logger.debug(f"LLM summarization not available: {e}")
+        
         try:
             event = await prisma.monitoringevent.create(
                 data={
@@ -174,11 +206,52 @@ class EventProcessor:
             # Broadcast via WebSocket
             await EventProcessor._broadcast_event(event)
             
+            # Send notifications for critical events
+            if severity == 'critical':
+                await EventProcessor._send_notifications(event, jurisdiction_id)
+            
             return event.id
             
         except Exception as e:
             logger.error(f"Error creating change event: {e}")
             return None
+    
+    @staticmethod
+    async def _send_notifications(event, jurisdiction_id: str):
+        """Send notifications for critical events"""
+        try:
+            # Get jurisdiction name
+            jurisdiction = await prisma.jurisdiction.find_unique(
+                where={'id': jurisdiction_id}
+            )
+            jurisdiction_name = jurisdiction.name if jurisdiction else None
+            
+            # Convert event to dict
+            event_data = {
+                'title': event.title,
+                'summary': event.summary,
+                'eventType': event.eventType,
+                'severity': event.severity,
+                'sourceUrl': event.sourceUrl,
+                'detectedAt': event.detectedAt.isoformat() if event.detectedAt else None
+            }
+            
+            # Send email notification
+            from src.services.notification_service import email_notification_service
+            if email_notification_service.enabled:
+                await email_notification_service.send_event_notification(
+                    event_data, jurisdiction_name
+                )
+            
+            # Send Slack notification
+            from src.services.notification_service import slack_notification_service
+            if slack_notification_service.enabled:
+                await slack_notification_service.send_event_notification(
+                    event_data, jurisdiction_name
+                )
+                
+        except Exception as e:
+            logger.error(f"Error sending notifications: {e}")
 
 
 # Global event processor instance

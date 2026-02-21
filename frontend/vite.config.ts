@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -9,7 +10,7 @@ export default defineConfig({
     host: '127.0.0.1',
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'http://127.0.0.1:8080',
         changeOrigin: true,
       },
     },
@@ -21,15 +22,21 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-charts': ['recharts'],
-          'vendor-ui': ['framer-motion', 'lucide-react'],
+          'vendor-ui': ['lucide-react'],
         },
       },
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'zustand', 'axios', 'recharts', 'framer-motion', 'lucide-react'],
+    include: ['react', 'react-dom', 'react-router-dom', 'zustand', 'axios', 'recharts', 'lucide-react'],
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
+  },
+  // @ts-expect-error - vitest config
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: ['./src/test/setup.ts'],
   },
 })

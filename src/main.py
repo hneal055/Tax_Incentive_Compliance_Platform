@@ -1,6 +1,11 @@
 """
 PilotForge - Tax Incentive Intelligence for Film & TV
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform
+All Rights Reserved.
+
+PROPRIETARY AND CONFIDENTIAL
+This software is proprietary and confidential. Unauthorized copying,
+distribution, modification, or use is strictly prohibited.
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
@@ -17,6 +22,14 @@ from src.utils.database import prisma
 from src.api.routes import router
 from src.services.monitoring_service import monitoring_service
 from src.services.scheduler_service import scheduler_service
+from src.services.rate_limit_service import rate_limit_service
+from src.services.news_monitor import news_monitor_service
+from src.services.llm_summarization import llm_summarization_service
+from src.services.notification_service import (
+    email_notification_service,
+    slack_notification_service
+)
+from src.core.api_key_middleware import ApiKeyMiddleware
 
 
 # Configure logging
@@ -46,10 +59,21 @@ async def lifespan(app: FastAPI):
     # Initialize monitoring services
     try:
         await monitoring_service.initialize()
+        await news_monitor_service.initialize()
+        await llm_summarization_service.initialize()
+        await email_notification_service.initialize()
+        await slack_notification_service.initialize()
         await scheduler_service.initialize()
         logger.info("✅ Monitoring services initialized")
     except Exception as e:
         logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
+    
+    # Initialize rate limiting service
+    try:
+        redis_url = settings.REDIS_URL if hasattr(settings, 'REDIS_URL') else "redis://localhost:6379"
+        await rate_limit_service.initialize(redis_url)
+    except Exception as e:
+        logger.warning(f"⚠️  Rate limiting service initialization failed: {e}")
     
     yield
     
@@ -60,9 +84,17 @@ async def lifespan(app: FastAPI):
     try:
         await scheduler_service.shutdown()
         await monitoring_service.shutdown()
+        await llm_summarization_service.shutdown()
+        await slack_notification_service.shutdown()
         logger.info("✅ Monitoring services shut down")
     except Exception as e:
         logger.error(f"❌ Monitoring service shutdown failed: {e}")
+    
+    # Shutdown rate limiting service
+    try:
+        await rate_limit_service.shutdown()
+    except Exception as e:
+        logger.error(f"❌ Rate limiting service shutdown failed: {e}")
     
     # Shutdown database
     try:
@@ -101,9 +133,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add API key rate limiting and permission middleware
+app.add_middleware(ApiKeyMiddleware)
+
 
 # Include API routes
-app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
+app.include_router(router, prefix="/api")
 
 
 # Root endpoint

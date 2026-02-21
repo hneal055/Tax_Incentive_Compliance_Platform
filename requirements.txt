@@ -6,6 +6,10 @@ annotated-doc==0.0.4
 annotated-types==0.7.0
 anthropic==0.72.0
 anyio==4.12.1
+apscheduler==3.10.4
+feedparser==6.0.11
+newsapi-python==0.2.7
+openai==1.58.1
 asgi-lifespan==2.1.0
 attrs==25.4.0
 bcrypt==3.2.2
@@ -38,7 +42,6 @@ dulwich==0.24.10
 ecdsa==0.19.1
 elevenlabs==2.33.1
 # Editable install with no version control (enhancedbudgetpro==0.1.0)
--e c:\projects\new-enhancedbudgetpro
 et_xmlfile==2.0.0
 execnet==2.1.2
 Faker==40.1.2
@@ -114,7 +117,6 @@ pdfplumber==0.11.7
 pefile==2023.2.7
 pillow==11.3.0
 # Editable Git install with no remote (PilotForge-MMB-Connector==0.1.0)
--e c:\projects\pilotforge-mmb-connector
 pkginfo==1.12.1.2
 platformdirs==4.5.0
 plotly==6.3.1
@@ -156,8 +158,9 @@ python-dateutil==2.9.0.post0
 python-docx==1.2.0
 python-dotenv==1.0.0
 python-jose==3.3.0
-python-multipart==0.0.6
+python-multipart==0.0.22
 pytokens==0.3.0
+redis==5.0.1
 pyttsx3==2.99
 pytz==2025.2
 pywin32==311
@@ -177,7 +180,6 @@ safetensors==0.7.0
 scikit-learn==1.7.2
 scipy==1.16.2
 # Editable Git install with no remote (scriptera==0.1.0)
--e c:\projects\scriptera
 seaborn==0.13.2
 sentry-sdk==2.51.0
 setuptools==80.9.0

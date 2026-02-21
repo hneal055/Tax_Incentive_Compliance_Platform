@@ -6,7 +6,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](./LICENSE)
+[![Status: Private](https://img.shields.io/badge/Status-Private-important.svg)]
 
 ---
 
@@ -33,6 +34,27 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 - **Python 3.11+**
 - **Node.js 20+** and **npm 10+**
 - **PostgreSQL 16**
+
+**OR** use **Docker** (recommended for quick setup):
+- **Docker** version 20.10+
+- **Docker Compose** version 2.0+
+
+### 🐳 Docker (Easiest - Recommended)
+
+```bash
+# Build and start all services (database, backend, frontend)
+docker compose up --build -d
+
+# Or use the test script
+./docker-test.sh
+```
+
+This starts:
+- Frontend: http://localhost
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+See [README-DOCKER.md](./README-DOCKER.md) for detailed Docker documentation.
 
 ### Full Stack (Recommended)
 
@@ -74,6 +96,18 @@ npm run dev -- --port 5200
 ```
 
 Frontend UI: http://localhost:5200
+
+### Developer Portal
+
+```bash
+cd developer-portal
+npm install
+npm run dev
+```
+
+Developer Portal: http://localhost:3000
+
+The Developer Portal provides comprehensive API documentation with interactive Swagger UI and ReDoc interfaces.
 
 ---
 
@@ -128,6 +162,13 @@ Tax_Incentive_Compliance_Platform/
 │   │   ├── utils/         # Report generation utilities
 │   │   └── test/          # Vitest test suite
 │   └── vitest.config.ts
+├── developer-portal/       # Next.js API documentation portal
+│   ├── app/               # Next.js App Router pages
+│   │   ├── page.tsx       # Homepage with API overview
+│   │   ├── docs/          # Swagger UI documentation
+│   │   └── redoc/         # ReDoc documentation
+│   └── public/
+│       └── openapi.json   # OpenAPI 3.1 specification
 ├── prisma/                 # Database schema and migrations
 ├── rules/                  # Jurisdiction tax rule definitions (JSON)
 ├── tests/                  # Backend test suite
@@ -206,6 +247,118 @@ startCommand: python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
 **Production**: https://pilotforge.onrender.com
 
 See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
+
+---
+
+## Real-Time Monitoring System ✨ **NEW**
+
+### Overview
+
+PilotForge now includes a **real-time legislative monitoring system** that watches external sources for changes to tax incentive programs and pushes instant alerts to your dashboard.
+
+### Features
+
+- **WebSocket Live Updates** — Real-time event notifications via WebSocket connections
+- **NewsAPI Integration** — Automated monitoring of news sources for tax incentive changes
+- **LLM Summarization** — AI-powered summaries using OpenAI GPT-4o-mini
+- **Email/Slack Notifications** — Critical alerts sent via email and Slack
+- **Jurisdiction Tracking Dashboard** — Dedicated UI for monitoring all jurisdictions
+
+### Architecture
+
+```
+┌─────────────────────┐     ┌──────────────────────┐     ┌────────────────────┐
+│   Data Collection    │     │   Event Pipeline      │     │   Live Frontend    │
+│                      │     │                       │     │                    │
+│  • News API feeds    │────▶│  • FastAPI async      │────▶│  • WebSocket conn  │
+│  • RSS/Atom feeds    │     │  • PostgreSQL events   │     │  • Zustand events  │
+│  • Gov open data     │     │  • Change detection    │     │  • Notification UI │
+│  • Web scraping      │     │  • APScheduler cron    │     │  • Alert feed      │
+│  • LLM summarization │     │  • WebSocket push      │     │  • Toast alerts    │
+└─────────────────────┘     └──────────────────────┘     └────────────────────┘
+```
+
+### Setup
+
+1. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Configure Environment Variables**:
+   ```bash
+   # NewsAPI (free tier: 100 requests/day)
+   NEWS_API_KEY=your-newsapi-key-here
+   MONITOR_INTERVAL_HOURS=4
+   
+   # OpenAI for LLM Summarization
+   OPENAI_API_KEY=your-openai-api-key-here
+   OPENAI_MODEL=gpt-4o-mini
+   
+   # Email Notifications (SMTP)
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USER=your-email@example.com
+   SMTP_PASSWORD=your-app-password
+   NOTIFICATION_FROM_EMAIL=noreply@pilotforge.com
+   NOTIFICATION_TO_EMAILS=admin@example.com,alerts@example.com
+   
+   # Slack Notifications
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   SLACK_CHANNEL=#pilotforge-alerts
+   ```
+
+3. **Seed Monitoring Sources**:
+   ```bash
+   python seed_monitoring_sources.py
+   ```
+
+4. **Access Monitoring Dashboard**:
+   - Navigate to http://localhost:5200/monitoring
+   - View real-time events, unread count, and WebSocket connection status
+   - Click events to mark as read and view source links
+
+### API Endpoints
+
+- `GET /api/v1/monitoring/events` — List monitoring events with filters
+- `GET /api/v1/monitoring/events/unread` — Get unread event count
+- `PATCH /api/v1/monitoring/events/:id/read` — Mark event as read
+- `GET /api/v1/monitoring/sources` — List monitoring sources
+- `POST /api/v1/monitoring/sources` — Add new monitoring source
+- `WS /api/v1/monitoring/ws` — WebSocket endpoint for real-time updates
+
+### How It Works
+
+1. **Scheduled Monitoring**: APScheduler runs background tasks every 5 minutes (RSS/web) and 4 hours (NewsAPI)
+2. **Change Detection**: Each source is monitored via SHA-256 content hashing
+3. **Event Creation**: When changes are detected, events are created with AI-generated summaries
+4. **Real-Time Push**: Events are broadcast via WebSocket to connected frontend clients
+5. **Notifications**: Critical severity events trigger email/Slack notifications
+6. **User Actions**: Users can view, filter, and mark events as read in the dashboard
+
+### Event Types
+
+- **incentive_change** — Changes to existing tax credit programs
+- **new_program** — Launch of new incentive programs
+- **expiration** — Upcoming or past deadline alerts
+- **news** — General news articles about tax incentives
+
+### Severity Levels
+
+- **🚨 Critical** — Urgent deadlines, major changes requiring immediate action
+- **⚠️ Warning** — Important updates that may impact productions
+- **ℹ️ Info** — General news and minor updates
+
+### Cost Estimate
+
+| Service | Monthly Cost | Notes |
+|---------|--------------|-------|
+| NewsAPI (free tier) | $0 | 100 requests/day, sufficient for 4-hour intervals |
+| NewsAPI (paid) | $49 | 1,000 requests/day for higher frequency |
+| OpenAI GPT-4o-mini | $10–50 | ~100 summaries/day at current pricing |
+| Email (SMTP) | $0 | Use existing email provider |
+| Slack | $0 | Free webhook integration |
+| **Total** | **$10–100/mo** | Depends on volume and API tier |
 
 ---
 
@@ -377,9 +530,11 @@ feedparser>=6.0           # RSS/Atom feed parsing
 
 ## License
 
-MIT License — Copyright (c) 2025-2026 Howard Neal - PilotForge
+**Proprietary and Confidential**
 
-See [LICENSE](./docs/LICENSE) for full details.
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform. All Rights Reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use is strictly prohibited. See [LICENSE](./LICENSE) for full terms and restrictions.
 
 ## Support
 

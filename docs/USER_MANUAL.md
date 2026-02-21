@@ -354,7 +354,7 @@ We welcome contributions! Please see:
 
 ## 📄 License
 
-MIT License - See [LICENSE](../LICENSE) for details
+**Proprietary and Confidential** - Copyright (c) 2026 PilotForge. All Rights Reserved. See [LICENSE](../LICENSE) for full terms and restrictions.
 
 ---
 

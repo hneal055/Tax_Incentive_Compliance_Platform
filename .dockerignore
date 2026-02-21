@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.venv
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/dist/
+frontend/node_modules/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Environment files
+.env
+.env.local
+.env.backup
+*.key
+*.pem
+secrets/
+
+# Database
+*.sql
+*.db
+prisma/migrations/*
+!prisma/migrations/.gitkeep
+
+# Backups and temp files
+backup_*/
+temp/
+*.tmp
+uploads/
+data/
+
+# Build artifacts
+Lib/
+scripts/
+pyvenv.cfg
+build/
+dist/
+
+# Documentation (optional, keep if needed)
+docs/
+*.md
+!README.md
+
+# Test files (optional, exclude to reduce image size)
+tests/
+*.test.*
+
+# Developer portal
+developer-portal/
+
+# Logs
+logs/
+*.log
+
+# Windows specific files
+*.ps1
+
+# Other
+.npmrc
+.python-version

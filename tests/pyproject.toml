@@ -12,6 +12,19 @@ addopts = [
     "--cov=src",
     "--cov-report=html",
     "--cov-report=term-missing",
+    "-p", "no:pylint"
+]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for combined components",
+    "e2e: End-to-end tests for complete workflows",
+    "database: Tests requiring database access",
+    "api: API endpoint tests",
+    "auth: Authentication and authorization tests",
+    "compliance: Compliance logic tests",
+    "slow: Tests that take longer to run",
+    "jurisdiction: Jurisdiction-specific tests",
+    "anyio: Tests using anyio"
 ]
 
 [tool.coverage.run]

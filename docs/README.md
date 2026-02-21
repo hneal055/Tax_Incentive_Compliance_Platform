@@ -11,7 +11,8 @@
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF.svg)](https://vite.dev/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind-4-38B2AC.svg)](https://tailwindcss.com/)
 [![Tests](https://img.shields.io/badge/Tests-31%2F31%20Passing-success.svg)](./tests/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](../LICENSE)
+[![Status: Private](https://img.shields.io/badge/Status-Private-important.svg)]
 
 ---
 
@@ -186,6 +187,7 @@ Zustand stores provide centralized state for:
 - [Frontend Setup Guide](./FRONTEND_SETUP.md) - Complete frontend installation and development guide
 - [User Manual](./USER_MANUAL.md) - API and UI usage documentation
 - [API Examples](./API_EXAMPLES.md) - Code samples including frontend examples
+- [Organization Admin API](./ORGANIZATION_ADMIN_API.md) - Organization and member management endpoints
 
 ### **Development**
 - [Roadmap](./ROADMAP.md) - Project phases and future features
@@ -344,8 +346,8 @@ Access the full-stack application with the React UI and FastAPI backend.
 
 ## 📄 License
 
-MIT License
+**Proprietary and Confidential**
 
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2026 PilotForge - Tax Incentive Compliance Platform. All Rights Reserved.
 
-See [LICENSE](./LICENSE) for full details.
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use is strictly prohibited. See [LICENSE](../LICENSE) for full terms and restrictions.

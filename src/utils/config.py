@@ -66,6 +66,13 @@ class Settings(BaseSettings):
     # Phase 2+ (optional for Phase 1)
     DATABASE_URL: Optional[str] = Field(default=None)
 
+    # JWT Authentication
+    # Note: SECRET_KEY must be changed in production! Generate a secure key with:
+    # python -c "import secrets; print(secrets.token_urlsafe(32))"
+    SECRET_KEY: str = Field(default="dev-secret-key-CHANGE-IN-PRODUCTION-rhxLi-h02Q6OlkSFypXkkfxaA4VJTRjAq789pzzpgCM")
+    ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

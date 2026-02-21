@@ -304,6 +304,10 @@ def mock_prisma_db(monkeypatch):
         "src.api.jurisdictions.prisma", "src.api.incentive_rules.prisma",
         "src.api.productions.prisma", "src.api.calculator.prisma",
         "src.api.reports.prisma", "src.api.excel.prisma", "src.api.monitoring.prisma",
+        "src.api.v1.endpoints.jurisdictions.prisma", "src.api.v1.endpoints.incentive_rules.prisma",
+        "src.api.v1.endpoints.productions.prisma", "src.api.v1.endpoints.reports.prisma",
+        "src.api.v1.endpoints.api_keys.prisma", "src.api.v1.endpoints.expenses.prisma",
+        "src.api.v1.endpoints.monitoring.prisma", "src.api.v1.endpoints.organizations.prisma",
         "src.main.prisma"
     ]
     for module in modules_to_patch:
