@@ -207,3 +207,4 @@ wrapt==2.1.1
 WTForms==3.2.1
 zipp==3.23.0
 zstandard==0.25.0
+aiohttp==3.9.5
