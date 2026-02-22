@@ -96,6 +96,7 @@ async def create_incentive_rule(rule: IncentiveRuleCreate):
         )
         
     return await prisma.incentiverule.create(
-        data=rule.model_dump()
+        data={**{k: json.dumps(v) if k == "requirements" and isinstance(v, dict) else v for k, v in rule.model_dump().items()}}
     )
+
 
