@@ -462,8 +462,8 @@ function JurisdictionsView({ jurisdictions }: { jurisdictions: Jurisdiction[] })
   });
 
   const regulatoryFeed = [
-    { source: "California Film Commission", time: "2h ago", text: "Proposed expansion of the 30-mile studio zone currently under committee review." },
-    { source: "British Film Commission", time: "5h ago", text: "New guidance issued for VFX expenditure qualification under updates." },
+    { source: "California Film Commission", time: "2h ago", text: "Proposed expansion of the 30-mile studio zone currently under committee review.", url: "https://film.ca.gov" },
+    { source: "British Film Commission", time: "5h ago", text: "New guidance issued for VFX expenditure qualification under updates.", url: "https://britishfilmcommission.org.uk" },
     { source: "Georgia Dept. of Econ Dev", time: "1d ago", text: "Fiscal year cap status: 65% utilized. Applications open." },
   ];
 
@@ -642,3 +642,5 @@ function AdvisorView() {
     </div>
   );
 }
+
+
