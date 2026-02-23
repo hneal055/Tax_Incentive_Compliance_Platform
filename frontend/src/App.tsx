@@ -230,7 +230,7 @@ function ProductionsView({ productions, jurisdictions, setProductions }: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, budget: parseFloat(form.budget) || 0 }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.detail || "Failed"); }
+      if (!res.ok) { const e = await res.json(); throw new Error(JSON.stringify(e.detail) || JSON.stringify(e) || "Failed"); }
       const created = await res.json();
       setProductions(prev => [...prev, created]);
       setShowForm(false);
@@ -642,5 +642,6 @@ function AdvisorView() {
     </div>
   );
 }
+
 
 
