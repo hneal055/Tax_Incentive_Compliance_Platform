@@ -1,271 +1,129 @@
-import React, { useEffect, useState } from 'react';
-import { Film, MapPin, Award, Plus, Calculator, BarChart3, Settings } from 'lucide-react';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Spinner from '../components/Spinner';
-import MetricCard from '../components/MetricCard';
-import SystemHealth from '../components/SystemHealth';
-import InsightCard from '../components/InsightCard';
-import EmptyState from '../components/EmptyState';
-import { useAppStore } from '../store';
-import api from '../api';
-import { useNavigate } from 'react-router-dom';
+import { Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const { productions, jurisdictions, fetchProductions, fetchJurisdictions } = useAppStore();
-  const [healthStatus, setHealthStatus] = useState<'healthy' | 'degraded' | 'offline' | 'checking'>('checking');
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastChecked, setLastChecked] = useState<Date>(new Date());
-  const [responseTime, setResponseTime] = useState<number | undefined>(undefined);
+const metrics = [
+  {
+    title: 'Budget Volume',
+    value: '$23.5M',
+    subtitle: 'Total planned',
+    icon: Wallet,
+    iconClass: 'bg-blue-500',
+  },
+  {
+    title: 'Est. Tax Credits',
+    value: '$3.5M',
+    subtitle: 'Avg 25% rate',
+    icon: TrendingUp,
+    iconClass: 'bg-emerald-500',
+  },
+  {
+    title: 'Active Projects',
+    value: '3',
+    subtitle: 'Tracked productions',
+    icon: Users,
+    iconClass: 'bg-violet-500',
+  },
+  {
+    title: 'Alerts',
+    value: '3',
+    subtitle: 'Action required',
+    icon: AlertCircle,
+    iconClass: 'bg-orange-500',
+  },
+];
 
-  // Calculate sample chart data for metrics (deterministic for purity)
-  const productionChartData = React.useMemo(() =>
-    Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, (productions?.length ?? 0) + ((i % 3) * 2 - 3)),
-    }))
-  , [productions?.length]);
+const chartData = [
+  { name: 'The Silent Hori...', budget: 15.5, actual: 8.5 },
+  { name: 'Echoes of Midni...', budget: 8.0, actual: 0 },
+  { name: 'Neon Pulse',         budget: 0.5, actual: 0 },
+];
 
-  const jurisdictionChartData = React.useMemo(() =>
-    Array.from({ length: 10 }, (_, i) => ({
-      value: Math.max(0, (jurisdictions?.length ?? 0) + ((i % 4) * 3 - 5)),
-    }))
-  , [jurisdictions?.length]);
-
-  const checkHealth = async () => {
-    const startTime = Date.now();
-    setHealthStatus('checking');
-    try {
-      const health = await api.health();
-      const endTime = Date.now();
-      setResponseTime(endTime - startTime);
-      setHealthStatus(health.status === 'healthy' ? 'healthy' : 'degraded');
-      setLastChecked(new Date());
-    } catch {
-      setHealthStatus('offline');
-      setResponseTime(undefined);
-    }
-  };
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        await Promise.all([
-          fetchProductions(),
-          fetchJurisdictions(),
-          checkHealth(),
-        ]);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Defensive: fallback to empty arrays if store returns null/undefined
-  const safeProductions = productions ?? [];
-  const safeJurisdictions = jurisdictions?.jurisdictions ?? [];
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
+function Dashboard() {
   return (
-    <div className="space-y-8 bg-bg-white
-     min-h-screen">
-      {/* Header with System Health */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Monitoring {safeProductions.length} production{safeProductions.length !== 1 ? 's' : ''} across {safeJurisdictions.length} jurisdiction{safeJurisdictions.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <SystemHealth
-          status={healthStatus}
-          lastChecked={lastChecked}
-          responseTime={responseTime}
-          onRefresh={checkHealth}
-        />
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">
+          Executive Dashboard
+        </h1>
+        <p className="text-slate-500 mt-1.5 text-[15px]">
+          Overview of active productions and tax incentive performance.
+        </p>
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard
-          title="Active Productions"
-          value={safeProductions.length}
-          icon={Film}
-          trend="neutral"
-          chartData={productionChartData}
-        />
-
-        <MetricCard
-          title="Jurisdictions"
-          value={safeJurisdictions.length}
-          icon={MapPin}
-          trend="neutral"
-          chartData={jurisdictionChartData}
-        />
-
-        <MetricCard
-          title="Tax Programs"
-          value="33+"
-          icon={Award}
-          trend="up"
-          trendValue="+3 this month"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <div
+              key={metric.title}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">{metric.title}</p>
+                  <p className="text-[32px] font-bold text-slate-900 mt-2 leading-none tracking-tight">
+                    {metric.value}
+                  </p>
+                  <p className="text-[13px] text-slate-400 mt-2 font-medium">{metric.subtitle}</p>
+                </div>
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shrink-0 ${metric.iconClass}`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={2} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* AI Insights */}
-      {safeProductions.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InsightCard
-            type="suggestion"
-            title="New Incentive Opportunities"
-            description="Based on your production locations, you may qualify for 3 additional tax credit programs."
-            action={{
-              label: "View recommendations",
-              onClick: () => navigate('/calculator'),
-            }}
-          />
-          <InsightCard
-            type="insight"
-            title="Compliance Deadline Approaching"
-            description="2 productions have incentive reporting deadlines within the next 30 days."
-            action={{
-              label: "View details",
-              onClick: () => navigate('/productions'),
-            }}
-          />
+      {/* Budget vs. Actual Spend Chart */}
+      <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+        <h2 className="text-lg font-bold text-slate-900 mb-7">Budget vs. Actual Spend</h2>
+
+        <div className="h-[380px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+              barCategoryGap="35%"
+              barGap={3}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 13 }}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 13 }}
+                tickFormatter={(v) => `$${v}M`}
+                domain={[0, 16]}
+                ticks={[0, 4, 8, 12, 16]}
+              />
+              <Tooltip
+                cursor={{ fill: 'rgba(148,163,184,0.08)' }}
+                formatter={(value: number) => [`$${value}M`, '']}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: 13,
+                }}
+              />
+              <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={52} name="Budget" />
+              <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      )}
-
-      {/* Quick Actions - Floating Action Toolbar */}
-      <Card title="Quick Actions" className="bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Button 
-            variant="primary" 
-            icon={Plus}
-            onClick={() => navigate('/productions')}
-            className="w-full h-20 text-lg"
-          >
-            Create Production
-          </Button>
-          <Button 
-            variant="outline" 
-            icon={Calculator}
-            onClick={() => navigate('/calculator')}
-            className="w-full h-20 text-lg"
-          >
-            Calculate Incentives
-          </Button>
-          <Button 
-            variant="outline" 
-            icon={BarChart3}
-            onClick={() => navigate('/productions')}
-            className="w-full h-20 text-lg"
-          >
-            View Reports
-          </Button>
-          <Button 
-            variant="outline" 
-            icon={Settings}
-            onClick={() => {}}
-            className="w-full h-20 text-lg"
-          >
-            Settings
-          </Button>
-        </div>
-      </Card>
-
-      {/* Recent Productions */}
-      <Card 
-        title="Recent Productions" 
-        subtitle={`${safeProductions.length} total production${safeProductions.length !== 1 ? 's' : ''}`}
-        hoverable
-      >
-        {safeProductions.length === 0 ? (
-          <EmptyState
-            icon={Film}
-            title="No productions yet"
-            description="Create your first production to start tracking tax incentives and managing compliance."
-            actionLabel="Create your first production"
-            onAction={() => navigate('/productions')}
-          />
-        ) : (
-          <div className="space-y-3">
-            {safeProductions.slice(0, 5).map((production) => (
-              <div 
-                key={production.id} 
-                className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent-blue/10 dark:bg-accent-teal/10 rounded-lg">
-                    <Film className="h-5 w-5 text-accent-blue dark:text-accent-teal" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">{production.title}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Budget: ${production.budget.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <Button size="sm" variant="ghost">
-                  View Details →
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* Jurisdiction Coverage */}
-      <Card 
-        title="Jurisdiction Coverage" 
-        subtitle="Global tax incentive programs"
-        hoverable
-      >
-        {safeJurisdictions.length === 0 ? (
-          <EmptyState
-            icon={MapPin}
-            title="No jurisdictions available"
-            description="Jurisdiction data will be loaded from the API. Check your connection."
-            actionLabel="Refresh data"
-            onAction={checkHealth}
-          />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {safeJurisdictions.slice(0, 8).map((jurisdiction) => (
-              <div 
-                key={jurisdiction.id} 
-                className="text-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-lg hover:shadow-md transition-all border border-gray-200 dark:border-gray-700"
-              >
-                <p className="font-bold text-lg text-accent-blue dark:text-accent-teal">{jurisdiction.code}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{jurisdiction.name}</p>
-              </div>
-            ))}
-            {safeJurisdictions.length > 8 && (
-              <div className="text-center p-4 bg-gradient-to-br from-accent-blue to-accent-teal dark:from-accent-blue/80 dark:to-accent-teal/80 text-white rounded-lg flex items-center justify-center hover:shadow-lg transition-all cursor-pointer">
-                <p className="font-bold">+{safeJurisdictions.length - 8} more</p>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
+      </div>
     </div>
   );
-};
+}
 
 export default Dashboard;
-

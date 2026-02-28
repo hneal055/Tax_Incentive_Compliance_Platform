@@ -1,25 +1,28 @@
-import React, { useEffect } from 'react';
-import { MapPin, Globe, Building2 } from 'lucide-react';
+import { Globe, Building2, MapPin } from 'lucide-react';
 import Card from '../components/Card';
-import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
-import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
+import type { Production } from '../types';
 
-const Jurisdictions: React.FC = () => {
-  const { jurisdictions, fetchJurisdictions, isLoading } = useAppStore();
+interface JurisdictionsProps {
+  productions: Production[];
+  onAddProduction?: (production: Production) => void;
+  onUpdateProduction?: (production: Production) => void;
+  onDeleteProduction?: (id: string) => void;
+}
 
-  useEffect(() => {
-    fetchJurisdictions();
-  }, [fetchJurisdictions]);
-
-  if (isLoading && jurisdictions.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
+function Jurisdictions({}: JurisdictionsProps) {
+  // Mock jurisdictions data
+  const jurisdictions = [
+    { id: '1', code: 'CA', name: 'California', country: 'United States', type: 'State' },
+    { id: '2', code: 'GA', name: 'Georgia', country: 'United States', type: 'State' },
+    { id: '3', code: 'LA', name: 'Louisiana', country: 'United States', type: 'State' },
+    { id: '4', code: 'NY', name: 'New York', country: 'United States', type: 'State' },
+    { id: '5', code: 'BC', name: 'British Columbia', country: 'Canada', type: 'Province' },
+    { id: '6', code: 'ON', name: 'Ontario', country: 'Canada', type: 'Province' },
+    { id: '7', code: 'GB', name: 'United Kingdom', country: 'United Kingdom', type: 'Country' },
+    { id: '8', code: 'AU', name: 'Australia', country: 'Australia', type: 'Country' },
+  ];
 
   const getTypeIcon = (type: string) => {
     switch (type.toLowerCase()) {
@@ -37,9 +40,9 @@ const Jurisdictions: React.FC = () => {
     switch (type.toLowerCase()) {
       case 'state':
       case 'province':
-        return 'bg-accent-blue/20 text-accent-blue dark:bg-accent-blue/30 dark:text-accent-blue';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'country':
-        return 'bg-accent-emerald/20 text-accent-emerald dark:bg-accent-emerald/30 dark:text-accent-emerald';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
       default:
         return 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
@@ -48,10 +51,10 @@ const Jurisdictions: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+        <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">
           Jurisdictions
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-slate-500 mt-1.5 text-[15px]">
           {jurisdictions.length} global jurisdictions with tax incentive programs
         </p>
       </div>
@@ -65,7 +68,7 @@ const Jurisdictions: React.FC = () => {
                 title="No jurisdictions available"
                 description="Jurisdiction data will be loaded from the API. Please check your connection and ensure the backend is running."
                 actionLabel="Retry loading"
-                onAction={fetchJurisdictions}
+                onAction={() => {}}
               />
             </Card>
           </div>
@@ -83,10 +86,10 @@ const Jurisdictions: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-gradient-to-br from-accent-blue/20 to-accent-teal/20 dark:from-accent-blue/30 dark:to-accent-teal/30 rounded-lg">
-                          <TypeIcon className="h-5 w-5 text-accent-blue dark:text-accent-teal" />
+                        <div className="p-2 bg-gradient-to-br from-blue-100/50 to-cyan-100/50 dark:from-blue-900/30 dark:to-cyan-900/30 rounded-lg">
+                          <TypeIcon className="h-5 w-5 text-blue-600 dark:text-cyan-400" />
                         </div>
-                        <span className="text-3xl font-bold bg-gradient-to-r from-accent-blue to-accent-teal bg-clip-text text-transparent">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
                           {jurisdiction.code}
                         </span>
                       </div>
@@ -112,6 +115,6 @@ const Jurisdictions: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Jurisdictions;

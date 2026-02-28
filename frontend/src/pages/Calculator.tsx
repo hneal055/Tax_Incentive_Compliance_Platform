@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Calculator as CalculatorIcon, Film, MapPin, DollarSign, TrendingUp, FileText, Sparkles } from 'lucide-react';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Spinner from '../components/Spinner';
 import EmptyState from '../components/EmptyState';
 import InsightCard from '../components/InsightCard';
-import { useAppStore } from '../store';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import type { Production } from '../types';
 
-const Calculator: React.FC = () => {
-  const navigate = useNavigate();
-  const { productions, jurisdictions, fetchProductions, fetchJurisdictions, isLoading } = useAppStore();
+interface CalculatorProps {
+  productions: Production[];
+  onAddProduction?: (production: Production) => void;
+  onUpdateProduction?: (production: Production) => void;
+  onDeleteProduction?: (id: string) => void;
+}
+
+function Calculator({ productions = [] }: CalculatorProps) {
   const [selectedProduction, setSelectedProduction] = useState('');
   const [selectedJurisdiction, setSelectedJurisdiction] = useState('');
   const [results, setResults] = useState<{
@@ -24,10 +28,13 @@ const Calculator: React.FC = () => {
   } | null>(null);
   const [calculating, setCalculating] = useState(false);
 
-  useEffect(() => {
-    fetchProductions();
-    fetchJurisdictions();
-  }, [fetchProductions, fetchJurisdictions]);
+  // Mock jurisdictions
+  const jurisdictions = [
+    { id: 'ca', code: 'CA', name: 'California' },
+    { id: 'ga', code: 'GA', name: 'Georgia' },
+    { id: 'la', code: 'LA', name: 'Louisiana' },
+    { id: 'ny', code: 'NY', name: 'New York' },
+  ];
 
   const handleCalculate = async () => {
     if (!selectedProduction || !selectedJurisdiction) {
@@ -35,7 +42,7 @@ const Calculator: React.FC = () => {
     }
 
     setCalculating(true);
-    // Simulate calculation - in real app would call API
+    // Simulate calculation
     setTimeout(() => {
       const production = productions.find(p => p.id === selectedProduction);
       const jurisdiction = jurisdictions.find(j => j.id === selectedJurisdiction);
@@ -53,6 +60,8 @@ const Calculator: React.FC = () => {
     }, 1500);
   };
 
+  const isLoading = false;
+
   if (isLoading && productions.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -64,10 +73,10 @@ const Calculator: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+        <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">
           Tax Incentive Calculator
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">Calculate potential tax incentives for your production</p>
+        <p className="text-slate-500 mt-1.5 text-[15px]">Calculate potential tax incentives for your production</p>
       </div>
 
       {productions.length === 0 ? (
@@ -77,7 +86,7 @@ const Calculator: React.FC = () => {
             title="No productions to calculate"
             description="Create a production first to calculate tax incentives and see potential savings."
             actionLabel="Create a production"
-            onAction={() => navigate('/productions')}
+            onAction={() => {}}
           />
         </Card>
       ) : (
@@ -95,7 +104,7 @@ const Calculator: React.FC = () => {
                     Production
                   </label>
                   <select
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue dark:focus:ring-accent-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
                     value={selectedProduction}
                     onChange={(e) => setSelectedProduction(e.target.value)}
                   >
@@ -114,7 +123,7 @@ const Calculator: React.FC = () => {
                     Jurisdiction
                   </label>
                   <select
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue dark:focus:ring-accent-teal bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-cyan-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
                     value={selectedJurisdiction}
                     onChange={(e) => setSelectedJurisdiction(e.target.value)}
                   >
@@ -130,8 +139,6 @@ const Calculator: React.FC = () => {
                 <Button 
                   onClick={handleCalculate} 
                   disabled={calculating || !selectedProduction || !selectedJurisdiction}
-                  loading={calculating}
-                  icon={CalculatorIcon}
                   className="w-full"
                 >
                   {calculating ? 'Calculating...' : 'Calculate Incentives'}
@@ -156,12 +163,12 @@ const Calculator: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-4"
                 >
-                  <div className="p-6 bg-gradient-to-br from-status-active/20 to-accent-emerald/20 dark:from-status-active/30 dark:to-accent-emerald/30 border border-status-active dark:border-status-active/50 rounded-xl">
-                    <div className="flex items-center gap-2 text-sm text-status-active dark:text-status-active font-medium mb-2">
+                  <div className="p-6 bg-gradient-to-br from-green-100/50 to-emerald-100/50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-300 dark:border-green-700 rounded-xl">
+                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium mb-2">
                       <DollarSign className="h-4 w-4" />
                       <span>Estimated Incentive</span>
                     </div>
-                    <p className="text-4xl font-bold text-status-active dark:text-status-active">
+                    <p className="text-4xl font-bold text-green-700 dark:text-green-400">
                       ${results.incentiveAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                   </div>
@@ -194,12 +201,13 @@ const Calculator: React.FC = () => {
                         <TrendingUp className="h-4 w-4" />
                         Effective Rate
                       </span>
-                      <span className="font-bold text-lg text-accent-blue dark:text-accent-teal">{results.effectiveRate}%</span>
+                      <span className="font-bold text-lg text-blue-600 dark:text-cyan-400">{results.effectiveRate}%</span>
                     </div>
                   </div>
 
                   <div className="pt-4">
-                    <Button variant="outline" icon={FileText} className="w-full">
+                    <Button variant="outline" className="w-full">
+                      <FileText className="h-4 w-4" />
                       Generate Report
                     </Button>
                   </div>
@@ -209,7 +217,6 @@ const Calculator: React.FC = () => {
                   icon={Sparkles}
                   title="Ready to calculate"
                   description="Select a production and jurisdiction above to see your estimated tax incentives."
-                  className="py-8"
                 />
               )}
             </Card>
@@ -236,25 +243,25 @@ const Calculator: React.FC = () => {
               <ul className="space-y-2">
                 <li className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
                   <div className="flex-shrink-0 mt-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-accent-blue dark:bg-accent-teal" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-cyan-400" />
                   </div>
                   <span>Qualified expenses based on jurisdiction criteria</span>
                 </li>
                 <li className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
                   <div className="flex-shrink-0 mt-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-accent-blue dark:bg-accent-teal" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-cyan-400" />
                   </div>
                   <span>Estimated incentive amount</span>
                 </li>
                 <li className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
                   <div className="flex-shrink-0 mt-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-accent-blue dark:bg-accent-teal" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-cyan-400" />
                   </div>
                   <span>Effective tax rate</span>
                 </li>
                 <li className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
                   <div className="flex-shrink-0 mt-1">
-                    <div className="h-1.5 w-1.5 rounded-full bg-accent-blue dark:bg-accent-teal" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-cyan-400" />
                   </div>
                   <span>Detailed breakdown of calculations</span>
                 </li>
@@ -265,6 +272,6 @@ const Calculator: React.FC = () => {
       )}
     </div>
   );
-};
+}
 
 export default Calculator;

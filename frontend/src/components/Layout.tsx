@@ -1,29 +1,84 @@
-import React from 'react';
-import Navbar from './Navbar';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const tabs = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'productions', label: 'Productions', icon: Clapperboard },
+  { id: 'calculator', label: 'Incentive Calculator', icon: Calculator },
+  { id: 'jurisdictions', label: 'Jurisdictions', icon: Globe },
+  { id: 'advisor', label: 'AI Advisor', icon: Bot, badge: 'NEW' },
+];
+
+function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-      <footer className="bg-gradient-to-r from-primary-base to-charcoal text-white py-6 mt-12">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm font-medium">
-            © 2025-2026 PilotForge - Tax Incentive Intelligence for Film & TV
-          </p>
-          <p className="text-xs text-blue-200 mt-1">
-            Powered by modern data technology
-          </p>
+    <div className="flex h-screen bg-slate-50 font-sans">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#13151a] text-slate-300 flex flex-col fixed h-full z-20 shrink-0">
+        {/* Logo */}
+        <div className="px-5 py-6 flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+            $
+          </div>
+          <span className="text-white text-[17px] font-bold tracking-wide">PilotForge</span>
         </div>
-      </footer>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 space-y-0.5">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-[#2563eb] text-white'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-[18px] h-[18px] shrink-0" />
+                <span className="flex-1 text-left">{tab.label}</span>
+                {tab.badge && (
+                  <span className="px-1.5 py-0.5 bg-blue-500 text-white text-[10px] uppercase font-bold rounded-sm leading-none">
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User section */}
+        <div className="mt-auto px-4 py-4 border-t border-white/8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-[11px] text-white font-semibold shrink-0">
+              FM
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-medium truncate">Finance Manager</p>
+              <p className="text-slate-500 text-xs truncate">Pro Account</p>
+            </div>
+            <button className="text-slate-500 hover:text-slate-300 transition-colors shrink-0">
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        <main className="flex-1 bg-slate-50 p-8 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
-};
+}
 
 export default Layout;
