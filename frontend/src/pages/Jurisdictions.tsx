@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, RefreshCw, Bookmark, ChevronDown, X } from 'lucide-react';
+import { Search, RefreshCw, Bookmark, ChevronDown, X, ExternalLink, CheckCircle, Send } from 'lucide-react';
 import type { Production } from '../types';
 
 interface JurisdictionsProps {
@@ -14,16 +14,19 @@ interface JurisdictionsProps {
 const FEED_ITEMS = [
   {
     agency: 'California Film Commission',
+    url: 'https://www.film.ca.gov/',
     time: '2h ago',
     text: 'Proposed expansion of the 30-mile studio zone currently under committee review.',
   },
   {
     agency: 'British Film Commission',
+    url: 'https://britishfilmcommission.org.uk/',
     time: '5h ago',
     text: 'New guidance issued for VFX expenditure qualification under updates.',
   },
   {
     agency: 'Georgia Dept. of Econ Dev',
+    url: 'https://www.georgia.org/competitive-advantages/entertainment/georgia-film-tv-production',
     time: '1d ago',
     text: 'Fiscal year cap status: 65% utilized. Applications open.',
   },
@@ -87,15 +90,166 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   );
 }
 
+// ─── Concierge modal ─────────────────────────────────────────────────────────
+
+const INQUIRY_TYPES = [
+  'Custom jurisdiction application',
+  'Incentive eligibility review',
+  'Multi-jurisdiction strategy',
+  'Document preparation assistance',
+  'Other',
+];
+
+function ConciergeModal({ onClose }: { onClose: () => void }) {
+  const [form, setForm]       = useState({ name: '', email: '', inquiry: INQUIRY_TYPES[0], message: '' });
+  const [submitted, setSubmit] = useState(false);
+  const [errors, setErrors]   = useState<{ name?: string; email?: string; message?: string }>({});
+
+  function validate() {
+    const e: typeof errors = {};
+    if (!form.name.trim())                           e.name    = 'Name is required';
+    if (!form.email.trim() || !form.email.includes('@')) e.email = 'Valid email is required';
+    if (!form.message.trim())                        e.message = 'Please describe your inquiry';
+    return e;
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+    setSubmit(true);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-start justify-between px-7 pt-7 pb-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Contact Concierge</h2>
+              <p className="text-slate-500 text-xs mt-0.5">PilotForge specialist team · typically replies in 2h</p>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} title="Close" aria-label="Close" className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {submitted ? (
+          /* Success state */
+          <div className="px-7 py-10 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-7 h-7 text-emerald-600" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1.5">Request Received</h3>
+            <p className="text-slate-500 text-sm max-w-xs">
+              A PilotForge specialist will review your inquiry and reach out within 2 business hours.
+            </p>
+            <div className="mt-6 w-full bg-slate-50 rounded-xl p-4 text-left space-y-1.5 border border-slate-100">
+              <p className="text-xs text-slate-500"><span className="font-semibold text-slate-700">Name:</span> {form.name}</p>
+              <p className="text-xs text-slate-500"><span className="font-semibold text-slate-700">Email:</span> {form.email}</p>
+              <p className="text-xs text-slate-500"><span className="font-semibold text-slate-700">Topic:</span> {form.inquiry}</p>
+            </div>
+            <button type="button" onClick={onClose} className="mt-6 px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">
+              Done
+            </button>
+          </div>
+        ) : (
+          /* Form */
+          <form onSubmit={handleSubmit} className="px-7 py-6 space-y-4">
+            {/* Roadmap note */}
+            <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+              <p className="text-indigo-600 text-xs leading-relaxed">
+                <span className="font-bold">How this works: </span>
+                Our concierge team handles custom jurisdiction research, application preparation, and multi-territory strategy.
+                Submissions route to a specialist based on your inquiry type.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Full Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder="Jane Smith"
+                  value={form.name}
+                  onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors(er => ({ ...er, name: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.name ? 'border-red-400' : 'border-slate-200'}`}
+                />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email <span className="text-red-400">*</span></label>
+                <input
+                  type="email"
+                  placeholder="jane@studio.com"
+                  value={form.email}
+                  onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setErrors(er => ({ ...er, email: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.email ? 'border-red-400' : 'border-slate-200'}`}
+                />
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Inquiry Type</label>
+              <select
+                value={form.inquiry}
+                onChange={e => setForm(f => ({ ...f, inquiry: e.target.value }))}
+                title="Inquiry Type"
+                aria-label="Inquiry Type"
+                className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+              >
+                {INQUIRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Message <span className="text-red-400">*</span></label>
+              <textarea
+                rows={4}
+                placeholder="Describe your production's needs, jurisdiction targets, and any specific questions…"
+                value={form.message}
+                onChange={e => { setForm(f => ({ ...f, message: e.target.value })); setErrors(er => ({ ...er, message: undefined })); }}
+                className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${errors.message ? 'border-red-400' : 'border-slate-200'}`}
+              />
+              {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" className="flex-1 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                <Send className="w-4 h-4" />
+                Send Inquiry
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
-  const [search, setSearch]           = useState('');
-  const [typeFilter, setTypeFilter]   = useState('All Types');
-  const [countryFilter, setCountry]   = useState('All Countries');
-  const [selectedId, setSelectedId]   = useState<string | null>(null);
-  const [savedIds, setSavedIds]       = useState<Set<string>>(new Set());
-  const [toast, setToast]             = useState<string | null>(null);
+  const [search, setSearch]             = useState('');
+  const [typeFilter, setTypeFilter]     = useState('All Types');
+  const [countryFilter, setCountry]     = useState('All Countries');
+  const [selectedId, setSelectedId]     = useState<string | null>(null);
+  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set());
+  const [toast, setToast]               = useState<string | null>(null);
+  const [showConcierge, setConcierge]   = useState(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -154,9 +308,18 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
 
           <div className="divide-y divide-white/8">
             {FEED_ITEMS.map((item, i) => (
-              <div key={i} className="px-5 py-4 hover:bg-white/4 transition-colors cursor-pointer">
+              <div key={i} className="px-5 py-4 hover:bg-white/4 transition-colors group">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-blue-400 text-xs font-semibold">{item.agency}</span>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {item.agency}
+                    <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
                   <span className="text-slate-500 text-xs">{item.time}</span>
                 </div>
                 <p className="text-slate-400 text-xs leading-relaxed">{item.text}</p>
@@ -184,6 +347,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
           </p>
           <button
             type="button"
+            onClick={() => setConcierge(true)}
             className="w-full py-2 border border-indigo-300 rounded-lg text-indigo-600 text-sm font-semibold hover:bg-indigo-100 transition-colors"
           >
             Contact Concierge
@@ -327,6 +491,9 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
 
       {/* Toast */}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
+      {/* Concierge modal */}
+      {showConcierge && <ConciergeModal onClose={() => setConcierge(false)} />}
     </div>
   );
 }
