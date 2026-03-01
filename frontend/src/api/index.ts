@@ -90,7 +90,7 @@ export const api = {
 };
 
 export const getApiUrl = (path: string): string => {
-  return apiClient.getBaseUrl() + path;
+  return 'http://localhost:8000' + path;
 };
 
 export default api;
