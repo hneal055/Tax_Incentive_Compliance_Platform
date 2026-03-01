@@ -1,0 +1,501 @@
+=== Root Directory Files ===
+
+Name                                      Len
+                                          gth
+----                                      ---
+.dockerignore                             607
+.env                                      261
+.env.example                              126
+.env.txt                                  146
+.gitignore                                494
+.python-version                             6
+activate.ps1                              139
+automate.py                               …85
+BRANCH_PROTECTION.md                      …02
+BRAND_GUIDELINES.md                       …45
+build-image.ps1                           …13
+check_branding.py                         …22
+check_python312.py                        …89
+cleanup_commands.ps1                      653
+cleanup_investigation_20260219_085640.txt  30
+cleanup-repo.ps1                          …94
+client.ts                                 308
+CONTRIBUTING.md                           …12
+dashboard.ps1                             …13
+DEPLOYMENT_GUIDE.md                       …04
+DEPLOYMENT_NOTES.md                       782
+diagnostic-check.ps1                      …99
+docker_check.ps1                          …33
+DOCKER_SETUP.md                           …45
+docker-compose.prod.yml                   …09
+docker-compose.yml                        598
+docker-manage.ps1                         …91
+Dockerfile                                …46
+expense.py                                …94
+expenses.py                               …94
+finish-cleanup.ps1                        …32
+force_reset_database.py                   …89
+FRONTEND_IMPLEMENTATION.md                …90
+generate_docs.py                          …30
+GIT_WORKFLOW.md                           …79
+GITHUB_SETUP.md                           …10
+health-check.ps1                          …63
+k8s-deployment.yaml                       …50
+legacy_main.py.py                         …43
+list_endpoints.py                         128
+main.py                                   …02
+MILESTONE_1_COMPLETE.md                   …88
+package-lock.json                         …24
+package.json                              631
+pdf_generator.py                          …92
+PERFORMANCE_GUIDE.py                      …62
+PROJECT_PROGRESS.md                       …81
+PROJECT_SUMMARY.md                        771
+pyproject.toml                            564
+pytest.ini                                …44
+QUICK_REFERENCE.md                        …63
+README.md                                 …90
+rebrand.py                                …39
+release_notes.md                           17
+render.yaml                               513
+report.py                                 …76
+reports.py                                …45
+requirements-dev.txt                      239
+requirements-test-minimal.txt             416
+requirements-test.txt                     616
+requirements.base.txt                     140
+requirements.core.txt                     302
+requirements.data.txt                      86
+requirements.db.txt                       247
+requirements.extras.txt                   359
+requirements.txt                          …38
+routes.py                                 875
+run_comprehensive_tests_Version2.ps1      …53
+sample.pdf                                …11
+schema.prisma.txt                         …20
+setup-env.ps1                             611
+STABILITY_REVIEW.md                       …10
+start_Version2 (1).ps1                    …23
+start.ps1                                 …09
+start.sh                                  547
+Tax_incentive_compliance_dailystartup.txt 157
+test_api_endpoints.py                     …94
+test_config_validation.py                 …57
+test_error_handling.py                    …90
+test_excel.xlsx                           …02
+test_expenses_full.py                     …55
+test_performance.py                       …85
+test_production_readiness.py              …09
+test_reportlab.py                         978
+test_security.py                          …44
+TEST.md                                     8
+test.pdf                                  …28
+USER_MANUAL.md                            …12
+VERSION_CONTROL_LEVEL_10.md               …68
+VERSION_CONTROL_SETUP.md                  …42
+version_manager.py                        …98
+WORKING_STATE.md                          …63
+
+
+=== Backup Files ===
+
+    Directory: C:\Projects\Tax_Incentive_Compliance_Platform\archive_20260218_125420
+
+Mode                 LastWriteTime     Length
+----                 -------------     ------
+-a---           1/16/2026  7:36 AM        825
+-a---           1/16/2026  7:36 AM       6971
+-a---           1/16/2026  7:36 AM       4797
+
+    Directory: C:\Projects\Tax_Incentive_Compliance_Platform\tests
+
+Mode                 LastWriteTime     Length
+----                 -------------     ------
+-a---           1/16/2026  4:12 PM       4544
+
+
+=== Backup Directories ===
+
+Directory: backup_20260110_140811
+
+Name
+----
+.env.example
+.gitignore
+docker-compose.yml
+expense.py
+expenses.py
+MILESTONE_1_COMPLETE.md
+package.json
+pdf_generator.py
+PROJECT_PROGRESS.md
+pyproject.toml
+pytest.ini
+QUICK_REFERENCE.md
+README.md
+rebrand.py
+release_notes.md
+report.py
+reports.py
+requirements-dev.txt
+requirements.core.txt
+requirements.data.txt
+requirements.db.txt
+requirements.extras.txt
+requirements.txt
+routes.py
+schema.prisma
+schema.prisma.txt
+start.ps1
+Tax_incentive_compliance_dailystartup.txt
+test_production.py
+USER_MANUAL.md
+WORKING_STATE.md
+AUTOMATION_GUIDE.md
+ci-cd.yml
+AB.json
+CT.json
+FL.json
+IL.json
+LA.json
+MA.json
+NC.json
+NM.json
+NSW.json
+ON.json
+PA.json
+QC.json
+QLD.json
+UK.json
+VIC.json
+_write_test.txt
+API_EXAMPLES.md
+automate.py
+BRAND.md
+check_branding.py
+DEPLOYMENT.md
+generate_docs.py
+LICENSE
+MIT_License
+NORTH_STAR.md
+README.md
+rebrand.py
+ROADMAP.md
+RULE_FORMAT.md
+USER_MANUAL.md
+version_manager.py
+schema.prisma
+IL_FILM_CREDIT_MVP.json
+IL.json
+seed_incentive_rules.py
+seed_jurisdictions.py
+seed_more_jurisdictions.py
+seed_more_rules.py
+start_api.ps1
+start-day.ps1
+start.ps1
+test.ps1
+write_rules.ps1
+setup.ps1
+__init__.py
+logging_setup.py
+main.py
+main.py.bak_20260109_151355
+setup_database.py
+__init__.py
+calculator.py
+excel.py
+expenses.py
+incentive_rules.py
+jurisdictions
+jurisdictions.py
+productions.py
+reports.py
+routes.py
+rule_engine.py
+__init__.py
+calculator.py
+expense.py
+incentive_rule.py
+jurisdiction.py
+production.py
+report.py
+__init__.py
+engine.py
+models.py
+registry.py
+__init__.py
+config.py
+database.py
+excel_generator.py
+pdf_generator.py
+startup_banner.py
+__init__.py
+conftest.py
+pyproject.toml
+test quick start.md
+test_api_endpoints.py
+test_calculator_logic.py
+test_engine_entrypoint.py
+test_engine_evaluate_rule.py
+test_registry.py
+test_report_generation.py
+test_smoke_api.py
+test.ps1
+IL.json
+__init__.py
+
+
+Directory: backup_20260111_074042
+
+Name
+----
+.env.example
+.gitignore
+automate.py
+BRAND_GUIDELINES.md
+check_branding.py
+docker-compose.yml
+expense.py
+expenses.py
+generate_docs.py
+MILESTONE_1_COMPLETE.md
+package.json
+pdf_generator.py
+PROJECT_PROGRESS.md
+pyproject.toml
+pytest.ini
+QUICK_REFERENCE.md
+README.md
+rebrand.py
+release_notes.md
+report.py
+reports.py
+requirements-dev.txt
+requirements.core.txt
+requirements.data.txt
+requirements.db.txt
+requirements.extras.txt
+requirements.txt
+routes.py
+schema.prisma
+schema.prisma.txt
+start.ps1
+Tax_incentive_compliance_dailystartup.txt
+test_production.py
+USER_MANUAL.md
+version_manager.py
+WORKING_STATE.md
+AUTOMATION_GUIDE.md
+ci-cd.yml
+.env.example
+.gitignore
+docker-compose.yml
+expense.py
+expenses.py
+MILESTONE_1_COMPLETE.md
+package.json
+pdf_generator.py
+PROJECT_PROGRESS.md
+pyproject.toml
+pytest.ini
+QUICK_REFERENCE.md
+README.md
+rebrand.py
+release_notes.md
+report.py
+reports.py
+requirements-dev.txt
+requirements.core.txt
+requirements.data.txt
+requirements.db.txt
+requirements.extras.txt
+requirements.txt
+routes.py
+schema.prisma
+schema.prisma.txt
+start.ps1
+Tax_incentive_compliance_dailystartup.txt
+test_production.py
+USER_MANUAL.md
+WORKING_STATE.md
+AUTOMATION_GUIDE.md
+ci-cd.yml
+AB.json
+CT.json
+FL.json
+IL.json
+LA.json
+MA.json
+NC.json
+NM.json
+NSW.json
+ON.json
+PA.json
+QC.json
+QLD.json
+UK.json
+VIC.json
+_write_test.txt
+API_EXAMPLES.md
+automate.py
+BRAND.md
+check_branding.py
+DEPLOYMENT.md
+generate_docs.py
+LICENSE
+MIT_License
+NORTH_STAR.md
+README.md
+rebrand.py
+ROADMAP.md
+RULE_FORMAT.md
+USER_MANUAL.md
+version_manager.py
+schema.prisma
+IL_FILM_CREDIT_MVP.json
+IL.json
+seed_incentive_rules.py
+seed_jurisdictions.py
+seed_more_jurisdictions.py
+seed_more_rules.py
+start_api.ps1
+start-day.ps1
+start.ps1
+test.ps1
+write_rules.ps1
+setup.ps1
+__init__.py
+logging_setup.py
+main.py
+main.py.bak_20260109_151355
+setup_database.py
+__init__.py
+calculator.py
+excel.py
+expenses.py
+incentive_rules.py
+jurisdictions
+jurisdictions.py
+productions.py
+reports.py
+routes.py
+rule_engine.py
+__init__.py
+calculator.py
+expense.py
+incentive_rule.py
+jurisdiction.py
+production.py
+report.py
+__init__.py
+engine.py
+models.py
+registry.py
+__init__.py
+config.py
+database.py
+excel_generator.py
+pdf_generator.py
+startup_banner.py
+__init__.py
+conftest.py
+pyproject.toml
+test quick start.md
+test_api_endpoints.py
+test_calculator_logic.py
+test_engine_entrypoint.py
+test_engine_evaluate_rule.py
+test_registry.py
+test_report_generation.py
+test_smoke_api.py
+test.ps1
+IL.json
+__init__.py
+AB.json
+CT.json
+FL.json
+IL.json
+LA.json
+MA.json
+NC.json
+NM.json
+NSW.json
+ON.json
+PA.json
+QC.json
+QLD.json
+UK.json
+VIC.json
+_write_test.txt
+API_EXAMPLES.md
+BRAND.md
+DEPLOYMENT.md
+LICENSE
+MIT_License
+NORTH_STAR.md
+README.md
+ROADMAP.md
+RULE_FORMAT.md
+USER_MANUAL.md
+schema.prisma
+IL_FILM_CREDIT_MVP.json
+IL.json
+seed_incentive_rules.py
+seed_jurisdictions.py
+seed_more_jurisdictions.py
+seed_more_rules.py
+start_api.ps1
+start-day.ps1
+start.ps1
+test.ps1
+write_rules.ps1
+setup.ps1
+__init__.py
+logging_setup.py
+main.py
+main.py.bak_20260109_151355
+setup_database.py
+__init__.py
+calculator.py
+excel.py
+expenses.py
+incentive_rules.py
+jurisdictions
+jurisdictions.py
+productions.py
+reports.py
+routes.py
+rule_engine.py
+__init__.py
+calculator.py
+expense.py
+incentive_rule.py
+jurisdiction.py
+production.py
+report.py
+__init__.py
+engine.py
+models.py
+registry.py
+__init__.py
+config.py
+database.py
+excel_generator.py
+pdf_generator.py
+startup_banner.py
+__init__.py
+conftest.py
+pyproject.toml
+test quick start.md
+test_api_endpoints.py
+test_calculator_logic.py
+test_engine_entrypoint.py
+test_engine_evaluate_rule.py
+test_registry.py
+test_report_generation.py
+test_smoke_api.py
+test.ps1
+IL.json
+__init__.py
+

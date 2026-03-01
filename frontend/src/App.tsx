@@ -7,56 +7,21 @@ import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
 import Login from './pages/Login';
 import { useAuthStore } from './store/auth';
-import type { Production } from './types';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [productions, setProductions] = useState<Production[]>([]);
   const { isAuthenticated, loadFromStorage } = useAuthStore();
 
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
 
-  const handleAddProduction = (newProduction: Production) => {
-    setProductions((prev) => [...prev, newProduction]);
-  };
-
-  const handleUpdateProduction = (updatedProduction: Production) => {
-    setProductions((prev) =>
-      prev.map(p => p.id === updatedProduction.id ? updatedProduction : p)
-    );
-  };
-
-  const handleDeleteProduction = (id: string) => {
-    setProductions((prev) => prev.filter(p => p.id !== id));
-  };
-
-  // Shared production handlers
-  const productionHandlers = {
-    onAddProduction: handleAddProduction,
-    onUpdateProduction: handleUpdateProduction,
-    onDeleteProduction: handleDeleteProduction,
-  };
-
-  // Tab component map for cleaner rendering
   const tabComponents: Record<string, React.ReactNode> = {
-    // Dashboard updated to static design, no props needed
-    dashboard: <Dashboard />, 
-    productions: (
-      <Productions
-        productions={productions}
-        {...productionHandlers}
-      />
-    ),
-    calculator: <Calculator productions={productions} {...productionHandlers} />,
-    jurisdictions: (
-      <Jurisdictions
-        productions={productions}
-        {...productionHandlers}
-      />
-    ),
-    advisor: <AIAdvisor />,
+    dashboard:    <Dashboard />,
+    productions:  <Productions />,
+    calculator:   <Calculator />,
+    jurisdictions: <Jurisdictions />,
+    advisor:      <AIAdvisor />,
   };
 
   if (!isAuthenticated) {

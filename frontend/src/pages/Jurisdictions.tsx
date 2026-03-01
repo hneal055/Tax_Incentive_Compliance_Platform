@@ -1,15 +1,9 @@
-import { useState, useMemo } from 'react';
-import { Search, RefreshCw, Bookmark, ChevronDown, X, ExternalLink, CheckCircle, Send } from 'lucide-react';
-import type { Production } from '../types';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, RefreshCw, Bookmark, ChevronDown, X, ExternalLink, CheckCircle, Send, Loader2 } from 'lucide-react';
+import type { Jurisdiction, IncentiveRule } from '../types';
+import api from '../api';
 
-interface JurisdictionsProps {
-  productions?: Production[];
-  onAddProduction?: (production: Production) => void;
-  onUpdateProduction?: (production: Production) => void;
-  onDeleteProduction?: (id: string) => void;
-}
-
-// ─── Static data ─────────────────────────────────────────────────────────────
+// ─── Static data (regulatory feed — acceptable static content) ───────────────
 
 const FEED_ITEMS = [
   {
@@ -32,32 +26,9 @@ const FEED_ITEMS = [
   },
 ];
 
-const JURISDICTIONS = [
-  // ── United States ──────────────────────────────────────────────────────────
-  { id: '1',  regionCode: 'US', name: 'Georgia',        baseRate: 20, agency: 'Georgia Department of Commerce',      minSpend: '$500k',   type: 'State',    country: 'United States', website: 'https://www.georgia.org/competitive-advantages/entertainment/georgia-film-tv-production' },
-  { id: '2',  regionCode: 'US', name: 'California',     baseRate: 25, agency: 'California Film Commission',          minSpend: '$1,000k', type: 'State',    country: 'United States', website: 'https://www.film.ca.gov/' },
-  { id: '3',  regionCode: 'US', name: 'New York',       baseRate: 30, agency: "Governor's Office of Motion Pic.",    minSpend: '$0k',     type: 'State',    country: 'United States', website: 'https://www.esd.ny.gov/new-york-state-film-tax-credit-program' },
-  { id: '6',  regionCode: 'US', name: 'Louisiana',      baseRate: 25, agency: 'Louisiana Entertainment',             minSpend: '$300k',   type: 'State',    country: 'United States', website: 'https://www.louisianaentertainment.gov/film/motion-picture-production-program' },
-  { id: '7',  regionCode: 'US', name: 'Michigan',       baseRate: 25, agency: 'Michigan Film Office',                minSpend: '$100k',   type: 'State',    country: 'United States', website: 'https://www.michiganbusiness.org/industries/film/' },
-  { id: '8',  regionCode: 'US', name: 'New Jersey',     baseRate: 35, agency: 'NJ Motion Picture Commission',        minSpend: '$1,000k', type: 'State',    country: 'United States', website: 'https://www.njeda.gov/film/' },
-  { id: '9',  regionCode: 'US', name: 'Virginia',       baseRate: 25, agency: 'Virginia Film Office',                minSpend: '$250k',   type: 'State',    country: 'United States', website: 'https://www.film.virginia.gov/incentives/' },
-  { id: '10', regionCode: 'US', name: 'Colorado',       baseRate: 20, agency: 'Colorado Office of Film TV & Media',  minSpend: '$100k',   type: 'State',    country: 'United States', website: 'https://coloradofilm.org/incentives/' },
-  { id: '11', regionCode: 'US', name: 'Hawaii',         baseRate: 22, agency: 'Hawaii Film Office',                  minSpend: '$0k',     type: 'State',    country: 'United States', website: 'https://filmoffice.hawaii.gov/tax-incentive/' },
-  { id: '12', regionCode: 'US', name: 'Oregon',         baseRate: 20, agency: 'Oregon Film Office',                  minSpend: '$75k',    type: 'State',    country: 'United States', website: 'https://oregonfilm.org/incentives/' },
-  { id: '13', regionCode: 'US', name: 'Montana',        baseRate: 14, agency: 'Montana Film Office',                 minSpend: '$50k',    type: 'State',    country: 'United States', website: 'https://montanafilm.com/incentive-program/' },
-  { id: '14', regionCode: 'US', name: 'Mississippi',    baseRate: 25, agency: 'Mississippi Development Authority',   minSpend: '$50k',    type: 'State',    country: 'United States', website: 'https://www.filmmississippi.org/incentives' },
-  // ── Canada ─────────────────────────────────────────────────────────────────
-  { id: '5',  regionCode: 'CA', name: 'Ontario',        baseRate: 35, agency: 'Ontario Creates',                     minSpend: '$100k',   type: 'Province', country: 'Canada',         website: 'https://ontariocreates.ca/' },
-  // ── International ──────────────────────────────────────────────────────────
-  { id: '4',  regionCode: 'GB', name: 'United Kingdom', baseRate: 25, agency: 'British Film Commission',             minSpend: '$0k',     type: 'Country',  country: 'United Kingdom', website: 'https://britishfilmcommission.org.uk/' },
-  { id: '15', regionCode: 'IE', name: 'Ireland',        baseRate: 32, agency: 'Screen Ireland / Revenue Commrs.',    minSpend: '$125k',   type: 'Country',  country: 'Ireland',        website: 'https://www.revenue.ie/en/companies-and-charities/reliefs-and-exemptions/film-relief/index.aspx' },
-  { id: '16', regionCode: 'FR', name: 'France',         baseRate: 30, agency: 'Centre National du Cinéma (CNC)',     minSpend: '$1,000k', type: 'Country',  country: 'France',         website: 'https://www.cnc.fr/professionnels/aides-et-financements/' },
-  { id: '17', regionCode: 'ES', name: 'Spain',          baseRate: 30, agency: 'ICAA / Regional Film Commissions',    minSpend: '$1,000k', type: 'Country',  country: 'Spain',          website: 'https://www.icex.es/' },
-  { id: '18', regionCode: 'NZ', name: 'New Zealand',    baseRate: 40, agency: 'New Zealand Film Commission',         minSpend: '$2,500k', type: 'Country',  country: 'New Zealand',    website: 'https://www.nzfilm.co.nz/funding/nzspg' },
-];
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const ALL_TYPES     = ['All Types', 'State', 'Province', 'Country'];
-const ALL_COUNTRIES = ['All Countries', 'United States', 'Canada', 'United Kingdom', 'Ireland', 'France', 'Spain', 'New Zealand'];
+function capitalize(s: string) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -122,9 +93,9 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
 
   function validate() {
     const e: typeof errors = {};
-    if (!form.name.trim())                              e.name    = 'Name is required';
-    if (!form.email.trim() || !form.email.includes('@')) e.email  = 'Valid email is required';
-    if (!form.message.trim())                           e.message = 'Please describe your inquiry';
+    if (!form.name.trim())                               e.name    = 'Name is required';
+    if (!form.email.trim() || !form.email.includes('@')) e.email   = 'Valid email is required';
+    if (!form.message.trim())                            e.message = 'Please describe your inquiry';
     return e;
   }
 
@@ -253,58 +224,98 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
-  const [search, setSearch]           = useState('');
-  const [typeFilter, setTypeFilter]   = useState('All Types');
-  const [countryFilter, setCountry]   = useState('All Countries');
-  const [selectedId, setSelectedId]   = useState<string | null>(null);
-  const [savedIds, setSavedIds]       = useState<Set<string>>(new Set());
-  const [toast, setToast]             = useState<string | null>(null);
-  const [showConcierge, setConcierge] = useState(false);
-  const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
+export default function Jurisdictions() {
+  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
+  const [rules,         setRules]         = useState<IncentiveRule[]>([]);
+  const [isLoading,     setIsLoading]     = useState(true);
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+  const [search,       setSearch]       = useState('');
+  const [typeFilter,   setTypeFilter]   = useState('All Types');
+  const [countryFilter, setCountry]     = useState('All Countries');
+  const [selectedId,   setSelectedId]   = useState<string | null>(null);
+  const [savedIds,     setSavedIds]     = useState<Set<string>>(new Set());
+  const [toast,        setToast]        = useState<string | null>(null);
+  const [showConcierge, setConcierge]   = useState(false);
+  const [addedIds,     setAddedIds]     = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    Promise.all([api.jurisdictions.list(), api.incentiveRules.list()])
+      .then(([jurs, rls]) => { setJurisdictions(jurs); setRules(rls); })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  // ── Client-side join helpers ─────────────────────────────────────────────────
+
+  function getBestRate(jId: string): number {
+    return rules
+      .filter(r => r.jurisdictionId === jId && r.active && r.percentage != null)
+      .reduce((max, r) => Math.max(max, r.percentage ?? 0), 0);
   }
+
+  function getMinSpend(jId: string): string {
+    const r = rules.find(r => r.jurisdictionId === jId && r.active && r.minSpend != null);
+    if (!r?.minSpend) return 'None';
+    const v = r.minSpend;
+    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}k`;
+    return `$${v}`;
+  }
+
+  // ── Dynamic filter options ───────────────────────────────────────────────────
+
+  const ALL_TYPES = useMemo(() => {
+    const types = Array.from(new Set(jurisdictions.map(j => capitalize(j.type)))).sort();
+    return ['All Types', ...types];
+  }, [jurisdictions]);
+
+  const ALL_COUNTRIES = useMemo(() => {
+    const countries = Array.from(new Set(jurisdictions.map(j => j.country))).sort();
+    return ['All Countries', ...countries];
+  }, [jurisdictions]);
+
+  // ── Filtering ────────────────────────────────────────────────────────────────
+
+  const filtered = useMemo(() => jurisdictions.filter(j => {
+    const matchType    = typeFilter    === 'All Types'     || capitalize(j.type) === typeFilter;
+    const matchCountry = countryFilter === 'All Countries' || j.country           === countryFilter;
+    const matchSearch  = !search.trim() ||
+      j.name.toLowerCase().includes(search.toLowerCase()) ||
+      j.country.toLowerCase().includes(search.toLowerCase()) ||
+      j.code.toLowerCase().includes(search.toLowerCase());
+    return matchType && matchCountry && matchSearch;
+  }), [jurisdictions, search, typeFilter, countryFilter]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+
+  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000); }
 
   function toggleSave(id: string, e: React.MouseEvent) {
     e.stopPropagation();
-    setSavedIds(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSavedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
-  function handleAddToProduction(j: typeof JURISDICTIONS[0], e: React.MouseEvent) {
+  function handleAddHint(name: string, e: React.MouseEvent) {
     e.stopPropagation();
-    if (onAddProduction) {
-      const now = new Date().toISOString();
-      onAddProduction({ id: `jur-${j.id}-${Date.now()}`, title: `${j.name} Production`, budget: 0, jurisdiction_id: j.id, created_at: now, updated_at: now });
-    }
-    setAddedIds(prev => new Set(prev).add(j.id));
-    setTimeout(() => setAddedIds(prev => { const n = new Set(prev); n.delete(j.id); return n; }), 2500);
-    showToast(`${j.name} added to production`);
+    setAddedIds(prev => new Set(prev).add(name));
+    setTimeout(() => setAddedIds(prev => { const n = new Set(prev); n.delete(name); return n; }), 2500);
+    showToast(`Go to Productions to create a production in ${name}`);
   }
 
-  function handleReview(j: typeof JURISDICTIONS[0], e: React.MouseEvent) {
+  function handleReview(j: Jurisdiction, e: React.MouseEvent) {
     e.stopPropagation();
-    window.open(j.website, '_blank', 'noopener,noreferrer');
+    window.open(j.website ?? '#', '_blank', 'noopener,noreferrer');
   }
 
   function handleRefresh() {
-    showToast('Jurisdiction data refreshed');
+    setIsLoading(true);
+    Promise.all([api.jurisdictions.list(), api.incentiveRules.list()])
+      .then(([jurs, rls]) => { setJurisdictions(jurs); setRules(rls); showToast('Jurisdiction data refreshed'); })
+      .catch(() => showToast('Refresh failed'))
+      .finally(() => setIsLoading(false));
   }
 
-  const selectedJur = selectedId ? JURISDICTIONS.find(j => j.id === selectedId) ?? null : null;
-
-  const filtered = useMemo(() => JURISDICTIONS.filter(j => {
-    const matchType    = typeFilter    === 'All Types'     || j.type    === typeFilter;
-    const matchCountry = countryFilter === 'All Countries' || j.country === countryFilter;
-    const matchSearch  = !search.trim() || j.name.toLowerCase().includes(search.toLowerCase()) || j.agency.toLowerCase().includes(search.toLowerCase());
-    return matchType && matchCountry && matchSearch;
-  }), [search, typeFilter, countryFilter]);
+  const selectedJur = selectedId ? jurisdictions.find(j => j.id === selectedId) ?? null : null;
 
   return (
     <div className="flex gap-6 h-full min-h-0">
@@ -393,7 +404,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name or agency..."
+              placeholder="Search by name, code, or country..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -407,7 +418,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
             aria-label="Refresh jurisdictions"
             className="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-colors shadow-sm"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
@@ -416,7 +427,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 flex items-center gap-6">
             {/* Rate badge */}
             <div className="shrink-0 text-center">
-              <div className="text-3xl font-black text-blue-700 leading-none">{selectedJur.baseRate}%</div>
+              <div className="text-3xl font-black text-blue-700 leading-none">{getBestRate(selectedJur.id)}%</div>
               <div className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mt-0.5">Base Rate</div>
             </div>
 
@@ -427,38 +438,33 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
               <div>
                 <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Jurisdiction</p>
                 <p className="text-sm font-bold text-slate-900 truncate">
-                  <span className="text-slate-400 font-semibold mr-1">{selectedJur.regionCode}</span>
+                  <span className="text-slate-400 font-semibold mr-1">{selectedJur.code}</span>
                   {selectedJur.name}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Agency</p>
-                <p className="text-sm font-semibold text-slate-700 truncate">{selectedJur.agency}</p>
+                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Country</p>
+                <p className="text-sm font-semibold text-slate-700 truncate">{selectedJur.country}</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Min Spend · Type</p>
-                <p className="text-sm font-semibold text-slate-700">{selectedJur.minSpend} · {selectedJur.type}</p>
+                <p className="text-sm font-semibold text-slate-700">{getMinSpend(selectedJur.id)} · {capitalize(selectedJur.type)}</p>
               </div>
             </div>
 
             {/* Actions */}
             <div className="shrink-0 flex items-center gap-2">
-              <a
-                href={selectedJur.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                Official Site
-              </a>
-              <button
-                type="button"
-                onClick={e => handleAddToProduction(selectedJur, e)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
-              >
-                + Add to Production
-              </button>
+              {selectedJur.website && (
+                <a
+                  href={selectedJur.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Official Site
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => setSelectedId(null)}
@@ -472,8 +478,15 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
           </div>
         )}
 
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+          </div>
+        )}
+
         {/* Grid */}
-        {filtered.length === 0 ? (
+        {!isLoading && filtered.length === 0 && (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <p className="text-slate-500 font-medium">No jurisdictions match your filters.</p>
@@ -486,12 +499,16 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
               </button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {!isLoading && filtered.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pb-2">
             {filtered.map(j => {
               const isSelected = selectedId === j.id;
               const isSaved    = savedIds.has(j.id);
               const isAdded    = addedIds.has(j.id);
+              const rate       = getBestRate(j.id);
+              const minSpend   = getMinSpend(j.id);
               return (
                 <div
                   key={j.id}
@@ -504,24 +521,26 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
                 >
                   {/* Card header */}
                   <div className="flex items-start gap-3">
-                    <span className="text-slate-400 text-sm font-semibold mt-1 shrink-0">{j.regionCode}</span>
+                    <span className="text-slate-400 text-sm font-semibold mt-1 shrink-0">{j.code}</span>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-bold text-slate-900 leading-tight">{j.name}</h3>
                     </div>
-                    <span className="shrink-0 px-2 py-0.5 bg-emerald-500 text-white text-[11px] font-bold rounded-md tracking-wide">
-                      {j.baseRate}% BASE
-                    </span>
+                    {rate > 0 && (
+                      <span className="shrink-0 px-2 py-0.5 bg-emerald-500 text-white text-[11px] font-bold rounded-md tracking-wide">
+                        {rate}% BASE
+                      </span>
+                    )}
                   </div>
 
                   {/* Details */}
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-xs w-16 shrink-0">Agency</span>
-                      <span className="text-slate-700 text-xs font-semibold truncate">{j.agency}</span>
+                      <span className="text-slate-400 text-xs w-16 shrink-0">Country</span>
+                      <span className="text-slate-700 text-xs font-semibold truncate">{j.country}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 text-xs w-16 shrink-0">Min Spend</span>
-                      <span className="text-slate-700 text-xs font-semibold">{j.minSpend}</span>
+                      <span className="text-slate-700 text-xs font-semibold">{minSpend}</span>
                     </div>
                   </div>
 
@@ -542,7 +561,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={e => handleAddToProduction(j, e)}
+                        onClick={e => handleAddHint(j.name, e)}
                         className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest transition-colors ${
                           isAdded ? 'text-emerald-600' : 'text-blue-600 hover:text-blue-700'
                         }`}

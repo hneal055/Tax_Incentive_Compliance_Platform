@@ -1,0 +1,17 @@
+{
+    "name": "Tax Incentive Compliance Platform",
+    "build": {
+        "dockerfile": "../Dockerfile"
+    },
+    "workspaceFolder": "/app",
+    "forwardPorts": [8000],
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+    ],
+    "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt || true",
+    "remoteUser": "root"
+}

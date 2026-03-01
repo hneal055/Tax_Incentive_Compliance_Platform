@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calculator as CalcIcon,
   TrendingUp,
@@ -7,34 +7,10 @@ import {
   Download,
   RotateCcw,
   CheckCircle,
+  Loader2,
 } from 'lucide-react';
-import type { Production } from '../types';
-
-interface CalculatorProps {
-  productions: Production[];
-  onAddProduction?: (production: Production) => void;
-  onUpdateProduction?: (production: Production) => void;
-  onDeleteProduction?: (id: string) => void;
-}
-
-// ─── Static data ────────────────────────────────────────────────────────────
-
-const MOCK_PRODUCTIONS: Production[] = [
-  { id: 'mock-1', title: 'The Silent Horizon',  budget: 15000000, jurisdiction_id: 'ga', created_at: '2025-01-15T00:00:00Z', updated_at: '2025-01-15T00:00:00Z' },
-  { id: 'mock-2', title: 'Echoes of Midnight',  budget: 8000000,  jurisdiction_id: 'ny', created_at: '2025-02-01T00:00:00Z', updated_at: '2025-02-01T00:00:00Z' },
-  { id: 'mock-3', title: 'Neon Pulse',           budget: 4000000,  jurisdiction_id: 'la', created_at: '2025-03-01T00:00:00Z', updated_at: '2025-03-01T00:00:00Z' },
-];
-
-const JURISDICTIONS = [
-  { id: 'ga', regionCode: 'us', name: 'Georgia',          creditRate: 0.20, qualifiedRatio: 0.85 },
-  { id: 'ca', regionCode: 'us', name: 'California',       creditRate: 0.25, qualifiedRatio: 0.80 },
-  { id: 'la', regionCode: 'us', name: 'Louisiana',        creditRate: 0.25, qualifiedRatio: 0.85 },
-  { id: 'ny', regionCode: 'us', name: 'New York',         creditRate: 0.30, qualifiedRatio: 0.80 },
-  { id: 'bc', regionCode: 'ca', name: 'British Columbia', creditRate: 0.28, qualifiedRatio: 0.85 },
-  { id: 'on', regionCode: 'ca', name: 'Ontario',          creditRate: 0.35, qualifiedRatio: 0.75 },
-  { id: 'gb', regionCode: 'gb', name: 'United Kingdom',   creditRate: 0.25, qualifiedRatio: 0.80 },
-  { id: 'au', regionCode: 'au', name: 'Australia',        creditRate: 0.20, qualifiedRatio: 0.90 },
-];
+import type { Production, Jurisdiction } from '../types';
+import api from '../api';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,43 +34,70 @@ function fmt(n: number) {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export default function Calculator({ productions = [] }: CalculatorProps) {
-  const displayProductions = productions.length > 0 ? productions : MOCK_PRODUCTIONS;
+export default function Calculator() {
+  const [productions,  setProductions]  = useState<Production[]>([]);
+  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
+  const [dataLoading,  setDataLoading]  = useState(true);
 
-  const [prodId,   setProdId]   = useState(displayProductions[0]?.id ?? '');
-  const [jurId,    setJurId]    = useState(JURISDICTIONS[0].id);
+  const [prodId,   setProdId]   = useState('');
+  const [jurId,    setJurId]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const [result,   setResult]   = useState<CalcResult | null>(null);
   const [reported, setReported] = useState(false);
+  const [calcError, setCalcError] = useState<string | null>(null);
 
-  function handleCalculate() {
-    const prod = displayProductions.find(p => p.id === prodId);
-    const jur  = JURISDICTIONS.find(j => j.id === jurId);
+  useEffect(() => {
+    Promise.all([api.productions.list(), api.jurisdictions.list()])
+      .then(([prods, jurs]) => {
+        setProductions(prods);
+        setJurisdictions(jurs.filter(j => j.active));
+        if (prods.length)  setProdId(prods[0].id);
+        if (jurs.length)   setJurId(jurs[0].id);
+      })
+      .catch(() => {})
+      .finally(() => setDataLoading(false));
+  }, []);
+
+  async function handleCalculate() {
+    const prod = productions.find(p => p.id === prodId);
+    const jur  = jurisdictions.find(j => j.id === jurId);
     if (!prod || !jur) return;
 
     setLoading(true);
     setResult(null);
     setReported(false);
+    setCalcError(null);
 
-    setTimeout(() => {
-      const qualified = prod.budget * jur.qualifiedRatio;
-      const credit    = qualified * jur.creditRate;
+    try {
+      const data = await api.calculations.calculate(prodId, jurId);
+
+      const creditRate = data.qualified_expenses > 0
+        ? (data.incentive_amount / data.qualified_expenses) * 100
+        : 0;
+      const effectiveRate = data.total_expenses > 0
+        ? (data.incentive_amount / data.total_expenses) * 100
+        : 0;
+
       setResult({
-        productionTitle:  prod.title,
-        jurisdictionName: jur.name,
-        totalBudget:      prod.budget,
-        qualifiedExpenses: qualified,
-        creditRate:       jur.creditRate * 100,
-        estimatedCredit:  credit,
-        effectiveRate:    (credit / prod.budget) * 100,
+        productionTitle:   prod.title,
+        jurisdictionName:  jur.name,
+        totalBudget:       data.total_expenses,
+        qualifiedExpenses: data.qualified_expenses,
+        creditRate,
+        estimatedCredit:   data.incentive_amount,
+        effectiveRate,
       });
+    } catch {
+      setCalcError('Calculation failed. Ensure this production has qualifying expenses.');
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   }
 
   function handleReset() {
     setResult(null);
     setReported(false);
+    setCalcError(null);
   }
 
   function handleDownload() {
@@ -102,7 +105,20 @@ export default function Calculator({ productions = [] }: CalculatorProps) {
     setTimeout(() => setReported(false), 3000);
   }
 
-  const canCalculate = !!prodId && !!jurId;
+  const canCalculate = !!prodId && !!jurId && !dataLoading;
+
+  // ── No productions prompt ─────────────────────────────────────────────────
+  if (!dataLoading && productions.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="text-center">
+          <CalcIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" strokeWidth={1.2} />
+          <p className="text-slate-600 font-semibold mb-1">No productions yet</p>
+          <p className="text-slate-400 text-sm">Add a production on the Productions page before running a calculation.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex gap-6 h-full min-h-0">
@@ -116,53 +132,66 @@ export default function Calculator({ productions = [] }: CalculatorProps) {
             <h2 className="text-base font-bold text-slate-900">Quick Estimate</h2>
           </div>
 
-          <div className="space-y-5">
-            {/* Production select */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
-                Production
-              </label>
-              <select
-                value={prodId}
-                onChange={e => { setProdId(e.target.value); setResult(null); }}
-                title="Production"
-                aria-label="Production"
-                className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
-              >
-                {displayProductions.map(p => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-              </select>
+          {dataLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
             </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Production select */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
+                  Production
+                </label>
+                <select
+                  value={prodId}
+                  onChange={e => { setProdId(e.target.value); setResult(null); setCalcError(null); }}
+                  title="Production"
+                  aria-label="Production"
+                  className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                >
+                  {productions.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Jurisdiction select */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
-                Jurisdiction
-              </label>
-              <select
-                value={jurId}
-                onChange={e => { setJurId(e.target.value); setResult(null); }}
-                title="Jurisdiction"
-                aria-label="Jurisdiction"
-                className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+              {/* Jurisdiction select */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">
+                  Jurisdiction
+                </label>
+                <select
+                  value={jurId}
+                  onChange={e => { setJurId(e.target.value); setResult(null); setCalcError(null); }}
+                  title="Jurisdiction"
+                  aria-label="Jurisdiction"
+                  className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                >
+                  {jurisdictions.map(j => (
+                    <option key={j.id} value={j.id}>{j.code} — {j.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Error */}
+              {calcError && (
+                <p className="text-red-500 text-xs bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {calcError}
+                </p>
+              )}
+
+              {/* Run Calculation button */}
+              <button
+                type="button"
+                onClick={handleCalculate}
+                disabled={!canCalculate || loading}
+                className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {JURISDICTIONS.map(j => (
-                  <option key={j.id} value={j.id}>{j.regionCode} {j.name}</option>
-                ))}
-              </select>
+                {loading ? 'Calculating…' : 'Run Calculation'}
+              </button>
             </div>
-
-            {/* Run Calculation button */}
-            <button
-              type="button"
-              onClick={handleCalculate}
-              disabled={!canCalculate || loading}
-              className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? 'Calculating…' : 'Run Calculation'}
-            </button>
-          </div>
+          )}
 
           {/* How it works — compact */}
           <div className="mt-6 pt-5 border-t border-slate-100">
@@ -209,10 +238,10 @@ export default function Calculator({ productions = [] }: CalculatorProps) {
             {/* Top stat cards */}
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {[
-                { label: 'Total Budget',        value: fmt(result.totalBudget),       icon: Film,        color: 'text-blue-600',    bg: 'bg-blue-50'   },
-                { label: 'Qualified Expenses',  value: fmt(result.qualifiedExpenses),  icon: DollarSign,  color: 'text-violet-600',  bg: 'bg-violet-50' },
-                { label: 'Credit Rate',         value: `${result.creditRate.toFixed(0)}%`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { label: 'Est. Tax Credit',     value: fmt(result.estimatedCredit),   icon: DollarSign,  color: 'text-emerald-600', bg: 'bg-emerald-50', highlight: true },
+                { label: 'Total Budget',        value: fmt(result.totalBudget),                        icon: Film,       color: 'text-blue-600',    bg: 'bg-blue-50'    },
+                { label: 'Qualified Expenses',  value: fmt(result.qualifiedExpenses),                  icon: DollarSign, color: 'text-violet-600',  bg: 'bg-violet-50'  },
+                { label: 'Credit Rate',         value: `${result.creditRate.toFixed(0)}%`,             icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                { label: 'Est. Tax Credit',     value: fmt(result.estimatedCredit), icon: DollarSign,  color: 'text-emerald-600', bg: 'bg-emerald-50', highlight: true },
               ].map(s => {
                 const Icon = s.icon;
                 return (
@@ -248,13 +277,13 @@ export default function Calculator({ productions = [] }: CalculatorProps) {
 
               <div className="divide-y divide-slate-100">
                 {[
-                  { label: 'Production',           value: result.productionTitle,                              mono: false },
-                  { label: 'Jurisdiction',          value: result.jurisdictionName,                             mono: false },
-                  { label: 'Total Budget',          value: `$${result.totalBudget.toLocaleString()}`,           mono: true  },
-                  { label: 'Qualified Ratio',       value: `${((result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0)}% of budget`, mono: true },
-                  { label: 'Qualified Expenses',    value: `$${result.qualifiedExpenses.toLocaleString()}`,     mono: true  },
-                  { label: 'Credit Rate',           value: `${result.creditRate.toFixed(0)}%`,                 mono: true  },
-                  { label: 'Estimated Tax Credit',  value: `$${result.estimatedCredit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, mono: true, bold: true },
+                  { label: 'Production',           value: result.productionTitle,                                                mono: false },
+                  { label: 'Jurisdiction',         value: result.jurisdictionName,                                               mono: false },
+                  { label: 'Total Budget',         value: `$${result.totalBudget.toLocaleString()}`,                             mono: true  },
+                  { label: 'Qualified Ratio',      value: `${result.totalBudget > 0 ? ((result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0) : 0}% of budget`, mono: true },
+                  { label: 'Qualified Expenses',   value: `$${result.qualifiedExpenses.toLocaleString()}`,                       mono: true  },
+                  { label: 'Credit Rate',          value: `${result.creditRate.toFixed(0)}%`,                                    mono: true  },
+                  { label: 'Estimated Tax Credit', value: `$${result.estimatedCredit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, mono: true, bold: true },
                 ].map(row => (
                   <div key={row.label} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50 transition-colors">
                     <span className="text-sm text-slate-500">{row.label}</span>
@@ -270,10 +299,10 @@ export default function Calculator({ productions = [] }: CalculatorProps) {
                 <span className="text-xs text-slate-500">Budget utilization</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                    {((result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0)}% qualifies
+                    {result.totalBudget > 0 ? ((result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0) : 0}% qualifies
                   </span>
                   <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
-                    {(100 - (result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0)}% excluded
+                    {result.totalBudget > 0 ? (100 - (result.qualifiedExpenses / result.totalBudget) * 100).toFixed(0) : 100}% excluded
                   </span>
                 </div>
               </div>

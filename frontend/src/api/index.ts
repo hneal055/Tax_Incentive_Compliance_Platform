@@ -11,7 +11,7 @@ import type {
 export const api = {
   // Health check
   health: async (): Promise<HealthStatus> => {
-    const response = await apiClient.get('/health', { baseURL: 'http://localhost:8000' });
+    const response = await apiClient.get('/health');
     return response.data;
   },
 
@@ -19,7 +19,7 @@ export const api = {
   productions: {
     list: async (): Promise<Production[]> => {
       const response = await apiClient.get('/productions');
-      return response.data;
+      return response.data.productions ?? response.data;
     },
     get: async (id: string): Promise<Production> => {
       const response = await apiClient.get(`/productions/${id}`);
@@ -42,7 +42,7 @@ export const api = {
   jurisdictions: {
     list: async (): Promise<Jurisdiction[]> => {
       const response = await apiClient.get('/jurisdictions');
-      return response.data;
+      return response.data.jurisdictions ?? response.data;
     },
     get: async (id: string): Promise<Jurisdiction> => {
       const response = await apiClient.get(`/jurisdictions/${id}`);
@@ -54,7 +54,7 @@ export const api = {
   incentiveRules: {
     list: async (): Promise<IncentiveRule[]> => {
       const response = await apiClient.get('/incentive-rules');
-      return response.data;
+      return response.data.rules ?? response.data;
     },
     getByJurisdiction: async (jurisdictionId: string): Promise<IncentiveRule[]> => {
       const response = await apiClient.get(`/jurisdictions/${jurisdictionId}/incentive-rules`);
@@ -90,7 +90,8 @@ export const api = {
 };
 
 export const getApiUrl = (path: string): string => {
-  return 'http://localhost:8000' + path;
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  return base + path;
 };
 
 export default api;

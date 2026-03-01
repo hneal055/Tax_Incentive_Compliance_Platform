@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Zap, LogIn, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 
