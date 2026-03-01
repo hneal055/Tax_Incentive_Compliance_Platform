@@ -9,7 +9,7 @@ interface JurisdictionsProps {
   onDeleteProduction?: (id: string) => void;
 }
 
-// ─── Static data ────────────────────────────────────────────────────────────
+// ─── Static data ─────────────────────────────────────────────────────────────
 
 const FEED_ITEMS = [
   {
@@ -34,32 +34,32 @@ const FEED_ITEMS = [
 
 const JURISDICTIONS = [
   // ── United States ──────────────────────────────────────────────────────────
-  { id: '1',  regionCode: 'US', name: 'Georgia',       baseRate: 20, agency: 'Georgia Department of Commerce',      minSpend: '$500k',   type: 'State',    country: 'United States' },
-  { id: '2',  regionCode: 'US', name: 'California',    baseRate: 25, agency: 'California Film Commission',          minSpend: '$1,000k', type: 'State',    country: 'United States' },
-  { id: '3',  regionCode: 'US', name: 'New York',      baseRate: 30, agency: "Governor's Office of Motion Pic.",    minSpend: '$0k',     type: 'State',    country: 'United States' },
-  { id: '6',  regionCode: 'US', name: 'Louisiana',     baseRate: 25, agency: 'Louisiana Entertainment',            minSpend: '$300k',   type: 'State',    country: 'United States' },
-  { id: '7',  regionCode: 'US', name: 'Michigan',      baseRate: 25, agency: 'Michigan Film Office',               minSpend: '$100k',   type: 'State',    country: 'United States' },
-  { id: '8',  regionCode: 'US', name: 'New Jersey',    baseRate: 35, agency: 'NJ Motion Picture Commission',       minSpend: '$1,000k', type: 'State',    country: 'United States' },
-  { id: '9',  regionCode: 'US', name: 'Virginia',      baseRate: 25, agency: 'Virginia Film Office',               minSpend: '$250k',   type: 'State',    country: 'United States' },
-  { id: '10', regionCode: 'US', name: 'Colorado',      baseRate: 20, agency: 'Colorado Office of Film TV & Media', minSpend: '$100k',   type: 'State',    country: 'United States' },
-  { id: '11', regionCode: 'US', name: 'Hawaii',        baseRate: 22, agency: 'Hawaii Film Office',                 minSpend: '$0k',     type: 'State',    country: 'United States' },
-  { id: '12', regionCode: 'US', name: 'Oregon',        baseRate: 20, agency: 'Oregon Film Office',                 minSpend: '$75k',    type: 'State',    country: 'United States' },
-  { id: '13', regionCode: 'US', name: 'Montana',       baseRate: 14, agency: 'Montana Film Office',                minSpend: '$50k',    type: 'State',    country: 'United States' },
-  { id: '14', regionCode: 'US', name: 'Mississippi',   baseRate: 25, agency: 'Mississippi Development Authority',  minSpend: '$50k',    type: 'State',    country: 'United States' },
+  { id: '1',  regionCode: 'US', name: 'Georgia',        baseRate: 20, agency: 'Georgia Department of Commerce',      minSpend: '$500k',   type: 'State',    country: 'United States', website: 'https://www.georgia.org/competitive-advantages/entertainment/georgia-film-tv-production' },
+  { id: '2',  regionCode: 'US', name: 'California',     baseRate: 25, agency: 'California Film Commission',          minSpend: '$1,000k', type: 'State',    country: 'United States', website: 'https://www.film.ca.gov/' },
+  { id: '3',  regionCode: 'US', name: 'New York',       baseRate: 30, agency: "Governor's Office of Motion Pic.",    minSpend: '$0k',     type: 'State',    country: 'United States', website: 'https://www.esd.ny.gov/new-york-state-film-tax-credit-program' },
+  { id: '6',  regionCode: 'US', name: 'Louisiana',      baseRate: 25, agency: 'Louisiana Entertainment',             minSpend: '$300k',   type: 'State',    country: 'United States', website: 'https://www.louisianaentertainment.gov/film/motion-picture-production-program' },
+  { id: '7',  regionCode: 'US', name: 'Michigan',       baseRate: 25, agency: 'Michigan Film Office',                minSpend: '$100k',   type: 'State',    country: 'United States', website: 'https://www.michiganbusiness.org/industries/film/' },
+  { id: '8',  regionCode: 'US', name: 'New Jersey',     baseRate: 35, agency: 'NJ Motion Picture Commission',        minSpend: '$1,000k', type: 'State',    country: 'United States', website: 'https://www.njeda.gov/film/' },
+  { id: '9',  regionCode: 'US', name: 'Virginia',       baseRate: 25, agency: 'Virginia Film Office',                minSpend: '$250k',   type: 'State',    country: 'United States', website: 'https://www.film.virginia.gov/incentives/' },
+  { id: '10', regionCode: 'US', name: 'Colorado',       baseRate: 20, agency: 'Colorado Office of Film TV & Media',  minSpend: '$100k',   type: 'State',    country: 'United States', website: 'https://coloradofilm.org/incentives/' },
+  { id: '11', regionCode: 'US', name: 'Hawaii',         baseRate: 22, agency: 'Hawaii Film Office',                  minSpend: '$0k',     type: 'State',    country: 'United States', website: 'https://filmoffice.hawaii.gov/tax-incentive/' },
+  { id: '12', regionCode: 'US', name: 'Oregon',         baseRate: 20, agency: 'Oregon Film Office',                  minSpend: '$75k',    type: 'State',    country: 'United States', website: 'https://oregonfilm.org/incentives/' },
+  { id: '13', regionCode: 'US', name: 'Montana',        baseRate: 14, agency: 'Montana Film Office',                 minSpend: '$50k',    type: 'State',    country: 'United States', website: 'https://montanafilm.com/incentive-program/' },
+  { id: '14', regionCode: 'US', name: 'Mississippi',    baseRate: 25, agency: 'Mississippi Development Authority',   minSpend: '$50k',    type: 'State',    country: 'United States', website: 'https://www.filmmississippi.org/incentives' },
   // ── Canada ─────────────────────────────────────────────────────────────────
-  { id: '5',  regionCode: 'CA', name: 'Ontario',       baseRate: 35, agency: 'Ontario Creates',                    minSpend: '$100k',   type: 'Province', country: 'Canada' },
-  // ── International ───────────────────────────────────────────────────────────
-  { id: '4',  regionCode: 'GB', name: 'United Kingdom',baseRate: 25, agency: 'British Film Commission',            minSpend: '$0k',     type: 'Country',  country: 'United Kingdom' },
-  { id: '15', regionCode: 'IE', name: 'Ireland',       baseRate: 32, agency: 'Screen Ireland / Revenue Commrs.',   minSpend: '$125k',   type: 'Country',  country: 'Ireland' },
-  { id: '16', regionCode: 'FR', name: 'France',        baseRate: 30, agency: 'Centre National du Cinéma (CNC)',    minSpend: '$1,000k', type: 'Country',  country: 'France' },
-  { id: '17', regionCode: 'ES', name: 'Spain',         baseRate: 30, agency: 'ICAA / Regional Film Commissions',   minSpend: '$1,000k', type: 'Country',  country: 'Spain' },
-  { id: '18', regionCode: 'NZ', name: 'New Zealand',   baseRate: 40, agency: 'New Zealand Film Commission',        minSpend: '$2,500k', type: 'Country',  country: 'New Zealand' },
+  { id: '5',  regionCode: 'CA', name: 'Ontario',        baseRate: 35, agency: 'Ontario Creates',                     minSpend: '$100k',   type: 'Province', country: 'Canada',         website: 'https://ontariocreates.ca/' },
+  // ── International ──────────────────────────────────────────────────────────
+  { id: '4',  regionCode: 'GB', name: 'United Kingdom', baseRate: 25, agency: 'British Film Commission',             minSpend: '$0k',     type: 'Country',  country: 'United Kingdom', website: 'https://britishfilmcommission.org.uk/' },
+  { id: '15', regionCode: 'IE', name: 'Ireland',        baseRate: 32, agency: 'Screen Ireland / Revenue Commrs.',    minSpend: '$125k',   type: 'Country',  country: 'Ireland',        website: 'https://www.revenue.ie/en/companies-and-charities/reliefs-and-exemptions/film-relief/index.aspx' },
+  { id: '16', regionCode: 'FR', name: 'France',         baseRate: 30, agency: 'Centre National du Cinéma (CNC)',     minSpend: '$1,000k', type: 'Country',  country: 'France',         website: 'https://www.cnc.fr/professionnels/aides-et-financements/' },
+  { id: '17', regionCode: 'ES', name: 'Spain',          baseRate: 30, agency: 'ICAA / Regional Film Commissions',    minSpend: '$1,000k', type: 'Country',  country: 'Spain',          website: 'https://www.icex.es/' },
+  { id: '18', regionCode: 'NZ', name: 'New Zealand',    baseRate: 40, agency: 'New Zealand Film Commission',         minSpend: '$2,500k', type: 'Country',  country: 'New Zealand',    website: 'https://www.nzfilm.co.nz/funding/nzspg' },
 ];
 
 const ALL_TYPES     = ['All Types', 'State', 'Province', 'Country'];
 const ALL_COUNTRIES = ['All Countries', 'United States', 'Canada', 'United Kingdom', 'Ireland', 'France', 'Spain', 'New Zealand'];
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function FilterDropdown({ value, options, onChange }: { value: string; options: string[]; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -96,7 +96,7 @@ function FilterDropdown({ value, options, onChange }: { value: string; options: 
 
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium animate-in">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium">
       <span>{message}</span>
       <button type="button" onClick={onClose} title="Dismiss" aria-label="Dismiss notification" className="text-slate-400 hover:text-white transition-colors">
         <X className="w-4 h-4" />
@@ -105,7 +105,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   );
 }
 
-// ─── Concierge modal ─────────────────────────────────────────────────────────
+// ─── Concierge modal ──────────────────────────────────────────────────────────
 
 const INQUIRY_TYPES = [
   'Custom jurisdiction application',
@@ -116,15 +116,15 @@ const INQUIRY_TYPES = [
 ];
 
 function ConciergeModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm]       = useState({ name: '', email: '', inquiry: INQUIRY_TYPES[0], message: '' });
+  const [form, setForm]        = useState({ name: '', email: '', inquiry: INQUIRY_TYPES[0], message: '' });
   const [submitted, setSubmit] = useState(false);
-  const [errors, setErrors]   = useState<{ name?: string; email?: string; message?: string }>({});
+  const [errors, setErrors]    = useState<{ name?: string; email?: string; message?: string }>({});
 
   function validate() {
     const e: typeof errors = {};
-    if (!form.name.trim())                           e.name    = 'Name is required';
-    if (!form.email.trim() || !form.email.includes('@')) e.email = 'Valid email is required';
-    if (!form.message.trim())                        e.message = 'Please describe your inquiry';
+    if (!form.name.trim())                              e.name    = 'Name is required';
+    if (!form.email.trim() || !form.email.includes('@')) e.email  = 'Valid email is required';
+    if (!form.message.trim())                           e.message = 'Please describe your inquiry';
     return e;
   }
 
@@ -140,7 +140,6 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
 
-        {/* Header */}
         <div className="flex items-start justify-between px-7 pt-7 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
@@ -159,7 +158,6 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {submitted ? (
-          /* Success state */
           <div className="px-7 py-10 flex flex-col items-center text-center">
             <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-7 h-7 text-emerald-600" />
@@ -178,9 +176,7 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
         ) : (
-          /* Form */
           <form onSubmit={handleSubmit} className="px-7 py-6 space-y-4">
-            {/* Roadmap note */}
             <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
               <p className="text-indigo-600 text-xs leading-relaxed">
                 <span className="font-bold">How this works: </span>
@@ -255,16 +251,17 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
-  const [search, setSearch]             = useState('');
-  const [typeFilter, setTypeFilter]     = useState('All Types');
-  const [countryFilter, setCountry]     = useState('All Countries');
-  const [selectedId, setSelectedId]     = useState<string | null>(null);
-  const [savedIds, setSavedIds]         = useState<Set<string>>(new Set());
-  const [toast, setToast]               = useState<string | null>(null);
-  const [showConcierge, setConcierge]   = useState(false);
+  const [search, setSearch]           = useState('');
+  const [typeFilter, setTypeFilter]   = useState('All Types');
+  const [countryFilter, setCountry]   = useState('All Countries');
+  const [selectedId, setSelectedId]   = useState<string | null>(null);
+  const [savedIds, setSavedIds]       = useState<Set<string>>(new Set());
+  const [toast, setToast]             = useState<string | null>(null);
+  const [showConcierge, setConcierge] = useState(false);
+  const [addedIds, setAddedIds]       = useState<Set<string>>(new Set());
 
   function showToast(msg: string) {
     setToast(msg);
@@ -286,17 +283,21 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
       const now = new Date().toISOString();
       onAddProduction({ id: `jur-${j.id}-${Date.now()}`, title: `${j.name} Production`, budget: 0, jurisdiction_id: j.id, created_at: now, updated_at: now });
     }
+    setAddedIds(prev => new Set(prev).add(j.id));
+    setTimeout(() => setAddedIds(prev => { const n = new Set(prev); n.delete(j.id); return n; }), 2500);
     showToast(`${j.name} added to production`);
   }
 
   function handleReview(j: typeof JURISDICTIONS[0], e: React.MouseEvent) {
     e.stopPropagation();
-    showToast(`Opening ${j.name} incentive profile…`);
+    window.open(j.website, '_blank', 'noopener,noreferrer');
   }
 
   function handleRefresh() {
     showToast('Jurisdiction data refreshed');
   }
+
+  const selectedJur = selectedId ? JURISDICTIONS.find(j => j.id === selectedId) ?? null : null;
 
   const filtered = useMemo(() => JURISDICTIONS.filter(j => {
     const matchType    = typeFilter    === 'All Types'     || j.type    === typeFilter;
@@ -370,11 +371,11 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
         </div>
       </div>
 
-      {/* ── Main content ───────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* ── Main content ──────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 gap-4">
 
         {/* Header */}
-        <div className="mb-5">
+        <div>
           <h1 className="text-[28px] font-bold text-slate-900 tracking-tight leading-tight">
             Jurisdiction Intelligence
           </h1>
@@ -384,7 +385,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-3">
           <FilterDropdown value={typeFilter}    options={ALL_TYPES}     onChange={setTypeFilter} />
           <FilterDropdown value={countryFilter} options={ALL_COUNTRIES} onChange={setCountry}    />
 
@@ -410,6 +411,67 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
           </button>
         </div>
 
+        {/* ── Selected jurisdiction detail panel ─────────────── */}
+        {selectedJur && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 flex items-center gap-6">
+            {/* Rate badge */}
+            <div className="shrink-0 text-center">
+              <div className="text-3xl font-black text-blue-700 leading-none">{selectedJur.baseRate}%</div>
+              <div className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mt-0.5">Base Rate</div>
+            </div>
+
+            <div className="w-px h-10 bg-blue-200 shrink-0" />
+
+            {/* Details */}
+            <div className="flex-1 grid grid-cols-3 gap-4 min-w-0">
+              <div>
+                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Jurisdiction</p>
+                <p className="text-sm font-bold text-slate-900 truncate">
+                  <span className="text-slate-400 font-semibold mr-1">{selectedJur.regionCode}</span>
+                  {selectedJur.name}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Agency</p>
+                <p className="text-sm font-semibold text-slate-700 truncate">{selectedJur.agency}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Min Spend · Type</p>
+                <p className="text-sm font-semibold text-slate-700">{selectedJur.minSpend} · {selectedJur.type}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="shrink-0 flex items-center gap-2">
+              <a
+                href={selectedJur.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Official Site
+              </a>
+              <button
+                type="button"
+                onClick={e => handleAddToProduction(selectedJur, e)}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors"
+              >
+                + Add to Production
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedId(null)}
+                title="Dismiss"
+                aria-label="Dismiss selected jurisdiction"
+                className="p-1.5 text-blue-300 hover:text-blue-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
         {filtered.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
@@ -429,6 +491,7 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
             {filtered.map(j => {
               const isSelected = selectedId === j.id;
               const isSaved    = savedIds.has(j.id);
+              const isAdded    = addedIds.has(j.id);
               return (
                 <div
                   key={j.id}
@@ -469,26 +532,26 @@ export default function Jurisdictions({ onAddProduction }: JurisdictionsProps) {
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={(e) => handleReview(j, e)}
-                      className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors"
+                      onClick={e => handleReview(j, e)}
+                      className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-widest transition-colors"
                     >
                       Review
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                      </svg>
+                      <ExternalLink className="w-3 h-3" />
                     </button>
 
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={(e) => handleAddToProduction(j, e)}
-                        className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest transition-colors"
+                        onClick={e => handleAddToProduction(j, e)}
+                        className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest transition-colors ${
+                          isAdded ? 'text-emerald-600' : 'text-blue-600 hover:text-blue-700'
+                        }`}
                       >
-                        Add to Production
+                        {isAdded ? <><CheckCircle className="w-3 h-3" /> Added</> : 'Add to Production'}
                       </button>
                       <button
                         type="button"
-                        onClick={(e) => toggleSave(j.id, e)}
+                        onClick={e => toggleSave(j.id, e)}
                         title={isSaved ? 'Remove bookmark' : 'Bookmark'}
                         aria-label={isSaved ? 'Remove bookmark' : 'Bookmark'}
                         className={`transition-colors ${isSaved ? 'text-blue-600' : 'text-slate-300 hover:text-slate-500'}`}
