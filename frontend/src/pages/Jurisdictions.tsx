@@ -33,16 +33,31 @@ const FEED_ITEMS = [
 ];
 
 const JURISDICTIONS = [
-  { id: '1', regionCode: 'US', name: 'Georgia',        baseRate: 20, agency: 'Georgia Department of Commerce',   minSpend: '$500k',   type: 'State',    country: 'United States' },
-  { id: '2', regionCode: 'US', name: 'California',     baseRate: 25, agency: 'California Film Commission',       minSpend: '$1,000k', type: 'State',    country: 'United States' },
-  { id: '3', regionCode: 'US', name: 'New York',       baseRate: 30, agency: "Governor's Office of Motion Pic.", minSpend: '$0k',     type: 'State',    country: 'United States' },
-  { id: '4', regionCode: 'GB', name: 'United Kingdom', baseRate: 25, agency: 'British Film Commission',          minSpend: '$0k',     type: 'Country',  country: 'United Kingdom' },
-  { id: '5', regionCode: 'CA', name: 'Ontario',        baseRate: 35, agency: 'Ontario Creates',                 minSpend: '$100k',   type: 'Province', country: 'Canada' },
-  { id: '6', regionCode: 'US', name: 'Louisiana',      baseRate: 25, agency: 'Louisiana Entertainment',         minSpend: '$300k',   type: 'State',    country: 'United States' },
+  // ── United States ──────────────────────────────────────────────────────────
+  { id: '1',  regionCode: 'US', name: 'Georgia',       baseRate: 20, agency: 'Georgia Department of Commerce',      minSpend: '$500k',   type: 'State',    country: 'United States' },
+  { id: '2',  regionCode: 'US', name: 'California',    baseRate: 25, agency: 'California Film Commission',          minSpend: '$1,000k', type: 'State',    country: 'United States' },
+  { id: '3',  regionCode: 'US', name: 'New York',      baseRate: 30, agency: "Governor's Office of Motion Pic.",    minSpend: '$0k',     type: 'State',    country: 'United States' },
+  { id: '6',  regionCode: 'US', name: 'Louisiana',     baseRate: 25, agency: 'Louisiana Entertainment',            minSpend: '$300k',   type: 'State',    country: 'United States' },
+  { id: '7',  regionCode: 'US', name: 'Michigan',      baseRate: 25, agency: 'Michigan Film Office',               minSpend: '$100k',   type: 'State',    country: 'United States' },
+  { id: '8',  regionCode: 'US', name: 'New Jersey',    baseRate: 35, agency: 'NJ Motion Picture Commission',       minSpend: '$1,000k', type: 'State',    country: 'United States' },
+  { id: '9',  regionCode: 'US', name: 'Virginia',      baseRate: 25, agency: 'Virginia Film Office',               minSpend: '$250k',   type: 'State',    country: 'United States' },
+  { id: '10', regionCode: 'US', name: 'Colorado',      baseRate: 20, agency: 'Colorado Office of Film TV & Media', minSpend: '$100k',   type: 'State',    country: 'United States' },
+  { id: '11', regionCode: 'US', name: 'Hawaii',        baseRate: 22, agency: 'Hawaii Film Office',                 minSpend: '$0k',     type: 'State',    country: 'United States' },
+  { id: '12', regionCode: 'US', name: 'Oregon',        baseRate: 20, agency: 'Oregon Film Office',                 minSpend: '$75k',    type: 'State',    country: 'United States' },
+  { id: '13', regionCode: 'US', name: 'Montana',       baseRate: 14, agency: 'Montana Film Office',                minSpend: '$50k',    type: 'State',    country: 'United States' },
+  { id: '14', regionCode: 'US', name: 'Mississippi',   baseRate: 25, agency: 'Mississippi Development Authority',  minSpend: '$50k',    type: 'State',    country: 'United States' },
+  // ── Canada ─────────────────────────────────────────────────────────────────
+  { id: '5',  regionCode: 'CA', name: 'Ontario',       baseRate: 35, agency: 'Ontario Creates',                    minSpend: '$100k',   type: 'Province', country: 'Canada' },
+  // ── International ───────────────────────────────────────────────────────────
+  { id: '4',  regionCode: 'GB', name: 'United Kingdom',baseRate: 25, agency: 'British Film Commission',            minSpend: '$0k',     type: 'Country',  country: 'United Kingdom' },
+  { id: '15', regionCode: 'IE', name: 'Ireland',       baseRate: 32, agency: 'Screen Ireland / Revenue Commrs.',   minSpend: '$125k',   type: 'Country',  country: 'Ireland' },
+  { id: '16', regionCode: 'FR', name: 'France',        baseRate: 30, agency: 'Centre National du Cinéma (CNC)',    minSpend: '$1,000k', type: 'Country',  country: 'France' },
+  { id: '17', regionCode: 'ES', name: 'Spain',         baseRate: 30, agency: 'ICAA / Regional Film Commissions',   minSpend: '$1,000k', type: 'Country',  country: 'Spain' },
+  { id: '18', regionCode: 'NZ', name: 'New Zealand',   baseRate: 40, agency: 'New Zealand Film Commission',        minSpend: '$2,500k', type: 'Country',  country: 'New Zealand' },
 ];
 
-const ALL_TYPES    = ['All Types',    'State', 'Province', 'Country'];
-const ALL_COUNTRIES = ['All Countries', 'United States', 'Canada', 'United Kingdom'];
+const ALL_TYPES     = ['All Types', 'State', 'Province', 'Country'];
+const ALL_COUNTRIES = ['All Countries', 'United States', 'Canada', 'United Kingdom', 'Ireland', 'France', 'Spain', 'New Zealand'];
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
