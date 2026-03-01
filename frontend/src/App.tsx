@@ -1,15 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Productions from './pages/Productions';
 import Calculator from './pages/Calculator';
 import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
+import Login from './pages/Login';
+import { useAuthStore } from './store/auth';
 import type { Production } from './types';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [productions, setProductions] = useState<Production[]>([]);
+  const { isAuthenticated, loadFromStorage } = useAuthStore();
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
 
   const handleAddProduction = (newProduction: Production) => {
     setProductions((prev) => [...prev, newProduction]);
@@ -51,6 +58,10 @@ function App() {
     ),
     advisor: <AIAdvisor />,
   };
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>

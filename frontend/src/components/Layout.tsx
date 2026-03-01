@@ -1,4 +1,5 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Settings } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut } from 'lucide-react';
+import { useAuthStore } from '../store/auth';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,12 @@ const tabs = [
 ];
 
 function Layout({ children, activeTab, onTabChange }: LayoutProps) {
+  const { user, logout } = useAuthStore();
+
+  const initials = user?.email
+    ? user.email.slice(0, 2).toUpperCase()
+    : 'PF';
+
   return (
     <div className="flex h-screen bg-slate-50 font-sans">
       {/* Sidebar */}
@@ -58,14 +65,19 @@ function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         <div className="mt-auto px-4 py-4 border-t border-white/8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-[11px] text-white font-semibold shrink-0">
-              FM
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">Finance Manager</p>
-              <p className="text-slate-500 text-xs truncate">Pro Account</p>
+              <p className="text-white text-sm font-medium truncate">{user?.email ?? 'Unknown'}</p>
+              <p className="text-slate-500 text-xs truncate capitalize">{user?.role ?? 'admin'}</p>
             </div>
-            <button className="text-slate-500 hover:text-slate-300 transition-colors shrink-0">
-              <Settings className="w-4 h-4" />
+            <button
+              onClick={logout}
+              title="Sign out"
+              aria-label="Sign out"
+              className="text-slate-500 hover:text-red-400 transition-colors shrink-0"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>

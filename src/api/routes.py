@@ -1,8 +1,9 @@
 """
 Main API router - aggregates all route modules
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from src.api.auth import router as auth_router
 from src.api.jurisdictions import router as jurisdictions_router
 from src.api.incentive_rules import router as incentive_rules_router
 from src.api.productions import router as productions_router
@@ -10,19 +11,25 @@ from src.api.calculator import router as calculator_router
 from src.api.reports import router as reports_router
 from src.api.excel import router as excel_router
 from src.api.rule_engine import router as rule_engine_router
+from src.utils.auth_utils import get_current_user
 
 API_PREFIX = "/api/0.1.0"
 
 router = APIRouter()
 
-# Include routers
-router.include_router(jurisdictions_router)
-router.include_router(incentive_rules_router)
-router.include_router(productions_router)
-router.include_router(calculator_router)
-router.include_router(reports_router)
-router.include_router(excel_router)
-router.include_router(rule_engine_router)
+_auth_dep = [Depends(get_current_user)]
+
+# Public — no auth required
+router.include_router(auth_router)
+
+# Protected — JWT required
+router.include_router(jurisdictions_router, dependencies=_auth_dep)
+router.include_router(incentive_rules_router, dependencies=_auth_dep)
+router.include_router(productions_router, dependencies=_auth_dep)
+router.include_router(calculator_router, dependencies=_auth_dep)
+router.include_router(reports_router, dependencies=_auth_dep)
+router.include_router(excel_router, dependencies=_auth_dep)
+router.include_router(rule_engine_router, dependencies=_auth_dep)
 
 
 @router.get("/", tags=["Meta"])
