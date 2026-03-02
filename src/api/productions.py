@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/productions", tags=["Productions"])
 
 
-@router.get("/", response_model=ProductionList, summary="Get all productions")
+@router.get("", response_model=ProductionList, summary="Get all productions")
 async def get_productions(
     production_type: Optional[str] = None,
     active: Optional[bool] = None
