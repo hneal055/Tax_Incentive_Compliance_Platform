@@ -1,91 +1,158 @@
 import apiClient from './client';
-import type { 
-  Production, 
-  Jurisdiction, 
-  IncentiveRule, 
-  Expense, 
+import type {
+  Production,
+  Jurisdiction,
+  IncentiveRule,
+  Expense,
   CalculationResult,
-  HealthStatus 
+  HealthStatus
 } from '../types';
+import { getFlagSnapshot } from '../contexts/FeatureFlagContext';
+import { mockApi } from '../mocks/api';
+
+// Wraps every API call with flag check + automatic mock fallback on failure.
+// Reads from getFlagSnapshot() so runtime flag toggles (via FeatureFlagContext) take effect
+// immediately on the next call — no page reload needed.
+// READ operations fall back to mock data silently (good for dev with backend down).
+// WRITE operations re-throw after logging so callers can handle the error.
+async function withFallback<T>(
+  realFn: () => Promise<T>,
+  mockFn: () => Promise<T>,
+  label: string,
+  isRead = true,
+): Promise<T> {
+  if (!getFlagSnapshot().USE_REAL_API) {
+    if (import.meta.env.DEV) console.log(`[MOCK] ${label}`);
+    return mockFn();
+  }
+  try {
+    if (import.meta.env.DEV) console.log(`[API] ${label}`);
+    return await realFn();
+  } catch (error) {
+    if (isRead) {
+      if (import.meta.env.DEV) console.warn(`[FALLBACK] ${label} — API unavailable, using mock data`, error);
+      return mockFn();
+    }
+    console.error(`[API ERROR] ${label}`, error);
+    throw error;
+  }
+}
 
 export const api = {
-  // Health check
-  health: async (): Promise<HealthStatus> => {
-    const response = await apiClient.get('/health');
-    return response.data;
-  },
+  health: () =>
+    withFallback(
+      async () => { const r = await apiClient.get('/health'); return r.data as HealthStatus; },
+      () => mockApi.health(),
+      'health',
+    ),
 
-  // Productions
   productions: {
-    list: async (): Promise<Production[]> => {
-      const response = await apiClient.get('/productions');
-      return response.data.productions ?? response.data;
-    },
-    get: async (id: string): Promise<Production> => {
-      const response = await apiClient.get(`/productions/${id}`);
-      return response.data;
-    },
-    create: async (data: Partial<Production>): Promise<Production> => {
-      const response = await apiClient.post('/productions', data);
-      return response.data;
-    },
-    update: async (id: string, data: Partial<Production>): Promise<Production> => {
-      const response = await apiClient.put(`/productions/${id}`, data);
-      return response.data;
-    },
-    delete: async (id: string): Promise<void> => {
-      await apiClient.delete(`/productions/${id}`);
-    },
+    list: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/productions'); return (r.data.productions ?? r.data) as Production[]; },
+        () => mockApi.productions.list(),
+        'productions.list',
+      ),
+
+    get: (id: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/productions/${id}`); return r.data as Production; },
+        () => mockApi.productions.get(id),
+        `productions.get(${id})`,
+      ),
+
+    create: (data: Partial<Production>) =>
+      withFallback(
+        async () => { const r = await apiClient.post('/productions', data); return r.data as Production; },
+        () => mockApi.productions.create(data),
+        'productions.create',
+        false,
+      ),
+
+    update: (id: string, data: Partial<Production>) =>
+      withFallback(
+        async () => { const r = await apiClient.put(`/productions/${id}`, data); return r.data as Production; },
+        () => mockApi.productions.update(id, data),
+        `productions.update(${id})`,
+        false,
+      ),
+
+    delete: (id: string) =>
+      withFallback(
+        async () => { await apiClient.delete(`/productions/${id}`); },
+        () => mockApi.productions.delete(id),
+        `productions.delete(${id})`,
+        false,
+      ),
   },
 
-  // Jurisdictions
   jurisdictions: {
-    list: async (): Promise<Jurisdiction[]> => {
-      const response = await apiClient.get('/jurisdictions');
-      return response.data.jurisdictions ?? response.data;
-    },
-    get: async (id: string): Promise<Jurisdiction> => {
-      const response = await apiClient.get(`/jurisdictions/${id}`);
-      return response.data;
-    },
+    list: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/jurisdictions'); return (r.data.jurisdictions ?? r.data) as Jurisdiction[]; },
+        () => mockApi.jurisdictions.list(),
+        'jurisdictions.list',
+      ),
+
+    get: (id: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/jurisdictions/${id}`); return r.data as Jurisdiction; },
+        () => mockApi.jurisdictions.get(id),
+        `jurisdictions.get(${id})`,
+      ),
   },
 
-  // Incentive Rules
   incentiveRules: {
-    list: async (): Promise<IncentiveRule[]> => {
-      const response = await apiClient.get('/incentive-rules');
-      return response.data.rules ?? response.data;
-    },
-    getByJurisdiction: async (jurisdictionId: string): Promise<IncentiveRule[]> => {
-      const response = await apiClient.get(`/jurisdictions/${jurisdictionId}/incentive-rules`);
-      return response.data;
-    },
+    list: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/incentive-rules'); return (r.data.rules ?? r.data) as IncentiveRule[]; },
+        () => mockApi.incentiveRules.list(),
+        'incentiveRules.list',
+      ),
+
+    getByJurisdiction: (jurisdictionId: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/jurisdictions/${jurisdictionId}/incentive-rules`); return r.data as IncentiveRule[]; },
+        () => mockApi.incentiveRules.getByJurisdiction(jurisdictionId),
+        `incentiveRules.getByJurisdiction(${jurisdictionId})`,
+      ),
   },
 
-  // Expenses
   expenses: {
-    list: async (productionId: string): Promise<Expense[]> => {
-      const response = await apiClient.get(`/productions/${productionId}/expenses`);
-      return response.data;
-    },
-    create: async (productionId: string, data: Partial<Expense>): Promise<Expense> => {
-      const response = await apiClient.post(`/productions/${productionId}/expenses`, data);
-      return response.data;
-    },
-    delete: async (productionId: string, expenseId: string): Promise<void> => {
-      await apiClient.delete(`/productions/${productionId}/expenses/${expenseId}`);
-    },
+    list: (productionId: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/productions/${productionId}/expenses`); return r.data as Expense[]; },
+        () => mockApi.expenses.list(productionId),
+        `expenses.list(${productionId})`,
+      ),
+
+    create: (productionId: string, data: Partial<Expense>) =>
+      withFallback(
+        async () => { const r = await apiClient.post(`/productions/${productionId}/expenses`, data); return r.data as Expense; },
+        () => mockApi.expenses.create(productionId, data),
+        `expenses.create(${productionId})`,
+        false,
+      ),
+
+    delete: (productionId: string, expenseId: string) =>
+      withFallback(
+        async () => { await apiClient.delete(`/productions/${productionId}/expenses/${expenseId}`); },
+        () => mockApi.expenses.delete(productionId, expenseId),
+        `expenses.delete(${productionId}/${expenseId})`,
+        false,
+      ),
   },
 
-  // Calculations
   calculations: {
-    calculate: async (productionId: string, jurisdictionId: string): Promise<CalculationResult> => {
-      const response = await apiClient.post('/calculate', {
-        production_id: productionId,
-        jurisdiction_id: jurisdictionId,
-      });
-      return response.data;
-    },
+    calculate: (productionId: string, jurisdictionId: string) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.post('/calculate', { production_id: productionId, jurisdiction_id: jurisdictionId });
+          return r.data as CalculationResult;
+        },
+        () => mockApi.calculations.calculate(productionId, jurisdictionId),
+        `calculations.calculate(${productionId}, ${jurisdictionId})`,
+      ),
   },
 };
 

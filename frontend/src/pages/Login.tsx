@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Zap, LogIn, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
+import { getFlagSnapshot } from '../contexts/FeatureFlagContext';
 
 export default function Login() {
   const { login, isLoading, error } = useAuthStore();
@@ -9,6 +10,16 @@ export default function Login() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!getFlagSnapshot().USE_REAL_AUTH) {
+      useAuthStore.setState({
+        user: { id: 'mock-user', email: email || 'dev@mock.local', role: 'admin' },
+        token: 'mock-dev-token',
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
+      return;
+    }
     await login(email, password);
   }
 

@@ -7,6 +7,7 @@ import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
 import Login from './pages/Login';
 import { useAuthStore } from './store/auth';
+import { FeatureFlagPanel } from './components/DevTools/FeatureFlagPanel';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -29,9 +30,12 @@ function App() {
   }
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {tabComponents[activeTab] || tabComponents.dashboard}
-    </Layout>
+    <>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+        {tabComponents[activeTab] || tabComponents.dashboard}
+      </Layout>
+      <FeatureFlagPanel />
+    </>
   );
 }
 

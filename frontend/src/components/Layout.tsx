@@ -1,5 +1,6 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut, FlaskConical } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
+import { useFeatureFlag, features } from '../contexts/FeatureFlagContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const tabs = [
 
 function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   const { user, logout } = useAuthStore();
+  const usingMockData = !useFeatureFlag(features.USE_REAL_API);
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
@@ -33,6 +35,14 @@ function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           </div>
           <span className="text-white text-[17px] font-bold tracking-wide">PilotForge</span>
         </div>
+
+        {/* Mock data indicator — only visible when USE_REAL_API=false */}
+        {usingMockData && (
+          <div className="mx-3 mb-3 flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <FlaskConical className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="text-amber-400 text-[11px] font-semibold uppercase tracking-wide">Mock Data</span>
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 px-3 space-y-0.5">
