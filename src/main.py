@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from src.utils.config import settings
 from src.utils.database import prisma
 from src.utils.auth_utils import hash_password
+from src.utils.seed import run_migrations, seed_all
 from src.api.routes import router
 
 
@@ -53,9 +54,11 @@ async def lifespan(app: FastAPI):
     logger.info("🎬 Starting PilotForge")
     logger.info("   Tax Incentive Intelligence for Film & TV")
     try:
+        run_migrations()
         await prisma.connect()
         logger.info("✅ Database connected")
         await _seed_admin()
+        await seed_all()
     except Exception as e:
         logger.warning(f"⚠️  Database connection failed: {e}")
         logger.warning("   Application will run with limited functionality")

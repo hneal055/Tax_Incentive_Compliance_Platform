@@ -1,0 +1,173 @@
+"""
+Database seeding — jurisdictions, incentive rules.
+
+Called from src/main.py lifespan on every startup.
+All operations are idempotent: existing records are skipped by unique key.
+"""
+import json
+import logging
+import subprocess
+from datetime import datetime
+
+from src.utils.database import prisma
+
+logger = logging.getLogger(__name__)
+
+
+# ── Migrations ────────────────────────────────────────────────────────────────
+
+def run_migrations() -> None:
+    """Run `prisma migrate deploy`. Safe to call on every startup."""
+    try:
+        result = subprocess.run(
+            ["prisma", "migrate", "deploy"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if result.returncode == 0:
+            logger.info("✅ Prisma migrations applied")
+        else:
+            logger.warning(f"⚠️  Migration stderr: {result.stderr.strip()}")
+    except Exception as exc:
+        logger.error(f"❌ Migration failed: {exc}")
+
+
+# ── Jurisdiction data (22 total) ──────────────────────────────────────────────
+
+_JURISDICTIONS = [
+    # Core USA
+    {"name": "California",      "code": "CA", "country": "USA",            "type": "state",    "description": "California Film & TV Tax Credit Program",                 "website": "https://film.ca.gov/tax-credit/",                                                                                     "active": True},
+    {"name": "Georgia",         "code": "GA", "country": "USA",            "type": "state",    "description": "Georgia Film Tax Credit Program",                         "website": "https://www.georgia.org/film",                                                                                        "active": True},
+    {"name": "New York",        "code": "NY", "country": "USA",            "type": "state",    "description": "New York Film Production Tax Credit",                     "website": "https://esd.ny.gov/nyc-film-tv-commercials-production-credit",                                                        "active": True},
+    {"name": "Louisiana",       "code": "LA", "country": "USA",            "type": "state",    "description": "Louisiana Motion Picture Production Tax Credit",           "website": "https://www.louisianaentertainment.gov/film/",                                                                        "active": True},
+    {"name": "New Mexico",      "code": "NM", "country": "USA",            "type": "state",    "description": "New Mexico Film Production Tax Credit",                   "website": "https://www.nmfilm.com/incentives/",                                                                                  "active": True},
+    # Extended USA
+    {"name": "Michigan",        "code": "MI", "country": "USA",            "type": "state",    "description": "Michigan Film Production Incentive",                      "website": "https://www.michiganbusiness.org/industries/film/",                                                                    "active": True},
+    {"name": "New Jersey",      "code": "NJ", "country": "USA",            "type": "state",    "description": "NJ Film Tax Credit Program",                              "website": "https://www.njeda.gov/film/",                                                                                         "active": True},
+    {"name": "Virginia",        "code": "VA", "country": "USA",            "type": "state",    "description": "Virginia Film Tax Credit",                                "website": "https://www.film.virginia.gov/incentives/",                                                                           "active": True},
+    {"name": "Colorado",        "code": "CO", "country": "USA",            "type": "state",    "description": "Colorado Film Incentive Program",                         "website": "https://coloradofilm.org/incentives/",                                                                                "active": True},
+    {"name": "Hawaii",          "code": "HI", "country": "USA",            "type": "state",    "description": "Hawaii Film Production Tax Credit",                       "website": "https://filmoffice.hawaii.gov/tax-incentive/",                                                                        "active": True},
+    {"name": "Oregon",          "code": "OR", "country": "USA",            "type": "state",    "description": "Oregon Production Investment Fund",                       "website": "https://www.oregon4biz.com/Film/",                                                                                    "active": True},
+    {"name": "Montana",         "code": "MT", "country": "USA",            "type": "state",    "description": "Montana Media Production Tax Credit",                     "website": "https://montanafilm.com/incentive-program/",                                                                          "active": True},
+    {"name": "Mississippi",     "code": "MS", "country": "USA",            "type": "state",    "description": "Mississippi Film Incentive Program",                      "website": "https://www.filmmississippi.org/incentives",                                                                          "active": True},
+    # Canada
+    {"name": "British Columbia","code": "BC", "country": "Canada",         "type": "province", "description": "BC Film Incentive & Production Services Tax Credit",      "website": "https://creativebc.com/programs-funding/production-incentives/",                                                      "active": True},
+    {"name": "Ontario",         "code": "ON", "country": "Canada",         "type": "province", "description": "Ontario Film & Television Tax Credit",                   "website": "https://ontariocreates.ca/tax-incentives/",                                                                           "active": True},
+    {"name": "Quebec",          "code": "QC", "country": "Canada",         "type": "province", "description": "Quebec Film Production Tax Credit",                      "website": "https://www.sodec.gouv.qc.ca/en/programs/",                                                                           "active": True},
+    # International
+    {"name": "United Kingdom",  "code": "UK", "country": "United Kingdom", "type": "country",  "description": "UK Film Tax Relief & High-End TV Tax Relief",            "website": "https://www.bfi.org.uk/certification-funding/british-certification-tax-relief",                                       "active": True},
+    {"name": "Australia",       "code": "AU", "country": "Australia",      "type": "country",  "description": "Australian Screen Production Incentive",                  "website": "https://www.screenaustralia.gov.au/funding-and-support/producer-offset",                                             "active": True},
+    {"name": "Ireland",         "code": "IE", "country": "Ireland",        "type": "country",  "description": "Section 481 Film Tax Credit - 32% credit",               "website": "https://www.revenue.ie/en/companies-and-charities/reliefs-and-exemptions/film-relief/index.aspx",                   "active": True},
+    {"name": "France",          "code": "FR", "country": "France",         "type": "country",  "description": "French Tax Rebate for International Production (TRIP) - 30%", "website": "https://www.cnc.fr/professionnels/aides-et-financements/",                                                    "active": True},
+    {"name": "Spain",           "code": "ES", "country": "Spain",          "type": "country",  "description": "Spanish Film Production Incentives - 30% rebate",         "website": "https://www.icex.es/",                                                                                               "active": True},
+    {"name": "New Zealand",     "code": "NZ", "country": "New Zealand",    "type": "country",  "description": "NZ Screen Production Grant - 40% rebate",                 "website": "https://www.nzfilm.co.nz/funding/nzspg",                                                                             "active": True},
+]
+
+
+# ── Incentive rules data (33 total) ──────────────────────────────────────────
+
+_RULES = [
+    # California
+    {"jurisdictionCode": "CA", "ruleName": "California Film & TV Tax Credit 2.0",       "ruleCode": "CA-FILM-2.0",     "incentiveType": "tax_credit", "percentage": 20.0, "minSpend": 1000000, "maxCredit": 10000000, "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],                    "excludedExpenses": ["above_the_line", "marketing", "financing_costs"], "effectiveDate": datetime(2024, 1, 1), "requirements": {"minShootDays": 10, "californiaResidents": 75, "relocatingProject": False}, "active": True},
+    {"jurisdictionCode": "CA", "ruleName": "California Relocating TV Series Credit",     "ruleCode": "CA-TV-RELOCATE",  "incentiveType": "tax_credit", "percentage": 25.0, "minSpend": 1000000, "maxCredit": 12000000, "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],                    "excludedExpenses": ["above_the_line", "marketing"],                    "effectiveDate": datetime(2024, 1, 1), "requirements": {"relocatingProject": True, "tvSeries": True, "californiaResidents": 75},  "active": True},
+    # Georgia
+    {"jurisdictionCode": "GA", "ruleName": "Georgia Film Tax Credit",                    "ruleCode": "GA-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 20.0, "minSpend": 500000,                         "eligibleExpenses": ["labor", "equipment", "locations", "post_production", "talent"],         "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"georgiaSpend": 500000, "promotionalRequirements": True},                 "active": True},
+    {"jurisdictionCode": "GA", "ruleName": "Georgia Film Tax Credit + Promotional Bonus","ruleCode": "GA-FILM-PROMO",   "incentiveType": "tax_credit", "percentage": 30.0, "minSpend": 500000,                         "eligibleExpenses": ["labor", "equipment", "locations", "post_production", "talent"],         "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"georgiaSpend": 500000, "georgiaPromo": True, "logoInCredits": True},     "active": True},
+    # New York
+    {"jurisdictionCode": "NY", "ruleName": "NY Film Production Tax Credit",              "ruleCode": "NY-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 30.0, "minSpend": 250000,  "maxCredit": 7000000,  "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],                    "excludedExpenses": ["above_the_line_over_cap", "marketing"],           "effectiveDate": datetime(2024, 1, 1), "requirements": {"nySpend": 75, "shootingDays": 75},                                       "active": True},
+    {"jurisdictionCode": "NY", "ruleName": "NY Post-Production Credit",                  "ruleCode": "NY-POST-PROD",    "incentiveType": "tax_credit", "percentage": 30.0, "minSpend": 250000,  "maxCredit": 7000000,  "eligibleExpenses": ["post_production", "vfx", "editing", "sound"],                          "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"nyFacilities": True},                                                    "active": True},
+    # Louisiana
+    {"jurisdictionCode": "LA", "ruleName": "Louisiana Film Tax Credit",                  "ruleCode": "LA-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 25.0, "minSpend": 300000,                         "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],                    "excludedExpenses": ["marketing", "above_the_line_over_1m"],            "effectiveDate": datetime(2024, 1, 1), "requirements": {"louisianaResident": 60, "louisianaSpend": 300000},                      "active": True},
+    {"jurisdictionCode": "LA", "ruleName": "Louisiana Additional Payroll Credit",        "ruleCode": "LA-PAYROLL-BONUS","incentiveType": "tax_credit", "percentage": 10.0,                                             "eligibleExpenses": ["louisiana_resident_labor"],                                             "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"louisianaResident": 100, "stackableWithBase": True},                     "active": True},
+    # New Mexico
+    {"jurisdictionCode": "NM", "ruleName": "New Mexico Film Production Tax Credit",      "ruleCode": "NM-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 25.0, "minSpend": 50000,                          "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],                    "excludedExpenses": ["marketing", "indirect_costs"],                    "effectiveDate": datetime(2024, 1, 1), "requirements": {"newMexicoSpend": 60},                                                    "active": True},
+    {"jurisdictionCode": "NM", "ruleName": "New Mexico Veteran Crew Bonus",              "ruleCode": "NM-VETERAN-BONUS","incentiveType": "tax_credit", "percentage": 5.0,                                              "eligibleExpenses": ["veteran_labor"],                                                        "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"veteranCrew": True, "stackableWithBase": True},                          "active": True},
+    # British Columbia
+    {"jurisdictionCode": "BC", "ruleName": "BC Film Incentive - Basic",                  "ruleCode": "BC-FILM-BASIC",   "incentiveType": "tax_credit", "percentage": 35.0,                                             "eligibleExpenses": ["bc_labor"],                                                             "excludedExpenses": ["non_bc_labor", "marketing"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"bcResident": True, "canadianContent": True},                             "active": True},
+    {"jurisdictionCode": "BC", "ruleName": "BC Production Services Tax Credit",          "ruleCode": "BC-PSTC",         "incentiveType": "tax_credit", "percentage": 28.0,                                             "eligibleExpenses": ["bc_labor", "bc_goods_services"],                                        "excludedExpenses": ["marketing", "financing"],                         "effectiveDate": datetime(2024, 1, 1), "requirements": {"foreignProduction": True, "bcSpend": 1000000},                           "active": True},
+    # Ontario
+    {"jurisdictionCode": "ON", "ruleName": "Ontario Film & Television Tax Credit",       "ruleCode": "ON-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 35.0,                                             "eligibleExpenses": ["ontario_labor"],                                                        "excludedExpenses": ["marketing", "financing"],                         "effectiveDate": datetime(2024, 1, 1), "requirements": {"ontarioResident": True, "canadianContent": True},                        "active": True},
+    {"jurisdictionCode": "ON", "ruleName": "Ontario Production Services Tax Credit",     "ruleCode": "ON-PSTC",         "incentiveType": "tax_credit", "percentage": 21.5,                                             "eligibleExpenses": ["ontario_labor"],                                                        "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"foreignProduction": True},                                                "active": True},
+    # Quebec
+    {"jurisdictionCode": "QC", "ruleName": "Quebec Film Production Tax Credit",          "ruleCode": "QC-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 40.0,                                             "eligibleExpenses": ["quebec_labor"],                                                         "excludedExpenses": ["marketing", "above_the_line"],                    "effectiveDate": datetime(2024, 1, 1), "requirements": {"quebecResident": True, "frenchLanguage": 75},                            "active": True},
+    # United Kingdom
+    {"jurisdictionCode": "UK", "ruleName": "UK Film Tax Relief",                         "ruleCode": "UK-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 25.0, "minSpend": 1000000,                        "eligibleExpenses": ["uk_core_expenditure"],                                                  "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"ukSpend": 10, "culturalTest": True, "ukProduction": True},               "active": True},
+    # Michigan
+    {"jurisdictionCode": "MI", "ruleName": "Michigan Film Production Incentive",         "ruleCode": "MI-FILM-BASE",    "incentiveType": "rebate",     "percentage": 30.0, "minSpend": 50000,                          "eligibleExpenses": ["labor", "goods", "services", "michigan_spend"],                         "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"michiganSpend": 50000, "completionWithin12Months": True},                "active": True},
+    # New Jersey
+    {"jurisdictionCode": "NJ", "ruleName": "NJ Film Tax Credit",                         "ruleCode": "NJ-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 30.0, "minSpend": 1000000,                        "eligibleExpenses": ["labor", "services", "goods"],                                           "excludedExpenses": ["above_the_line_over_500k", "marketing"],          "effectiveDate": datetime(2024, 1, 1), "requirements": {"njSpend": 60, "diversity": True},                                        "active": True},
+    {"jurisdictionCode": "NJ", "ruleName": "NJ Film Tax Credit - Diversity Bonus",       "ruleCode": "NJ-DIVERSITY",    "incentiveType": "tax_credit", "percentage": 5.0,                                              "eligibleExpenses": ["qualified_diverse_spend"],                                              "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"diversityPlan": True, "stackableWithBase": True},                        "active": True},
+    # Virginia
+    {"jurisdictionCode": "VA", "ruleName": "Virginia Film Tax Credit",                   "ruleCode": "VA-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 20.0, "minSpend": 250000,  "maxCredit": 6500000,  "eligibleExpenses": ["virginia_labor", "goods", "services"],                                 "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"virginiaSpend": 250000},                                                  "active": True},
+    {"jurisdictionCode": "VA", "ruleName": "Virginia Enhanced Credit - Rural",           "ruleCode": "VA-RURAL",        "incentiveType": "tax_credit", "percentage": 10.0,                                             "eligibleExpenses": ["rural_spend"],                                                          "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"ruralLocation": True, "stackableWithBase": True},                        "active": True},
+    # Colorado
+    {"jurisdictionCode": "CO", "ruleName": "Colorado Film Incentive",                    "ruleCode": "CO-FILM-BASE",    "incentiveType": "rebate",     "percentage": 20.0, "minSpend": 100000,                         "eligibleExpenses": ["colorado_labor", "colorado_goods"],                                     "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"coloradoSpend": 100000},                                                  "active": True},
+    # Hawaii
+    {"jurisdictionCode": "HI", "ruleName": "Hawaii Film Production Tax Credit",          "ruleCode": "HI-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 20.0, "minSpend": 200000,                         "eligibleExpenses": ["hawaii_labor", "goods", "services"],                                    "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"hawaiiResident": 50, "hawaiiSpend": 200000},                            "active": True},
+    {"jurisdictionCode": "HI", "ruleName": "Hawaii Additional Credit - Neighbor Islands","ruleCode": "HI-NEIGHBOR",     "incentiveType": "tax_credit", "percentage": 5.0,                                              "eligibleExpenses": ["neighbor_island_spend"],                                                "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"neighborIsland": True, "stackableWithBase": True},                       "active": True},
+    # Oregon
+    {"jurisdictionCode": "OR", "ruleName": "Oregon Production Investment Fund",          "ruleCode": "OR-OPIF",         "incentiveType": "rebate",     "percentage": 20.0, "minSpend": 750000,  "maxCredit": 10000000, "eligibleExpenses": ["oregon_labor", "oregon_goods"],                                         "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"oregonLabor": 50, "oregonSpend": 750000},                               "active": True},
+    # Montana
+    {"jurisdictionCode": "MT", "ruleName": "Montana Media Production Tax Credit",        "ruleCode": "MT-FILM-BASE",    "incentiveType": "tax_credit", "percentage": 35.0, "minSpend": 50000,                          "eligibleExpenses": ["montana_labor", "montana_goods"],                                       "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"montanaSpend": 50000},                                                    "active": True},
+    # Mississippi
+    {"jurisdictionCode": "MS", "ruleName": "Mississippi Film Incentive - Base",          "ruleCode": "MS-FILM-BASE",    "incentiveType": "rebate",     "percentage": 25.0, "minSpend": 50000,                          "eligibleExpenses": ["mississippi_labor", "goods", "services"],                               "excludedExpenses": ["marketing"],                                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"mississippiSpend": 50000},                                               "active": True},
+    {"jurisdictionCode": "MS", "ruleName": "Mississippi Payroll Bonus",                  "ruleCode": "MS-PAYROLL",      "incentiveType": "rebate",     "percentage": 10.0,                                             "eligibleExpenses": ["mississippi_resident_labor"],                                           "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"mississippiResident": 100, "stackableWithBase": True},                   "active": True},
+    # Ireland
+    {"jurisdictionCode": "IE", "ruleName": "Section 481 Film Tax Credit",                "ruleCode": "IE-S481",         "incentiveType": "tax_credit", "percentage": 32.0,                                             "eligibleExpenses": ["irish_labor", "irish_goods"],                                           "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"irishSpend": 250000, "culturalTest": True},                              "active": True},
+    # France
+    {"jurisdictionCode": "FR", "ruleName": "Tax Rebate for International Production (TRIP)", "ruleCode": "FR-TRIP",     "incentiveType": "rebate",     "percentage": 30.0, "minSpend": 1000000, "maxCredit": 30000000, "eligibleExpenses": ["french_eligible_spend"],                                                 "excludedExpenses": ["development", "marketing"],                       "effectiveDate": datetime(2024, 1, 1), "requirements": {"minFrenchSpend": 1000000, "culturalTest": True},                        "active": True},
+    # Spain
+    {"jurisdictionCode": "ES", "ruleName": "Spanish Film Production Incentive",          "ruleCode": "ES-FILM",         "incentiveType": "rebate",     "percentage": 30.0, "minSpend": 1000000,                        "eligibleExpenses": ["spanish_eligible_spend"],                                               "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"spanishSpend": 1000000, "culturalTest": True},                          "active": True},
+    # New Zealand
+    {"jurisdictionCode": "NZ", "ruleName": "NZ Screen Production Grant",                 "ruleCode": "NZ-NZSPG",        "incentiveType": "grant",      "percentage": 40.0, "minSpend": 15000000,                       "eligibleExpenses": ["nz_labor", "nz_goods_services"],                                        "excludedExpenses": ["marketing", "distribution"],                      "effectiveDate": datetime(2024, 1, 1), "requirements": {"nzSpend": 15000000, "significantNZContent": True},                     "active": True},
+    {"jurisdictionCode": "NZ", "ruleName": "NZ Post-Digital-Visual Effects Grant",       "ruleCode": "NZ-PDV",          "incentiveType": "grant",      "percentage": 20.0, "minSpend": 500000,                         "eligibleExpenses": ["nz_vfx", "nz_post_production"],                                         "excludedExpenses": [],                                                 "effectiveDate": datetime(2024, 1, 1), "requirements": {"nzPDVSpend": 500000},                                                    "active": True},
+]
+
+
+# ── Seed functions (assume prisma is already connected) ───────────────────────
+
+async def _seed_jurisdictions() -> None:
+    existing = await prisma.jurisdiction.find_many()
+    existing_codes = {j.code for j in existing}
+    added = 0
+    for jur in _JURISDICTIONS:
+        if jur["code"] not in existing_codes:
+            await prisma.jurisdiction.create(data=jur)
+            added += 1
+    if added:
+        logger.info(f"✅ Seeded {added} jurisdictions")
+    else:
+        logger.info("ℹ️  Jurisdictions already seeded — skipping")
+
+
+async def _seed_rules() -> None:
+    jurisdictions = await prisma.jurisdiction.find_many()
+    jur_map = {j.code: j.id for j in jurisdictions}
+
+    existing_rules = await prisma.incentiverule.find_many()
+    existing_codes = {r.ruleCode for r in existing_rules}
+
+    added = 0
+    for rule in _RULES:
+        rule = dict(rule)  # don't mutate module-level data
+        jur_code = rule.pop("jurisdictionCode")
+        if jur_code not in jur_map or rule["ruleCode"] in existing_codes:
+            continue
+        if "requirements" in rule:
+            rule["requirements"] = json.dumps(rule["requirements"])
+        await prisma.incentiverule.create(
+            data={**rule, "jurisdiction": {"connect": {"id": jur_map[jur_code]}}}
+        )
+        added += 1
+
+    if added:
+        logger.info(f"✅ Seeded {added} incentive rules")
+    else:
+        logger.info("ℹ️  Incentive rules already seeded — skipping")
+
+
+async def seed_all() -> None:
+    """Seed jurisdictions and incentive rules. Idempotent — safe on every startup."""
+    await _seed_jurisdictions()
+    await _seed_rules()
