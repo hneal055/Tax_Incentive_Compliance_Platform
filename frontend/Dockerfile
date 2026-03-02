@@ -19,7 +19,7 @@ COPY . .
 
 # Build Vite app (skip TypeScript checking, vite will bundle)
 # Empty VITE_API_URL → relative URLs → routed through nginx (no CORS)
-RUN VITE_API_URL="" npx vite build
+RUN VITE_API_URL="" VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true npx vite build
 
 # ============================================
 # Stage 2: Runtime - Nginx

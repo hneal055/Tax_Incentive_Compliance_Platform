@@ -40,7 +40,7 @@ async def get_productions(
     }
 
 
-@router.post("/", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Create production")
+@router.post("", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Create production")
 async def create_production(production: ProductionCreate):
     """Create a new production."""
     try:

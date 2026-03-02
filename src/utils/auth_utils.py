@@ -14,7 +14,7 @@ from src.models.user import TokenData
 
 # ── Password hashing (using bcrypt directly; passlib 1.7.4 incompatible with bcrypt>=4) ──
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/0.1.0/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/0.1.0/auth/token")
 
 
 def hash_password(plain: str) -> str:
