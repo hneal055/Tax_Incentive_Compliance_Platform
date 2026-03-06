@@ -336,7 +336,7 @@ async def generate_scenario_report(request: GenerateScenarioReportRequest):
         if best_rule:
             scenario_results.append(
                 {
-                    "name": scenario.get(
+                    "scenarioName": scenario.get(
                         "name", f"Scenario {len(scenario_results) + 1}"
                     ),
                     "budget": scenario_budget,

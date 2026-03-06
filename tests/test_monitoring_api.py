@@ -119,7 +119,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.find_many = AsyncMock(return_value=[])
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=0)
         
-        response = await async_client.get("/api/v1/monitoring/events")
+        response = await async_client.get("/api/0.1.0/monitoring/events")
         
         assert response.status_code == 200
         data = response.json()
@@ -151,7 +151,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.find_many = AsyncMock(return_value=mock_events)
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=1)
         
-        response = await async_client.get("/api/v1/monitoring/events")
+        response = await async_client.get("/api/0.1.0/monitoring/events")
         
         assert response.status_code == 200
         data = response.json()
@@ -168,7 +168,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=0)
         
         response = await async_client.get(
-            "/api/v1/monitoring/events",
+            "/api/0.1.0/monitoring/events",
             params={
                 "jurisdiction_id": "jur-1",
                 "event_type": "new_program",
@@ -197,7 +197,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=0)
         
         response = await async_client.get(
-            "/api/v1/monitoring/events",
+            "/api/0.1.0/monitoring/events",
             params={"page": 2, "page_size": 10}
         )
         
@@ -214,7 +214,7 @@ class TestMonitoringEventsAPI:
         
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=5)
         
-        response = await async_client.get("/api/v1/monitoring/events/unread")
+        response = await async_client.get("/api/0.1.0/monitoring/events/unread")
         
         assert response.status_code == 200
         data = response.json()
@@ -228,7 +228,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.count = AsyncMock(return_value=3)
         
         response = await async_client.get(
-            "/api/v1/monitoring/events/unread",
+            "/api/0.1.0/monitoring/events/unread",
             params={"jurisdiction_id": "jur-1"}
         )
         
@@ -267,7 +267,7 @@ class TestMonitoringEventsAPI:
         mock_prisma_db.monitoringevent.find_unique = AsyncMock(return_value=mock_event)
         mock_prisma_db.monitoringevent.update = AsyncMock(return_value=mock_event)
         
-        response = await async_client.patch("/api/v1/monitoring/events/event-1/read")
+        response = await async_client.patch("/api/0.1.0/monitoring/events/event-1/read")
         
         assert response.status_code == 200
         data = response.json()
@@ -281,7 +281,7 @@ class TestMonitoringEventsAPI:
         
         mock_prisma_db.monitoringevent.find_unique = AsyncMock(return_value=None)
         
-        response = await async_client.patch("/api/v1/monitoring/events/invalid-id/read")
+        response = await async_client.patch("/api/0.1.0/monitoring/events/invalid-id/read")
         
         assert response.status_code == 404
         data = response.json()
@@ -298,7 +298,7 @@ class TestMonitoringSourcesAPI:
         
         mock_prisma_db.monitoringsource.find_many = AsyncMock(return_value=[])
         
-        response = await async_client.get("/api/v1/monitoring/sources")
+        response = await async_client.get("/api/0.1.0/monitoring/sources")
         
         assert response.status_code == 200
         data = response.json()
@@ -326,7 +326,7 @@ class TestMonitoringSourcesAPI:
         mock_sources = [MockSource()]
         mock_prisma_db.monitoringsource.find_many = AsyncMock(return_value=mock_sources)
         
-        response = await async_client.get("/api/v1/monitoring/sources")
+        response = await async_client.get("/api/0.1.0/monitoring/sources")
         
         assert response.status_code == 200
         data = response.json()
@@ -342,7 +342,7 @@ class TestMonitoringSourcesAPI:
         mock_prisma_db.monitoringsource.find_many = AsyncMock(return_value=[])
         
         response = await async_client.get(
-            "/api/v1/monitoring/sources",
+            "/api/0.1.0/monitoring/sources",
             params={
                 "jurisdiction_id": "jur-1",
                 "source_type": "api",
@@ -393,7 +393,7 @@ class TestMonitoringSourcesAPI:
             "active": True
         }
         
-        response = await async_client.post("/api/v1/monitoring/sources", json=source_data)
+        response = await async_client.post("/api/0.1.0/monitoring/sources", json=source_data)
         
         assert response.status_code == 201
         data = response.json()
@@ -413,7 +413,7 @@ class TestMonitoringSourcesAPI:
             "url": "https://example.com/feed.xml"
         }
         
-        response = await async_client.post("/api/v1/monitoring/sources", json=source_data)
+        response = await async_client.post("/api/0.1.0/monitoring/sources", json=source_data)
         
         assert response.status_code == 404
         data = response.json()
@@ -437,7 +437,7 @@ class TestMonitoringSourcesAPI:
             "url": "https://example.com/feed.xml"
         }
         
-        response = await async_client.post("/api/v1/monitoring/sources", json=source_data)
+        response = await async_client.post("/api/0.1.0/monitoring/sources", json=source_data)
         
         assert response.status_code == 400
         data = response.json()
@@ -476,7 +476,7 @@ class TestMonitoringSourcesAPI:
             "url": "https://api.example.com"
         }
         
-        response = await async_client.post("/api/v1/monitoring/sources", json=source_data)
+        response = await async_client.post("/api/0.1.0/monitoring/sources", json=source_data)
         
         assert response.status_code == 201
         data = response.json()

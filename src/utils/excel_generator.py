@@ -268,7 +268,7 @@ class ExcelExportGenerator:
             ws['A9'] = "Scenario:"
             ws['B9'] = best['scenarioName']
             ws['A10'] = "Budget:"
-            ws['B10'] = best['scenarioParams']['budget']
+            ws['B10'] = best['budget']
             ws['B10'].number_format = '$#,##0'
             ws['A11'] = "Estimated Credit:"
             ws['B11'] = best['estimatedCredit']
@@ -288,8 +288,8 @@ class ExcelExportGenerator:
         for i, scenario in enumerate(scenarios):
             ws.append([
                 scenario['scenarioName'],
-                scenario['scenarioParams']['budget'],
-                scenario['bestRuleName'],
+                scenario['budget'],
+                scenario['ruleName'],
                 scenario['estimatedCredit'],
                 scenario['effectiveRate'],
                 i + 1

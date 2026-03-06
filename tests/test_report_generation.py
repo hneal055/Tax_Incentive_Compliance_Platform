@@ -86,16 +86,16 @@ class TestPDFGeneration:
         scenarios = [
             {
                 "scenarioName": "Conservative",
-                "scenarioParams": {"budget": 4000000},
-                "bestRuleName": "CA Film Tax Credit",
+                "budget": 4000000,
+                "ruleName": "CA Film Tax Credit",
                 "bestRuleCode": "CA-FTC",
                 "estimatedCredit": 1000000,
                 "effectiveRate": 25.0
             },
             {
                 "scenarioName": "Premium",
-                "scenarioParams": {"budget": 7500000},
-                "bestRuleName": "CA Film Tax Credit",
+                "budget": 7500000,
+                "ruleName": "CA Film Tax Credit",
                 "bestRuleCode": "CA-FTC",
                 "estimatedCredit": 1875000,
                 "effectiveRate": 25.0
@@ -203,16 +203,16 @@ class TestExcelGeneration:
         scenarios = [
             {
                 "scenarioName": "Conservative",
-                "scenarioParams": {"budget": 4000000},
-                "bestRuleName": "CA Film Tax Credit",
+                "budget": 4000000,
+                "ruleName": "CA Film Tax Credit",
                 "bestRuleCode": "CA-FTC",
                 "estimatedCredit": 1000000,
                 "effectiveRate": 25.0
             },
             {
                 "scenarioName": "Premium",
-                "scenarioParams": {"budget": 7500000},
-                "bestRuleName": "CA Film Tax Credit",
+                "budget": 7500000,
+                "ruleName": "CA Film Tax Credit",
                 "bestRuleCode": "CA-FTC",
                 "estimatedCredit": 1875000,
                 "effectiveRate": 25.0

@@ -358,8 +358,8 @@ async def export_scenario_excel(request: GenerateScenarioReportRequest):
             
             scenario_results.append({
                 "scenarioName": scenario_name,
-                "scenarioParams": scenario,
-                "bestRuleName": best_rule.ruleName,
+                "budget": scenario_budget,
+                "ruleName": best_rule.ruleName,
                 "bestRuleCode": best_rule.ruleCode,
                 "estimatedCredit": best_credit,
                 "effectiveRate": effective_rate
