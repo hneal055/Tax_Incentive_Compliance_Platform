@@ -5,8 +5,27 @@ import {
   RefreshCw, Plus, ChevronRight, AlertCircle, TrendingUp,
   Briefcase, DollarSign, Search, ExternalLink
 } from "lucide-react";
+import { isMockMode, MOCK_FETCH_RESPONSES } from "./api/mock";
 
 const API = import.meta.env.VITE_API_URL || "";
+
+// Normalise a fetch path to a lookup key (strip query string + trailing slash)
+function mockKey(path: string) {
+  return path.split("?")[0].replace(/\/$/, "");
+}
+
+async function apiFetch(path: string) {
+  if (isMockMode()) {
+    const key = mockKey(path);
+    // Match by suffix so /api/v1/jurisdictions matches the key
+    const entry = Object.entries(MOCK_FETCH_RESPONSES).find(([k]) => key.endsWith(k));
+    if (entry) return new Promise((res) => setTimeout(() => res(entry[1]), 120));
+    return {};
+  }
+  const r = await fetch(`${API}${path}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
 
 const C = {
   sidebar: "#161b27", sidebarBorder: "#1e2535",
@@ -36,12 +55,6 @@ interface CalcResult {
 interface AIResult {
   recommendations?: { jurisdiction: string; rate: string; estimated_credit: string; reason: string; best_for?: string }[];
   error?: string;
-}
-
-async function apiFetch(path: string) {
-  const r = await fetch(`${API}${path}`);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
 }
 
 export default function PilotForgeDashboard() {
@@ -74,6 +87,7 @@ export default function PilotForgeDashboard() {
     { id: "calculator", label: "Incentive Calculator", icon: Calculator },
     { id: "jurisdictions", label: "Jurisdictions", icon: Globe },
     { id: "advisor", label: "AI Advisor", icon: Bot, badge: "NEW" },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
@@ -111,7 +125,7 @@ export default function PilotForgeDashboard() {
             <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600 }}>Finance Manager</div>
             <div style={{ color: "#64748b", fontSize: 11 }}>Pro Account</div>
           </div>
-          <Settings size={15} color="#475569" style={{ marginLeft: "auto", cursor: "pointer" }} />
+          <Settings size={15} color="#475569" style={{ marginLeft: "auto", cursor: "pointer" }} onClick={() => setActive("settings")} />
         </div>
       </div>
 
@@ -128,6 +142,7 @@ export default function PilotForgeDashboard() {
             {active === "calculator" && <CalculatorView productions={productions} jurisdictions={jurisdictions} rules={rules} />}
             {active === "jurisdictions" && <JurisdictionsView jurisdictions={jurisdictions} />}
             {active === "advisor" && <AdvisorView />}
+            {active === "settings" && <SettingsView />}
           </>
         )}
       </div>
@@ -685,5 +700,133 @@ function AdvisorView() {
   );
 }
 
+// ─── Settings View ────────────────────────────────────────────────────────────
 
+const SETTINGS_KEY = "pilotforge_settings";
+
+function loadAppSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}"); } catch { return {}; }
+}
+function saveAppSettings(patch: Record<string, unknown>) {
+  const next = { ...loadAppSettings(), ...patch };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  return next;
+}
+
+function SettingsView() {
+  const [mock, setMock] = useState<boolean>(() => loadAppSettings().useMockData === true);
+
+  const toggleMock = () => {
+    const next = !mock;
+    saveAppSettings({ useMockData: next });
+    setMock(next);
+    // Reload so apiFetch picks up the new mode
+    setTimeout(() => window.location.reload(), 200);
+  };
+
+  return (
+    <div style={{ padding: 32, maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: C.text, margin: "0 0 6px", letterSpacing: "-0.5px" }}>Settings</h1>
+        <p style={{ color: C.textMuted, fontSize: 14, margin: 0 }}>Configure your PilotForge experience.</p>
+      </div>
+
+      {/* Developer Tools */}
+      <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${C.cardBorder}`, padding: 28, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: mock ? "rgba(251,191,36,0.15)" : C.accentGlow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AlertCircle size={18} color={mock ? "#d97706" : C.accent} />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Developer Tools</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Toggle mock data for UI development and testing</div>
+          </div>
+        </div>
+
+        <div style={{
+          borderRadius: 10, border: `1px solid ${mock ? "#fcd34d" : C.cardBorder}`,
+          background: mock ? "#fffbeb" : "#f8fafc", padding: 20,
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Mock Data Mode</span>
+                {mock && (
+                  <span style={{ fontSize: 10, fontWeight: 800, background: "#fbbf24", color: "#78350f", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.6 }}>
+                When enabled, all API calls return built-in sample data — 8 jurisdictions, 8 incentive rules,
+                4 productions, and 5 monitoring events. The backend does not need to be running.
+                Toggling reloads the page to apply immediately.
+              </p>
+
+              {mock && (
+                <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+                  {[
+                    { label: "Jurisdictions", value: "8" },
+                    { label: "Incentive Rules", value: "8" },
+                    { label: "Productions", value: "4" },
+                    { label: "Monitoring Events", value: "5" },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ textAlign: "center", background: "#fff", border: "1px solid #fcd34d", borderRadius: 8, padding: "10px 16px" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: "#d97706" }}>{value}</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              aria-label={mock ? "Disable mock data mode" : "Enable mock data mode"}
+              aria-checked={mock ? "true" : "false"}
+              role="switch"
+              onClick={toggleMock}
+              style={{
+                flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+                background: mock ? "#fbbf24" : "#cbd5e1", position: "relative", transition: "background 0.2s",
+              }}
+            >
+              <span style={{
+                position: "absolute", top: 3, left: mock ? 23 : 3,
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 0.2s",
+              }} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* API Status */}
+      <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${C.cardBorder}`, padding: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentGlow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <TrendingUp size={18} color={C.accent} />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>API Configuration</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Backend connection info</div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {[
+            ["Data Source", mock ? "Mock (built-in)" : "Live API"],
+            ["API Base", API || window.location.origin],
+            ["Version", "v1"],
+            ["Mode", mock ? "Development" : "Production"],
+          ].map(([k, v]) => (
+            <div key={k} style={{ background: C.mainBg, borderRadius: 8, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginBottom: 2 }}>{k}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: mock && k === "Data Source" ? "#d97706" : C.text }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 

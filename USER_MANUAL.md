@@ -1,11 +1,11 @@
 # PilotForge
 > Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
-## User Manual v1.0
 
-**Platform Version:** 0.1.0  
-**API Version:** v1  
-**Last Updated:** January 9, 2026  
+## User Manual v1.2
+
+**Platform Version:** 1.2.0
+**API Version:** v1
+**Last Updated:** March 6, 2026
 **Documentation Standard:** OAS 3.1
 
 ---
@@ -46,11 +46,14 @@ The PilotForge is a **jurisdictional rule engine** designed to help film and tel
 
 ### Key Benefits
 
-✅ **Comprehensive Data** - 32 jurisdictions, 33+ incentive programs  
-✅ **Real-Time Access** - RESTful API with instant responses  
-✅ **Accurate Calculations** - Rule-based engine ensures compliance  
-✅ **Easy Integration** - Standard REST API, works with any system  
-✅ **Up-to-Date Information** - Regular updates to incentive rules  
+✅ **Comprehensive Data** - 32 jurisdictions, 33+ incentive programs
+✅ **Real-Time Access** - RESTful API with instant responses
+✅ **Accurate Calculations** - Rule-based engine ensures compliance
+✅ **Easy Integration** - Standard REST API, works with any system
+✅ **Up-to-Date Information** - Regular updates to incentive rules
+✅ **AI Strategic Advisor** - Claude-powered recommendations via secure server-side proxy
+✅ **Regulatory Monitoring** - Live event feed tracking incentive program changes
+✅ **Mock Data Mode** - Offline UI development with built-in fixture data
 
 ---
 
@@ -897,9 +900,141 @@ Incentive rule data sourced from:
 
 ### Updates
 
-**Last Updated:** January 9, 2026  
-**Version:** 1.0  
-**Next Review:** March 2026  
+**Last Updated:** March 6, 2026
+**Version:** 1.2
+**Next Review:** June 2026
+
+---
+
+## AI Strategic Advisor
+
+### Overview
+
+The AI Strategic Advisor provides natural-language recommendations for production budgeting and jurisdiction selection, powered by Anthropic Claude.
+
+The API key is held server-side — it is never sent to or accessible from the browser.
+
+### Endpoint
+
+```
+POST /api/v1/advisor/recommend
+Content-Type: application/json
+```
+
+### Request Body
+
+```json
+{
+  "budget": 5000000,
+  "production_type": "feature_film",
+  "preferred_jurisdictions": ["CA", "GA", "NM"],
+  "notes": "Prefer states with refundable credits"
+}
+```
+
+### Response
+
+```json
+{
+  "recommendations": [
+    "Georgia offers a 30% transferable tax credit with no cap — ideal for your $5M budget.",
+    "New Mexico provides a 25–35% refundable credit; the higher tier requires 60% in-state spend.",
+    "California's film credit is competitive but requires filming at an approved facility."
+  ]
+}
+```
+
+### Error Responses
+
+| Status | Meaning |
+|---|---|
+| `500` | `ANTHROPIC_API_KEY` not set or Anthropic API error |
+| `422` | Invalid request body |
+
+---
+
+## Regulatory Monitoring
+
+### Overview
+
+The monitoring system tracks incentive program changes across jurisdictions and surfaces them as events in the dashboard.
+
+### Endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/v1/monitoring/events/` | Paginated event feed (filter by `jurisdiction_id`, `severity`, `unread`) |
+| `GET` | `/api/v1/monitoring/events/unread/` | Count of unread events |
+| `PATCH` | `/api/v1/monitoring/events/{id}/read` | Mark a single event as read |
+| `GET` | `/api/v1/monitoring/sources/` | List configured monitoring sources |
+| `POST` | `/api/v1/monitoring/sources/` | Add a new monitoring source |
+
+### Event Object
+
+```json
+{
+  "id": "evt_abc123",
+  "jurisdictionId": "jur_ga",
+  "eventType": "incentive_change",
+  "severity": "warning",
+  "title": "Georgia Film Credit cap updated",
+  "summary": "Annual cap raised from $900M to $1.2B effective July 2026.",
+  "sourceUrl": "https://www.georgia.org/film",
+  "detectedAt": "2026-03-01T14:30:00Z",
+  "readAt": null,
+  "createdAt": "2026-03-01T14:30:00Z"
+}
+```
+
+### Severity Levels
+
+| Level | Color | Meaning |
+|---|---|---|
+| `info` | Blue | Informational update, no action required |
+| `warning` | Amber | Program change that may affect active productions |
+| `critical` | Red | Significant change requiring immediate attention |
+
+---
+
+## Settings & Developer Tools
+
+### Settings Persistence
+
+All settings are stored in `localStorage` under the key `pilotforge_settings`:
+
+```json
+{
+  "currency": "USD",
+  "defaultJurisdiction": "",
+  "notificationsEnabled": true,
+  "darkMode": false,
+  "autoRefresh": false,
+  "refreshInterval": 30,
+  "compactMode": false,
+  "showSparklines": true,
+  "severityFilters": { "info": true, "warning": true, "critical": true },
+  "useMockData": false
+}
+```
+
+### Mock Data Mode
+
+Mock Data Mode replaces all live API calls with built-in fixture data — useful for UI development without a running backend.
+
+**To enable:** Settings → Developer Tools → toggle "Mock Data Mode"
+
+The page reloads automatically after toggling. When active, the toggle shows an amber "ACTIVE" badge.
+
+**Mock fixtures included:**
+- 8 jurisdictions (CA, NY, GA, LA, NM, UK, CA-FED, NZ)
+- 8 incentive rules
+- 4 productions
+- 5 monitoring events
+
+**Implementation:** `frontend/src/api/mock.ts`
+- `isMockMode()` — reads `localStorage` at each call
+- `mockApi` — Proxy-compatible mock object
+- `MOCK_FETCH_RESPONSES` — path-keyed dict for `apiFetch()` in `App.tsx`
 
 ---
 

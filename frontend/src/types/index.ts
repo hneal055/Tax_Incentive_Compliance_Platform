@@ -224,4 +224,5 @@ export interface UserSettings {
   compactMode: boolean;
   showSparklines: boolean;
   severityFilters: { info: boolean; warning: boolean; critical: boolean };
+  useMockData: boolean;
 }
