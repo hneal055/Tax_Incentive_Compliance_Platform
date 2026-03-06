@@ -46,7 +46,7 @@ async def calculate_simple(request: SimpleCalculateRequest):
     """
     Calculate estimated tax credit for a production using a specific incentive rule.
 
-    - **productionBudget**: Total production budget
+    - **productionBudget**: Total production budget (required)
     - **jurisdictionId**: Target jurisdiction
     - **ruleId**: Specific incentive rule to apply
     - **qualifyingBudget**: Optional override for qualifying budget
@@ -58,33 +58,39 @@ async def calculate_simple(request: SimpleCalculateRequest):
     jurisdiction = await prisma.jurisdiction.find_unique(
         where={"id": request.jurisdictionId}
     )
-
     if not jurisdiction:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Jurisdiction not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Jurisdiction not found"
         )
 
     # Get rule
     rule = await prisma.incentiverule.find_unique(where={"id": request.ruleId})
-
     if not rule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Incentive rule not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Incentive rule not found"
         )
 
     # Verify rule belongs to jurisdiction
     if rule.jurisdictionId != request.jurisdictionId:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Rule does not belong to specified jurisdiction",
+            detail="Rule does not belong to specified jurisdiction",
         )
 
-    # Use qualifying budget or default to total budget
-    qualifying_budget = (
-        request.qualifyingBudget
-        if request.qualifyingBudget
-        else request.productionBudget
-    )
+    # Determine qualifying budget (handle None and zero correctly)
+    notes = []
+    if request.qualifyingBudget is not None:
+        qualifying_budget = request.qualifyingBudget
+        notes.append(f"ℹ️ Using specified qualifying budget: ${qualifying_budget:,.0f}")
+    else:
+        qualifying_budget = request.productionBudget
+        notes.append("ℹ️ No qualifying budget provided – using total production budget")
+
+    # Validate that qualifying_budget is positive (optional, but good practice)
+    if qualifying_budget <= 0:
+        notes.append(
+            "⚠️ Qualifying budget is zero or negative – estimated credit will be zero"
+        )
 
     # Calculate credit
     if rule.percentage:
@@ -100,28 +106,25 @@ async def calculate_simple(request: SimpleCalculateRequest):
         meets_minimum = qualifying_budget >= rule.minSpend
         if not meets_minimum:
             estimated_credit = 0
+            notes.append(
+                f"⚠️ Does not meet minimum spend requirement of ${rule.minSpend:,.0f}"
+            )
 
     # Apply maximum cap
     under_maximum = True
     if rule.maxCredit and estimated_credit > rule.maxCredit:
         estimated_credit = rule.maxCredit
         under_maximum = False
+        notes.append(f"ℹ️ Credit capped at maximum of ${rule.maxCredit:,.0f}")
 
     # Parse requirements
     requirements = parse_json_field(rule.requirements)
 
-    # Generate notes
-    notes = []
-    if not meets_minimum:
-        notes.append(
-            f"⚠️ Does not meet minimum spend requirement of ${rule.minSpend:,.0f}"
-        )
-    if not under_maximum:
-        notes.append(f"ℹ️ Credit capped at maximum of ${rule.maxCredit:,.0f}")
+    # Add rate note if applicable
     if rule.percentage:
         notes.append(f"💡 Rate: {rule.percentage}% of qualifying budget")
     if requirements:
-        notes.append(f"📋 Additional requirements apply - see requirements field")
+        notes.append("📋 Additional requirements apply – see requirements field")
 
     return SimpleCalculateResponse(
         jurisdiction=jurisdiction.name,
