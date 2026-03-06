@@ -450,9 +450,38 @@ function CalculatorView({ productions, jurisdictions, rules }: { productions: Pr
   );
 }
 
+interface MonitoringEvent {
+  id: string;
+  jurisdictionId: string;
+  eventType: string;
+  severity: string;
+  title: string;
+  summary: string;
+  sourceUrl?: string;
+  detectedAt: string;
+  readAt?: string;
+}
+
+function relativeTime(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 function JurisdictionsView({ jurisdictions }: { jurisdictions: Jurisdiction[] }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [feedEvents, setFeedEvents] = useState<MonitoringEvent[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch("/api/v1/monitoring/events/?page_size=5")
+      .then(d => setFeedEvents(d.events || []))
+      .catch(() => setFeedEvents([]))
+      .finally(() => setFeedLoading(false));
+  }, []);
 
   const filtered = jurisdictions.filter(j => {
     const q = search.toLowerCase();
@@ -461,42 +490,60 @@ function JurisdictionsView({ jurisdictions }: { jurisdictions: Jurisdiction[] })
     return match && type;
   });
 
-  const regulatoryFeed = [
-    { source: "California Film Commission", time: "2h ago", text: "Proposed expansion of the 30-mile studio zone currently under committee review.", url: "https://film.ca.gov" },
-    { source: "British Film Commission", time: "5h ago", text: "New guidance issued for VFX expenditure qualification under updates.", url: "https://britishfilmcommission.org.uk" },
-    { source: "Georgia Dept. of Econ Dev", time: "1d ago", text: "Fiscal year cap status: 65% utilized. Applications open." },
-  ];
-
   return (
     <div style={{ padding: 32 }}>
       <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ background: "#161b27", borderRadius: 12, overflow: "hidden" }}>
             <div style={{ background: "#1e2535", padding: "12px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.danger }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: feedLoading ? "#475569" : feedEvents.length > 0 ? C.success : "#475569" }} />
               <span style={{ color: "#e2e8f0", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Regulatory Feed</span>
+              {feedEvents.length > 0 && <span style={{ marginLeft: "auto", fontSize: 10, background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>{feedEvents.filter(e => !e.readAt).length} NEW</span>}
             </div>
             <div style={{ padding: "12px 16px" }}>
-              {regulatoryFeed.map((item, i) => (
-                <div key={i} style={{ marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid #1e2535" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ color: C.accent, fontSize: 12, fontWeight: 600 }}>{item.source}</span>
-                    <span style={{ color: "#475569", fontSize: 11 }}>{item.time}</span>
+              {feedLoading && <div style={{ color: "#475569", fontSize: 12, textAlign: "center", padding: "8px 0" }}>Loading events...</div>}
+              {!feedLoading && feedEvents.length === 0 && (
+                <div style={{ color: "#475569", fontSize: 12, textAlign: "center", padding: "8px 0" }}>No events yet. Add monitoring sources to track jurisdictions.</div>
+              )}
+              {!feedLoading && feedEvents.map((item, i) => (
+                <div key={item.id} style={{ marginBottom: i < feedEvents.length - 1 ? 14 : 0, paddingBottom: i < feedEvents.length - 1 ? 14 : 0, borderBottom: i < feedEvents.length - 1 ? "1px solid #1e2535" : "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
+                    {item.sourceUrl
+                      ? <a href={item.sourceUrl} target="_blank" rel="noreferrer" style={{ color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</a>
+                      : <span style={{ color: C.accent, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</span>}
+                    <span style={{ color: "#475569", fontSize: 11, flexShrink: 0 }}>{relativeTime(item.detectedAt)}</span>
                   </div>
-                  <p style={{ color: "#94a3b8", fontSize: 12, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
+                  <p style={{ color: "#94a3b8", fontSize: 12, margin: 0, lineHeight: 1.5 }}>{item.summary}</p>
                 </div>
               ))}
-              <div style={{ marginTop: 12, fontSize: 11, color: "#475569", textAlign: "center", fontWeight: 600 }}>GLOBAL MONITORING ACTIVE</div>
+              <div style={{ marginTop: 12, fontSize: 11, color: feedEvents.length > 0 ? C.success : "#475569", textAlign: "center", fontWeight: 600 }}>GLOBAL MONITORING ACTIVE</div>
             </div>
           </div>
           <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: `1px solid ${C.cardBorder}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <Briefcase size={15} color={C.accent} />
               <span style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Agency Directory</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, background: C.accentGlow, color: C.accent, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>{jurisdictions.length} active</span>
             </div>
-            <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.6, marginBottom: 16 }}>
-              PilotForge tracks {jurisdictions.length} active U.S. incentive programs. International jurisdictions coming soon.
-            </p>
+            <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              {jurisdictions.map(j => (
+                <div key={j.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${C.cardBorder}` }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{j.name}</div>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>{j.code} · {j.type}</div>
+                  </div>
+                  {j.website && j.website !== "https://prior.prior.prior" && (
+                    <a href={j.website} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 11, color: C.accent, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                      Visit <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+              ))}
+              {jurisdictions.length === 0 && (
+                <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>No agencies loaded yet.</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -558,24 +605,19 @@ function AdvisorView() {
     if (!synopsis.trim()) return;
     setLoading(true); setResult(null);
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch(`${API}/api/v1/advisor/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `You are a film tax incentive advisor. Given this project synopsis and budget, recommend the top 3 US states or international jurisdictions and explain why. Be specific about incentive rates and qualifying criteria.\n\nSynopsis: ${synopsis}\nBudget: $${parseInt(budget).toLocaleString()}\n\nRespond in JSON only (no markdown): {"recommendations": [{"jurisdiction": "string", "rate": "string", "estimated_credit": "string", "reason": "string", "best_for": "string"}]}`
-          }]
-        })
+        body: JSON.stringify({ synopsis, budget: parseFloat(budget) || 0 })
       });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${response.status}`);
+      }
       const data = await response.json();
-      const text = data.content[0].text;
-      const clean = text.replace(/```json|```/g, "").trim();
-      setResult(JSON.parse(clean));
-    } catch {
-      setResult({ error: "Could not generate insights. Please try again." });
+      setResult(data);
+    } catch (e: unknown) {
+      setResult({ error: e instanceof Error ? e.message : "Could not generate insights. Please try again." });
     }
     setLoading(false);
   };
