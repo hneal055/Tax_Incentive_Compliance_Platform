@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   compactMode: false,
   showSparklines: true,
   severityFilters: { info: true, warning: true, critical: true },
+  useMockData: false,
 };
 
 function loadSettings(): UserSettings {

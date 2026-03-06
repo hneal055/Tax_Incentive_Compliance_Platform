@@ -13,6 +13,7 @@ import {
   Loader2,
   Sun,
   Moon,
+  FlaskConical,
 } from 'lucide-react';
 import Card from '../components/Card';
 import { useAppStore } from '../store';
@@ -415,6 +416,75 @@ const Settings: React.FC = () => {
               <Trash2 className="h-4 w-4" />
               Reset to Defaults
             </button>
+          </div>
+        </Card>
+
+        {/* Developer Tools - full width */}
+        <Card className="lg:col-span-2">
+          <SectionHeader
+            icon={FlaskConical}
+            title="Developer Tools"
+            description="Toggle mock data for UI development and testing without a live backend"
+          />
+          <div className="space-y-4">
+            <div className={`rounded-lg border p-4 transition-colors ${settings.useMockData ? 'border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20' : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40'}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      Mock Data Mode
+                    </span>
+                    {settings.useMockData && (
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-400 text-amber-900 uppercase tracking-wide">
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    When enabled, all API calls return realistic sample data — 8 jurisdictions, 8 incentive rules,
+                    4 productions, and 5 monitoring events. Changes take effect on next data fetch or page refresh.
+                    The backend does not need to be running.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={settings.useMockData ? "true" : "false"}
+                  aria-label="Toggle mock data mode"
+                  onClick={() => {
+                    updateSettings({ useMockData: !settings.useMockData });
+                    // Trigger a full data refresh so the UI picks up the new mode immediately
+                    setTimeout(() => refreshAll(), 100);
+                  }}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                    settings.useMockData ? 'bg-amber-400' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                      settings.useMockData ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {settings.useMockData && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Jurisdictions', value: '8', note: 'US & International' },
+                  { label: 'Incentive Rules', value: '8', note: 'Various types' },
+                  { label: 'Productions', value: '4', note: 'All statuses' },
+                  { label: 'Monitoring Events', value: '5', note: 'Mixed severity' },
+                ].map(({ label, value, note }) => (
+                  <div key={label} className="rounded-lg border border-amber-200 dark:border-amber-700 bg-white dark:bg-gray-800 p-3 text-center">
+                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{value}</div>
+                    <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-0.5">{label}</div>
+                    <div className="text-[10px] text-gray-400 dark:text-gray-500">{note}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
       </div>

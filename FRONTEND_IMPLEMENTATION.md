@@ -46,7 +46,10 @@ frontend/
 ├── src/
 │   ├── api/
 │   │   ├── client.ts         # Axios API client configuration
-│   │   └── index.ts          # API service methods
+│   │   ├── index.ts          # API service layer (Proxy-wrapped for mock support)
+│   │   └── mock.ts           # Built-in mock data + isMockMode() helper
+│   ├── hooks/
+│   │   └── useSettings.ts    # UserSettings hook (localStorage: pilotforge_settings)
 │   ├── components/
 │   │   ├── Button.tsx        # Enhanced button with icons & accessibility
 │   │   ├── Card.tsx          # Card with hover effects & loading states
@@ -65,7 +68,8 @@ frontend/
 │   │   ├── Dashboard.tsx     # Redesigned with metrics & visualizations
 │   │   ├── Productions.tsx   # Enhanced with animations & empty states
 │   │   ├── Jurisdictions.tsx # Improved cards with type icons
-│   │   └── Calculator.tsx    # Modern form with insights
+│   │   ├── Calculator.tsx    # Modern form with insights
+│   │   └── Settings.tsx      # App settings + Developer Tools (mock mode toggle)
 │   ├── store/
 │   │   └── index.ts          # Zustand state store
 │   ├── types/
@@ -371,6 +375,16 @@ Full TypeScript coverage:
 - No `any` types used
 - Strict mode enabled
 
+## Recent Updates (v1.2.0 — March 2026)
+
+### What's New
+- ✅ **AI Strategic Advisor**: Natural-language recommendations via Anthropic Claude; server-side proxy (`/api/v1/advisor/recommend`) keeps API key out of browser
+- ✅ **Live Regulatory Feed**: `JurisdictionsView` fetches real monitoring events from the API instead of a static array
+- ✅ **Mock Data Mode**: Toggle in Settings switches between live API and built-in fixture data; persisted in `localStorage` under `pilotforge_settings`
+- ✅ **Settings Page**: Accessible via sidebar nav; includes currency, notifications, dark mode, compact view, mock mode, and API config panel
+- ✅ **Mock Data Architecture**: `api/mock.ts` provides `isMockMode()`, `mockApi` (Proxy-compatible), and `MOCK_FETCH_RESPONSES` (path-keyed dict for `apiFetch`)
+- ✅ **Routing Fix**: SPA fallback moved to `@app.exception_handler(404)` on the backend; API routes now normalize correctly without redirect loops
+
 ## Recent Updates (v2.0 - UI/UX Redesign)
 
 ### What's New
@@ -395,18 +409,32 @@ Full TypeScript coverage:
 4. **Calculator**: Enhanced form with insights
 5. **Jurisdictions**: Type-aware icon system
 
+## Mock Data Mode
+
+`frontend/src/api/mock.ts` provides a zero-friction offline development experience:
+
+- **`isMockMode()`** — reads `localStorage.getItem('pilotforge_settings')` at call-time; no build change needed to toggle
+- **`mockApi`** — full object matching `api/index.ts` shape; `api/index.ts` exports a `Proxy` that returns mock sections when `isMockMode()` is true
+- **`MOCK_FETCH_RESPONSES`** — path-keyed dict; `apiFetch()` in `App.tsx` matches paths at call-time for the monolithic UI
+- **Built-in fixtures**: 8 jurisdictions, 8 incentive rules, 4 productions, 5 monitoring events
+- Toggle via **Settings → Developer Tools**; persisted under `pilotforge_settings.useMockData` in localStorage; reload triggered automatically on change
+
+## AI Strategic Advisor
+
+- `AdvisorView` in `App.tsx` sends `POST /api/v1/advisor/recommend` to the backend
+- Backend (`src/api/advisor.py`) calls Anthropic Claude (`claude-sonnet-4-6`) using `ANTHROPIC_API_KEY` from the server environment
+- Returns `{ recommendations: string[] }` — API key never reaches the browser
+
 ## Future Enhancements
 
 Potential additions:
-- Unit tests with Vitest
-- E2E tests with Playwright  
-- Production detail pages
-- Report generation UI
+- Phase 2: WebSocket real-time push for monitoring events
+- Phase 3: NewsAPI keyword monitoring integration
+- Phase 4: RSS/Atom feed monitoring for film commissions
+- E2E tests with Playwright
 - Advanced filtering and search
-- Real-time data updates via WebSocket
 - Internationalization (i18n)
-- PDF export functionality
-- User preferences panel
+- WebSocket-driven toast notifications for critical alerts
 
 ## Conclusion
 

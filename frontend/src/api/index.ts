@@ -1,4 +1,5 @@
 import apiClient from './client';
+import mockApi, { isMockMode } from './mock';
 import type {
   Production,
   Jurisdiction,
@@ -224,4 +225,18 @@ export const api = {
   },
 };
 
-export default api;
+// Route every call through mock when dev mode is active.
+// Each method is wrapped at call-time so toggling takes effect immediately.
+const handler: ProxyHandler<typeof api> = {
+  get(target, key: string) {
+    const section = target[key as keyof typeof target];
+    if (isMockMode()) {
+      const mockSection = mockApi[key as keyof typeof mockApi];
+      if (mockSection !== undefined) return mockSection;
+    }
+    return section;
+  },
+};
+
+export const apiWithMock = new Proxy(api, handler);
+export default apiWithMock;

@@ -7,9 +7,9 @@ Main FastAPI application for tax incentive calculation and compliance verificati
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.utils.config import settings
@@ -106,22 +106,6 @@ app.add_middleware(
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
-# Root endpoint
-@app.get("/", tags=["Root"])
-async def root():
-    """
-    Root endpoint - API information
-    """
-    return {
-        "message": "Welcome to PilotForge",
-        "tagline": "Tax Incentive Intelligence for Film & TV",
-        "version": settings.API_VERSION,
-        "status": "running",
-        "docs": "/docs",
-        "api": f"/api/{settings.API_VERSION}"
-    }
-
-
 # Health check endpoint
 @app.get("/health", tags=["Health"])
 async def health_check():
@@ -156,43 +140,41 @@ async def health_check():
     }
 
 
-# Error handlers
+# Serve frontend SPA
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    # Mount static assets (JS/CSS/images) at /assets
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+
+
+# Error handlers — must be defined AFTER mounts so frontend_dist is available.
+# The 404 handler doubles as the SPA catch-all: non-API 404s get index.html,
+# which lets redirect_slashes work correctly for API paths (no catch-all route
+# that would shadow it).
 @app.exception_handler(404)
-async def not_found_handler(request, exc):
-    """Handle 404 errors"""
-    return JSONResponse(
-        status_code=404,
-        content={
-            "detail": "Resource not found",
-            "path": str(request.url.path)
-        }
-    )
+async def not_found_handler(request: Request, exc):
+    path = request.url.path
+    if path.startswith("/api/") or path.startswith("/assets"):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": "Resource not found", "path": path}
+        )
+    index = frontend_dist / "index.html"
+    if index.exists():
+        return FileResponse(str(index))
+    return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 
 @app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    """Handle 500 errors"""
+async def internal_error_handler(request: Request, exc):
     logger.error(f"Internal error: {exc}")
     return JSONResponse(
         status_code=500,
-        content={
-            "detail": "Internal server error",
-            "message": "An unexpected error occurred"
-        }
+        content={"detail": "Internal server error", "message": "An unexpected error occurred"}
     )
-
-
-# Mount frontend static files if build exists
-frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
-if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-    logger.info(f"✅ Frontend mounted from {frontend_dist}")
-else:
-    # Fallback to old static directory
-    static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-        logger.info(f"✅ Static files mounted from {static_dir}")
 
 
 

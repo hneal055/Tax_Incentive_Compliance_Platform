@@ -1,0 +1,31 @@
+# Core framework
+fastapi==0.128.0
+uvicorn[standard]==0.23.2
+python-multipart==0.0.6
+
+# Database
+prisma==0.15.0
+psycopg2-binary==2.9.11
+
+# Config / settings
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-dotenv==1.0.0
+
+# Monitoring service
+aiohttp==3.9.5
+feedparser==6.0.11
+beautifulsoup4==4.14.3
+
+# Scheduler
+apscheduler==3.10.4
+
+# Reports
+openpyxl==3.1.5
+reportlab==4.4.4
+
+# AI Advisor
+anthropic>=0.84.0
+
+# Utilities
+aiofiles==23.2.1

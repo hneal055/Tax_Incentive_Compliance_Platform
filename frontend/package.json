@@ -16,6 +16,9 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.59.0"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "lucide-react": "^0.562.0",

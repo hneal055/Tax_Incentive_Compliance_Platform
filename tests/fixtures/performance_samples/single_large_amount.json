@@ -1,0 +1,14 @@
+{
+  "productionId": "b0e3de4c-75da-4e8a-afd2-7f3f0c6a6e70",
+  "category": "Labor",
+  "subcategory": "Cast",
+  "description": "Major Studio Rental Package",
+  "amount": 5000000.0,
+  "expenseDate": "2025-10-20",
+  "paymentDate": "2025-11-19",
+  "isQualifying": true,
+  "vendorName": "Alexander-Wheeler",
+  "vendorLocation": "Jonesfurt, KS",
+  "invoiceNumber": "INV-56463981",
+  "receiptNumber": "REC-85655164"
+}

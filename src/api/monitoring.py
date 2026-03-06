@@ -22,7 +22,7 @@ router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
 
 
 # Event endpoints
-@router.get("/events", response_model=MonitoringEventList, summary="Get monitoring events")
+@router.get("/events/", response_model=MonitoringEventList, summary="Get monitoring events")
 async def get_monitoring_events(
     jurisdiction_id: Optional[str] = Query(None, description="Filter by jurisdiction ID"),
     event_type: Optional[str] = Query(None, description="Filter by event type"),
@@ -75,7 +75,7 @@ async def get_monitoring_events(
     }
 
 
-@router.get("/events/unread", response_model=UnreadCountResponse, summary="Get unread event count")
+@router.get("/events/unread/", response_model=UnreadCountResponse, summary="Get unread event count")
 async def get_unread_count(
     jurisdiction_id: Optional[str] = Query(None, description="Filter by jurisdiction ID"),
 ):
@@ -122,7 +122,7 @@ async def mark_event_as_read(event_id: str):
 
 
 # Source endpoints
-@router.get("/sources", response_model=MonitoringSourceList, summary="Get monitoring sources")
+@router.get("/sources/", response_model=MonitoringSourceList, summary="Get monitoring sources")
 async def get_monitoring_sources(
     jurisdiction_id: Optional[str] = Query(None, description="Filter by jurisdiction ID"),
     source_type: Optional[str] = Query(None, description="Filter by source type"),
@@ -157,7 +157,7 @@ async def get_monitoring_sources(
     }
 
 
-@router.post("/sources", response_model=MonitoringSourceResponse, status_code=status.HTTP_201_CREATED, summary="Create monitoring source")
+@router.post("/sources/", response_model=MonitoringSourceResponse, status_code=status.HTTP_201_CREATED, summary="Create monitoring source")
 async def create_monitoring_source(source: MonitoringSourceCreate):
     """
     Create a new monitoring source.

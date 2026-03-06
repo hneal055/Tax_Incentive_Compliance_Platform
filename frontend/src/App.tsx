@@ -5,8 +5,27 @@ import {
   RefreshCw, Plus, ChevronRight, AlertCircle, TrendingUp,
   Briefcase, DollarSign, Search, ExternalLink
 } from "lucide-react";
+import { isMockMode, MOCK_FETCH_RESPONSES } from "./api/mock";
 
-const API = import.meta.env.VITE_API_URL || "https://pilotforge-5wiz.onrender.com";
+const API = import.meta.env.VITE_API_URL || "";
+
+// Normalise a fetch path to a lookup key (strip query string + trailing slash)
+function mockKey(path: string) {
+  return path.split("?")[0].replace(/\/$/, "");
+}
+
+async function apiFetch(path: string) {
+  if (isMockMode()) {
+    const key = mockKey(path);
+    // Match by suffix so /api/v1/jurisdictions matches the key
+    const entry = Object.entries(MOCK_FETCH_RESPONSES).find(([k]) => key.endsWith(k));
+    if (entry) return new Promise((res) => setTimeout(() => res(entry[1]), 120));
+    return {};
+  }
+  const r = await fetch(`${API}${path}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
 
 const C = {
   sidebar: "#161b27", sidebarBorder: "#1e2535",
@@ -36,12 +55,6 @@ interface CalcResult {
 interface AIResult {
   recommendations?: { jurisdiction: string; rate: string; estimated_credit: string; reason: string; best_for?: string }[];
   error?: string;
-}
-
-async function apiFetch(path: string) {
-  const r = await fetch(`${API}${path}`);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
 }
 
 export default function PilotForgeDashboard() {
@@ -74,6 +87,7 @@ export default function PilotForgeDashboard() {
     { id: "calculator", label: "Incentive Calculator", icon: Calculator },
     { id: "jurisdictions", label: "Jurisdictions", icon: Globe },
     { id: "advisor", label: "AI Advisor", icon: Bot, badge: "NEW" },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   return (
@@ -111,7 +125,7 @@ export default function PilotForgeDashboard() {
             <div style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600 }}>Finance Manager</div>
             <div style={{ color: "#64748b", fontSize: 11 }}>Pro Account</div>
           </div>
-          <Settings size={15} color="#475569" style={{ marginLeft: "auto", cursor: "pointer" }} />
+          <Settings size={15} color="#475569" style={{ marginLeft: "auto", cursor: "pointer" }} onClick={() => setActive("settings")} />
         </div>
       </div>
 
@@ -128,6 +142,7 @@ export default function PilotForgeDashboard() {
             {active === "calculator" && <CalculatorView productions={productions} jurisdictions={jurisdictions} rules={rules} />}
             {active === "jurisdictions" && <JurisdictionsView jurisdictions={jurisdictions} />}
             {active === "advisor" && <AdvisorView />}
+            {active === "settings" && <SettingsView />}
           </>
         )}
       </div>
@@ -450,9 +465,38 @@ function CalculatorView({ productions, jurisdictions, rules }: { productions: Pr
   );
 }
 
+interface MonitoringEvent {
+  id: string;
+  jurisdictionId: string;
+  eventType: string;
+  severity: string;
+  title: string;
+  summary: string;
+  sourceUrl?: string;
+  detectedAt: string;
+  readAt?: string;
+}
+
+function relativeTime(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 function JurisdictionsView({ jurisdictions }: { jurisdictions: Jurisdiction[] }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [feedEvents, setFeedEvents] = useState<MonitoringEvent[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch("/api/v1/monitoring/events/?page_size=5")
+      .then(d => setFeedEvents(d.events || []))
+      .catch(() => setFeedEvents([]))
+      .finally(() => setFeedLoading(false));
+  }, []);
 
   const filtered = jurisdictions.filter(j => {
     const q = search.toLowerCase();
@@ -461,42 +505,60 @@ function JurisdictionsView({ jurisdictions }: { jurisdictions: Jurisdiction[] })
     return match && type;
   });
 
-  const regulatoryFeed = [
-    { source: "California Film Commission", time: "2h ago", text: "Proposed expansion of the 30-mile studio zone currently under committee review.", url: "https://film.ca.gov" },
-    { source: "British Film Commission", time: "5h ago", text: "New guidance issued for VFX expenditure qualification under updates.", url: "https://britishfilmcommission.org.uk" },
-    { source: "Georgia Dept. of Econ Dev", time: "1d ago", text: "Fiscal year cap status: 65% utilized. Applications open." },
-  ];
-
   return (
     <div style={{ padding: 32 }}>
       <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ background: "#161b27", borderRadius: 12, overflow: "hidden" }}>
             <div style={{ background: "#1e2535", padding: "12px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.danger }} />
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: feedLoading ? "#475569" : feedEvents.length > 0 ? C.success : "#475569" }} />
               <span style={{ color: "#e2e8f0", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Regulatory Feed</span>
+              {feedEvents.length > 0 && <span style={{ marginLeft: "auto", fontSize: 10, background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>{feedEvents.filter(e => !e.readAt).length} NEW</span>}
             </div>
             <div style={{ padding: "12px 16px" }}>
-              {regulatoryFeed.map((item, i) => (
-                <div key={i} style={{ marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid #1e2535" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ color: C.accent, fontSize: 12, fontWeight: 600 }}>{item.source}</span>
-                    <span style={{ color: "#475569", fontSize: 11 }}>{item.time}</span>
+              {feedLoading && <div style={{ color: "#475569", fontSize: 12, textAlign: "center", padding: "8px 0" }}>Loading events...</div>}
+              {!feedLoading && feedEvents.length === 0 && (
+                <div style={{ color: "#475569", fontSize: 12, textAlign: "center", padding: "8px 0" }}>No events yet. Add monitoring sources to track jurisdictions.</div>
+              )}
+              {!feedLoading && feedEvents.map((item, i) => (
+                <div key={item.id} style={{ marginBottom: i < feedEvents.length - 1 ? 14 : 0, paddingBottom: i < feedEvents.length - 1 ? 14 : 0, borderBottom: i < feedEvents.length - 1 ? "1px solid #1e2535" : "none" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
+                    {item.sourceUrl
+                      ? <a href={item.sourceUrl} target="_blank" rel="noreferrer" style={{ color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</a>
+                      : <span style={{ color: C.accent, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</span>}
+                    <span style={{ color: "#475569", fontSize: 11, flexShrink: 0 }}>{relativeTime(item.detectedAt)}</span>
                   </div>
-                  <p style={{ color: "#94a3b8", fontSize: 12, margin: 0, lineHeight: 1.5 }}>{item.text}</p>
+                  <p style={{ color: "#94a3b8", fontSize: 12, margin: 0, lineHeight: 1.5 }}>{item.summary}</p>
                 </div>
               ))}
-              <div style={{ marginTop: 12, fontSize: 11, color: "#475569", textAlign: "center", fontWeight: 600 }}>GLOBAL MONITORING ACTIVE</div>
+              <div style={{ marginTop: 12, fontSize: 11, color: feedEvents.length > 0 ? C.success : "#475569", textAlign: "center", fontWeight: 600 }}>GLOBAL MONITORING ACTIVE</div>
             </div>
           </div>
           <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: `1px solid ${C.cardBorder}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
               <Briefcase size={15} color={C.accent} />
               <span style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Agency Directory</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, background: C.accentGlow, color: C.accent, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>{jurisdictions.length} active</span>
             </div>
-            <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.6, marginBottom: 16 }}>
-              PilotForge tracks {jurisdictions.length} active U.S. incentive programs. International jurisdictions coming soon.
-            </p>
+            <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              {jurisdictions.map(j => (
+                <div key={j.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${C.cardBorder}` }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{j.name}</div>
+                    <div style={{ fontSize: 11, color: C.textMuted }}>{j.code} · {j.type}</div>
+                  </div>
+                  {j.website && j.website !== "https://prior.prior.prior" && (
+                    <a href={j.website} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 11, color: C.accent, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                      Visit <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+              ))}
+              {jurisdictions.length === 0 && (
+                <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>No agencies loaded yet.</p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -558,24 +620,19 @@ function AdvisorView() {
     if (!synopsis.trim()) return;
     setLoading(true); setResult(null);
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch(`${API}/api/v1/advisor/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `You are a film tax incentive advisor. Given this project synopsis and budget, recommend the top 3 US states or international jurisdictions and explain why. Be specific about incentive rates and qualifying criteria.\n\nSynopsis: ${synopsis}\nBudget: $${parseInt(budget).toLocaleString()}\n\nRespond in JSON only (no markdown): {"recommendations": [{"jurisdiction": "string", "rate": "string", "estimated_credit": "string", "reason": "string", "best_for": "string"}]}`
-          }]
-        })
+        body: JSON.stringify({ synopsis, budget: parseFloat(budget) || 0 })
       });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${response.status}`);
+      }
       const data = await response.json();
-      const text = data.content[0].text;
-      const clean = text.replace(/```json|```/g, "").trim();
-      setResult(JSON.parse(clean));
-    } catch {
-      setResult({ error: "Could not generate insights. Please try again." });
+      setResult(data);
+    } catch (e: unknown) {
+      setResult({ error: e instanceof Error ? e.message : "Could not generate insights. Please try again." });
     }
     setLoading(false);
   };
@@ -643,5 +700,133 @@ function AdvisorView() {
   );
 }
 
+// ─── Settings View ────────────────────────────────────────────────────────────
 
+const SETTINGS_KEY = "pilotforge_settings";
+
+function loadAppSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}"); } catch { return {}; }
+}
+function saveAppSettings(patch: Record<string, unknown>) {
+  const next = { ...loadAppSettings(), ...patch };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  return next;
+}
+
+function SettingsView() {
+  const [mock, setMock] = useState<boolean>(() => loadAppSettings().useMockData === true);
+
+  const toggleMock = () => {
+    const next = !mock;
+    saveAppSettings({ useMockData: next });
+    setMock(next);
+    // Reload so apiFetch picks up the new mode
+    setTimeout(() => window.location.reload(), 200);
+  };
+
+  return (
+    <div style={{ padding: 32, maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: C.text, margin: "0 0 6px", letterSpacing: "-0.5px" }}>Settings</h1>
+        <p style={{ color: C.textMuted, fontSize: 14, margin: 0 }}>Configure your PilotForge experience.</p>
+      </div>
+
+      {/* Developer Tools */}
+      <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${C.cardBorder}`, padding: 28, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: mock ? "rgba(251,191,36,0.15)" : C.accentGlow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <AlertCircle size={18} color={mock ? "#d97706" : C.accent} />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Developer Tools</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Toggle mock data for UI development and testing</div>
+          </div>
+        </div>
+
+        <div style={{
+          borderRadius: 10, border: `1px solid ${mock ? "#fcd34d" : C.cardBorder}`,
+          background: mock ? "#fffbeb" : "#f8fafc", padding: 20,
+        }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Mock Data Mode</span>
+                {mock && (
+                  <span style={{ fontSize: 10, fontWeight: 800, background: "#fbbf24", color: "#78350f", padding: "2px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    ACTIVE
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.6 }}>
+                When enabled, all API calls return built-in sample data — 8 jurisdictions, 8 incentive rules,
+                4 productions, and 5 monitoring events. The backend does not need to be running.
+                Toggling reloads the page to apply immediately.
+              </p>
+
+              {mock && (
+                <div style={{ display: "flex", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+                  {[
+                    { label: "Jurisdictions", value: "8" },
+                    { label: "Incentive Rules", value: "8" },
+                    { label: "Productions", value: "4" },
+                    { label: "Monitoring Events", value: "5" },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ textAlign: "center", background: "#fff", border: "1px solid #fcd34d", borderRadius: 8, padding: "10px 16px" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: "#d97706" }}>{value}</div>
+                      <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}>{label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              aria-label={mock ? "Disable mock data mode" : "Enable mock data mode"}
+              aria-checked={mock ? "true" : "false"}
+              role="switch"
+              onClick={toggleMock}
+              style={{
+                flexShrink: 0, width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer",
+                background: mock ? "#fbbf24" : "#cbd5e1", position: "relative", transition: "background 0.2s",
+              }}
+            >
+              <span style={{
+                position: "absolute", top: 3, left: mock ? 23 : 3,
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 0.2s",
+              }} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* API Status */}
+      <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${C.cardBorder}`, padding: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentGlow, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <TrendingUp size={18} color={C.accent} />
+          </div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>API Configuration</div>
+            <div style={{ fontSize: 12, color: C.textMuted }}>Backend connection info</div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {[
+            ["Data Source", mock ? "Mock (built-in)" : "Live API"],
+            ["API Base", API || window.location.origin],
+            ["Version", "v1"],
+            ["Mode", mock ? "Development" : "Production"],
+          ].map(([k, v]) => (
+            <div key={k} style={{ background: C.mainBg, borderRadius: 8, padding: "10px 14px" }}>
+              <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginBottom: 2 }}>{k}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: mock && k === "Data Source" ? "#d97706" : C.text }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 

@@ -20,6 +20,10 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 - **Tax Incentive Calculator** — Instant credit estimates with compliance checks and downloadable reports
 - **Production Management** — Track productions, budgets, and locations
 - **Dashboard** — Modern React interface with real-time metrics and zoom controls
+- **Live Regulatory Feed** — Real-time monitoring events pulled from the `/monitoring/events` API
+- **AI Strategic Advisor** — Server-side Anthropic Claude proxy for budget and jurisdiction recommendations
+- **Mock Data Mode** — Toggle between live API and built-in mock data for offline UI development
+- **Settings Panel** — In-app settings with developer tools (mock mode, API config, currency, notifications)
 - **PDF & Excel Reports** — Professional documentation for stakeholders
 - **Type-Safe** — Full TypeScript coverage for reliability
 - **Comprehensive Testing** — 51 frontend tests + 127 backend tests passing
@@ -104,9 +108,11 @@ Frontend UI: http://localhost:5200
 ```
 Tax_Incentive_Compliance_Platform/
 ├── src/                     # Backend Python application
-│   ├── main.py             # FastAPI app entry (async lifespan, CORS, health check)
+│   ├── main.py             # FastAPI app entry (async lifespan, CORS, SPA fallback via 404 handler)
 │   ├── api/                # API route handlers
-│   │   ├── routes.py       # Router registry (8 sub-routers)
+│   │   ├── routes.py       # Router registry (9 sub-routers)
+│   │   ├── advisor.py      # AI Strategic Advisor — Anthropic proxy endpoint
+│   │   ├── monitoring.py   # Regulatory monitoring events & sources
 │   │   ├── jurisdictions.py
 │   │   ├── productions.py
 │   │   ├── calculator.py
@@ -120,15 +126,22 @@ Tax_Incentive_Compliance_Platform/
 │   └── utils/              # Config, DB, PDF/Excel generators
 ├── frontend/               # React frontend application
 │   ├── src/
-│   │   ├── api/           # Axios API client and service layer
+│   │   ├── api/
+│   │   │   ├── client.ts  # Axios API client configuration
+│   │   │   ├── index.ts   # API service layer (Proxy-wrapped for mock support)
+│   │   │   └── mock.ts    # Built-in mock data + isMockMode() toggle helper
 │   │   ├── components/    # Reusable UI (Card, Button, Modal, Navbar, etc.)
-│   │   ├── pages/         # Route pages (Dashboard, Productions, Jurisdictions, Calculator)
+│   │   ├── hooks/
+│   │   │   └── useSettings.ts  # UserSettings hook with localStorage persistence
+│   │   ├── pages/         # Route pages (Dashboard, Productions, Jurisdictions, Calculator, Settings)
 │   │   ├── store/         # Zustand state management
 │   │   ├── types/         # TypeScript interfaces
 │   │   ├── utils/         # Report generation utilities
+│   │   ├── App.tsx        # Monolithic UI (active) with all views including Settings & AI Advisor
 │   │   └── test/          # Vitest test suite
 │   └── vitest.config.ts
 ├── prisma/                 # Database schema and migrations
+│   └── migrations/        # All applied migrations (including monitoring tables)
 ├── rules/                  # Jurisdiction tax rule definitions (JSON)
 ├── tests/                  # Backend test suite
 ├── docs/                   # Documentation
@@ -158,6 +171,7 @@ Tax_Incentive_Compliance_Platform/
 - Browse all available jurisdictions (15 seeded)
 - Filter by type (State, Country, Province)
 - View incentive program descriptions and websites
+- Live **Regulatory Feed** — recent monitoring events per jurisdiction
 - Search and sort options
 
 ### Tax Incentive Calculator
@@ -165,6 +179,17 @@ Tax_Incentive_Compliance_Platform/
 - Calculate tax incentives with qualified expense breakdown
 - **Generate Report** — Preview in new window or download as HTML
 - Professional report includes financial breakdown, budget utilization bar, and disclaimers
+
+### AI Strategic Advisor
+- Natural language recommendations for budget allocation and jurisdiction selection
+- Server-side Anthropic Claude proxy — API key never exposed to browser
+- Endpoint: `POST /api/v1/advisor/recommend`
+
+### Settings
+- Currency, default jurisdiction, notification preferences
+- Dark mode and compact view toggles
+- **Mock Data Mode** — one-click toggle for offline UI development with built-in fixture data
+- API Configuration panel showing current data source, base URL, and version
 
 ---
 
@@ -209,15 +234,11 @@ See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ---
 
-## Next Phase: Real-Time Jurisdiction Monitoring
+## Monitoring & AI: Implementation Status
 
-### Vision
+### Real-Time Jurisdiction Monitoring
 
-A real-time monitoring system that watches external sources — state film commission websites, legislative trackers, news feeds — for changes to tax incentive programs, rebates, and grants, then pushes alerts to the PilotForge dashboard as they happen.
-
-### Why This Matters
-
-Tax incentive programs change frequently. States modify credit percentages, cap amounts shift, new programs launch, and existing ones expire — often with limited notice. Currently, production companies rely on manual research or expensive consultants to stay current. PilotForge monitoring would provide an automated early warning system that keeps users ahead of changes that directly impact their bottom line.
+A monitoring system that watches external sources — state film commission websites, legislative trackers, news feeds — for changes to tax incentive programs, rebates, and grants, then surfaces alerts in the PilotForge dashboard.
 
 ### Architecture
 
@@ -235,24 +256,21 @@ Tax incentive programs change frequently. States modify credit percentages, cap 
 
 ### Implementation Plan
 
-#### Phase 1 — Data Models & REST API (Week 1, Days 1–3)
+#### Phase 1 — Data Models & REST API ✅ COMPLETE
 
-**Objective:** Establish the database foundation and basic CRUD for monitoring events.
-
-- [ ] Add `MonitoringSource` model to Prisma schema
-  - Fields: `jurisdictionId`, `sourceType` (rss/api/webpage), `url`, `checkInterval`, `lastCheckedAt`, `lastHash`, `active`
-- [ ] Add `MonitoringEvent` model to Prisma schema
-  - Fields: `jurisdictionId`, `sourceId`, `eventType` (incentive_change/new_program/expiration/news), `severity` (info/warning/critical), `title`, `summary`, `sourceUrl`, `detectedAt`, `readAt`, `metadata`
-- [ ] Create `src/api/monitoring.py` with REST endpoints:
-  - `GET /api/v1/monitoring/events` — paginated event feed with filters
-  - `GET /api/v1/monitoring/events/unread` — unread count
+- [x] Added `MonitoringSource` model to Prisma schema (migration `20260306173718`)
+- [x] Added `MonitoringEvent` model to Prisma schema
+- [x] Created `src/api/monitoring.py` with REST endpoints:
+  - `GET /api/v1/monitoring/events/` — paginated event feed with filters
+  - `GET /api/v1/monitoring/events/unread/` — unread count
   - `PATCH /api/v1/monitoring/events/:id/read` — mark as read
-  - `GET /api/v1/monitoring/sources` — list configured sources
-  - `POST /api/v1/monitoring/sources` — add new source
-- [ ] Register router in `src/api/routes.py`
-- [ ] Write Pytest tests for all new endpoints
+  - `GET /api/v1/monitoring/sources/` — list configured sources
+  - `POST /api/v1/monitoring/sources/` — add new source
+- [x] Registered router in `src/api/routes.py`
+- [x] Frontend `JurisdictionsView` fetches and renders live regulatory feed
+- [x] AI Strategic Advisor (`src/api/advisor.py`) — Anthropic server-side proxy
 
-#### Phase 2 — WebSocket & Frontend Real-Time UI (Week 1–2, Days 3–6)
+#### Phase 2 — WebSocket & Frontend Real-Time UI (Next)
 
 **Objective:** Push events to the browser in real-time and display them.
 

@@ -8,18 +8,19 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements.docker.txt .
 
-# Install dependencies including uvicorn
-RUN pip install --no-cache-dir -r requirements.txt && pip install uvicorn
+RUN pip install --no-cache-dir -r requirements.docker.txt
 
 COPY . .
 
 # Generate Prisma Client
 RUN prisma generate
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Expose the port
 EXPOSE 8000
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/entrypoint.sh"]

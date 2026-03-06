@@ -1,0 +1,14 @@
+{
+  "productionId": "INSERT_PRODUCTION_ID_HERE",
+  "category": "Travel",
+  "subcategory": "Hotel",
+  "description": "Road loss respond dark pattern.",
+  "amount": 8927.49,
+  "expenseDate": "2025-10-24",
+  "paymentDate": "2025-09-03",
+  "isQualifying": true,
+  "vendorName": "Pierce Ltd",
+  "vendorLocation": "Daltonview, AL",
+  "invoiceNumber": "INV-14918320",
+  "receiptNumber": "REC-87749927"
+}

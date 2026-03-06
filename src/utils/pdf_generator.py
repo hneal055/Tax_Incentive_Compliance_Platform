@@ -348,7 +348,7 @@ class PDFReportGenerator:
             self.styles['HighlightBox']
         ))
         story.append(Paragraph(
-            f"<b>Budget:</b> ${best_scenario['scenarioParams']['budget']:,.0f}",
+            f"<b>Budget:</b> ${best_scenario['budget']:,.0f}",
             self.styles['HighlightBox']
         ))
         story.append(Paragraph(
@@ -364,10 +364,10 @@ class PDFReportGenerator:
         for scenario in scenarios:
             scenario_data.append([
                 scenario['scenarioName'],
-                f"${scenario['scenarioParams']['budget']:,.0f}",
+                f"${scenario['budget']:,.0f}",
                 f"${scenario['estimatedCredit']:,.0f}",
                 f"{scenario['effectiveRate']:.1f}%",
-                scenario['bestRuleName'][:25] + '...' if len(scenario['bestRuleName']) > 25 else scenario['bestRuleName']
+                scenario['ruleName'][:25] + '...' if len(scenario['ruleName']) > 25 else scenario['ruleName']
             ])
         
         scenario_table = Table(scenario_data, colWidths=[1.4*inch, 1.2*inch, 1.2*inch, 1*inch, 1.6*inch])
