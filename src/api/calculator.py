@@ -5,6 +5,7 @@ Calculator API endpoints - Tax credit calculations
 from src.services.compliance_checker import ComplianceChecker
 from fastapi import APIRouter, HTTPException, status
 import json
+import logging
 from typing import Dict, Any
 
 from src.models.calculator import (
@@ -29,12 +30,26 @@ from src.utils.database import prisma
 
 router = APIRouter(prefix="/calculate", tags=["Calculator"])
 
+logger = logging.getLogger(__name__)
+
 
 def parse_json_field(field: Any) -> Dict:
-    """Parse JSON field that might be string or dict"""
+    """
+    Parse a JSON field that may be a string, dict, or None.
+    Returns a dictionary; returns empty dict on failure or if field is falsy.
+    Logs a warning if JSON decoding fails.
+    """
     if isinstance(field, str):
-        return json.loads(field)
-    return field if field else {}
+        try:
+            return json.loads(field)
+        except json.JSONDecodeError as e:
+            logger.warning(
+                f"Failed to parse JSON field: {e}. Field content (first 100 chars): {field[:100]}"
+            )
+            return {}
+    if isinstance(field, dict):
+        return field
+    return {}
 
 
 @router.post(
