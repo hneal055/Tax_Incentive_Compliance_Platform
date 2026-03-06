@@ -2,6 +2,7 @@
 Calculator API endpoints - Tax credit calculations
 """
 
+from src.services.compliance_checker import ComplianceChecker
 from fastapi import APIRouter, HTTPException, status
 import json
 from typing import Dict, Any
@@ -385,16 +386,20 @@ async def check_compliance(request: ComplianceCheckRequest):
 
     # Get rule
     rule = await prisma.incentiverule.find_unique(where={"id": request.ruleId})
-
     if not rule:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Incentive rule not found"
         )
 
-    # Get jurisdiction
+    # Get jurisdiction (for name)
     jurisdiction = await prisma.jurisdiction.find_unique(
         where={"id": rule.jurisdictionId}
     )
+    if not jurisdiction:
+        # Fallback if jurisdiction missing (shouldn't happen)
+        jurisdiction_name = "Jurisdiction"
+    else:
+        jurisdiction_name = jurisdiction.name
 
     # Get production if ID provided
     production = None
@@ -414,299 +419,37 @@ async def check_compliance(request: ComplianceCheckRequest):
     elif request.productionBudget:
         budget = request.productionBudget
 
-    qualifying_budget = request.qualifyingBudget or budget
+    # Initialize the compliance checker
+    checker = ComplianceChecker(
+        rule=rule,
+        production_budget=budget,
+        qualifying_budget=request.qualifyingBudget,
+        shoot_days=request.shootDays,
+        local_hire_percentage=request.localHirePercentage,
+        has_promo_logo=request.hasPromoLogo,
+        has_cultural_test=request.hasCulturalTest,
+        is_relocating=request.isRelocating,
+        jurisdiction_name=jurisdiction_name,
+    )
 
-    # Parse requirements from rule
-    requirements_data = parse_json_field(rule.requirements)
+    requirement_checks, action_items, warnings = checker.run_all_checks()
 
-    # Track all requirement checks
-    requirement_checks = []
-    requirements_met = 0
-    requirements_not_met = 0
-    requirements_unknown = 0
-    action_items = []
-    warnings = []
-    next_steps = []
+    # Count statuses
+    requirements_met = sum(1 for c in requirement_checks if c.status == "met")
+    requirements_not_met = sum(1 for c in requirement_checks if c.status == "not_met")
+    requirements_unknown = sum(1 for c in requirement_checks if c.status == "unknown")
+    total_requirements = len(requirement_checks)
 
-    # Check 1: Minimum Spend
-    if rule.minSpend:
-        if budget and budget >= rule.minSpend:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_spend",
-                    description=f"Minimum spend of ${rule.minSpend:,.0f}",
-                    status="met",
-                    required=True,
-                    userValue=budget,
-                    requiredValue=rule.minSpend,
-                    notes=f"Budget of ${budget:,.0f} exceeds minimum",
-                )
-            )
-            requirements_met += 1
-        elif budget:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_spend",
-                    description=f"Minimum spend of ${rule.minSpend:,.0f}",
-                    status="not_met",
-                    required=True,
-                    userValue=budget,
-                    requiredValue=rule.minSpend,
-                    notes=f"Budget of ${budget:,.0f} is below minimum",
-                )
-            )
-            requirements_not_met += 1
-            action_items.append(f"❌ Increase budget to at least ${rule.minSpend:,.0f}")
-        else:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_spend",
-                    description=f"Minimum spend of ${rule.minSpend:,.0f}",
-                    status="unknown",
-                    required=True,
-                    requiredValue=rule.minSpend,
-                    notes="Budget not provided",
-                )
-            )
-            requirements_unknown += 1
-            action_items.append("⚠️ Provide production budget for verification")
-
-    # Check 2: Shoot Days (if in requirements)
-    if "minShootDays" in requirements_data:
-        min_days = requirements_data["minShootDays"]
-        if request.shootDays and request.shootDays >= min_days:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_shoot_days",
-                    description=f"Minimum {min_days} shoot days required",
-                    status="met",
-                    required=True,
-                    userValue=request.shootDays,
-                    requiredValue=min_days,
-                    notes=f"{request.shootDays} days scheduled",
-                )
-            )
-            requirements_met += 1
-        elif request.shootDays:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_shoot_days",
-                    description=f"Minimum {min_days} shoot days required",
-                    status="not_met",
-                    required=True,
-                    userValue=request.shootDays,
-                    requiredValue=min_days,
-                    notes=f"Only {request.shootDays} days planned",
-                )
-            )
-            requirements_not_met += 1
-            action_items.append(f"❌ Extend shoot schedule to at least {min_days} days")
-        else:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="minimum_shoot_days",
-                    description=f"Minimum {min_days} shoot days required",
-                    status="unknown",
-                    required=True,
-                    requiredValue=min_days,
-                    notes="Shoot days not provided",
-                )
-            )
-            requirements_unknown += 1
-            action_items.append("⚠️ Provide shoot schedule for verification")
-
-    # Check 3: Local Hiring Percentage
-    local_hire_keys = [
-        "californiaResidents",
-        "georgiaResident",
-        "localHirePercentage",
-        "nySpend",
-        "bcResident",
-        "ontarioResident",
-    ]
-    for key in local_hire_keys:
-        if key in requirements_data:
-            required_pct = requirements_data[key]
-            if request.localHirePercentage is not None:
-                if request.localHirePercentage >= required_pct:
-                    requirement_checks.append(
-                        RequirementCheck(
-                            requirement="local_hiring",
-                            description=f"Minimum {required_pct}% local hiring required",
-                            status="met",
-                            required=True,
-                            userValue=request.localHirePercentage,
-                            requiredValue=required_pct,
-                            notes=f"{request.localHirePercentage}% local hiring planned",
-                        )
-                    )
-                    requirements_met += 1
-                else:
-                    requirement_checks.append(
-                        RequirementCheck(
-                            requirement="local_hiring",
-                            description=f"Minimum {required_pct}% local hiring required",
-                            status="not_met",
-                            required=True,
-                            userValue=request.localHirePercentage,
-                            requiredValue=required_pct,
-                            notes=f"Only {request.localHirePercentage}% local hiring planned",
-                        )
-                    )
-                    requirements_not_met += 1
-                    action_items.append(f"❌ Increase local hiring to {required_pct}%")
-            else:
-                requirement_checks.append(
-                    RequirementCheck(
-                        requirement="local_hiring",
-                        description=f"Minimum {required_pct}% local hiring required",
-                        status="unknown",
-                        required=True,
-                        requiredValue=required_pct,
-                        notes="Local hiring percentage not provided",
-                    )
-                )
-                requirements_unknown += 1
-                action_items.append(
-                    f"⚠️ Confirm {required_pct}% local hiring commitment"
-                )
-            break
-
-    # Check 4: Promotional Logo
-    if "georgiaPromo" in requirements_data or "logoInCredits" in requirements_data:
-        if request.hasPromoLogo is True:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="promotional_logo",
-                    description="Include jurisdiction logo in credits",
-                    status="met",
-                    required=True,
-                    userValue=True,
-                    notes="Logo placement confirmed",
-                )
-            )
-            requirements_met += 1
-        elif request.hasPromoLogo is False:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="promotional_logo",
-                    description="Include jurisdiction logo in credits",
-                    status="not_met",
-                    required=True,
-                    userValue=False,
-                    notes="Logo not planned for credits",
-                )
-            )
-            requirements_not_met += 1
-            action_items.append(f"❌ Add {jurisdiction.name} logo to end credits")
-        else:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="promotional_logo",
-                    description="Include jurisdiction logo in credits",
-                    status="unknown",
-                    required=True,
-                    notes="Logo placement not confirmed",
-                )
-            )
-            requirements_unknown += 1
-            action_items.append(
-                f"⚠️ Confirm {jurisdiction.name} logo placement in credits"
-            )
-
-    # Check 5: Cultural Test
-    if "culturalTest" in requirements_data:
-        if request.hasCulturalTest is True:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="cultural_test",
-                    description="Pass cultural test for content",
-                    status="met",
-                    required=True,
-                    userValue=True,
-                    notes="Cultural test passed",
-                )
-            )
-            requirements_met += 1
-        elif request.hasCulturalTest is False:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="cultural_test",
-                    description="Pass cultural test for content",
-                    status="not_met",
-                    required=True,
-                    userValue=False,
-                    notes="Cultural test not passed",
-                )
-            )
-            requirements_not_met += 1
-            warnings.append("⚠️ Cultural test failure may disqualify production")
-        else:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="cultural_test",
-                    description="Pass cultural test for content",
-                    status="unknown",
-                    required=True,
-                    notes="Cultural test status unknown",
-                )
-            )
-            requirements_unknown += 1
-            action_items.append("⚠️ Submit cultural test application")
-
-    # Check 6: Relocating Production
-    if "relocatingProject" in requirements_data:
-        if request.isRelocating is not None:
-            if request.isRelocating == requirements_data["relocatingProject"]:
-                requirement_checks.append(
-                    RequirementCheck(
-                        requirement="relocating_production",
-                        description="Relocating production from another jurisdiction",
-                        status="met",
-                        required=True,
-                        userValue=request.isRelocating,
-                        requiredValue=requirements_data["relocatingProject"],
-                        notes="Relocation status matches requirement",
-                    )
-                )
-                requirements_met += 1
-            else:
-                requirement_checks.append(
-                    RequirementCheck(
-                        requirement="relocating_production",
-                        description="Relocating production from another jurisdiction",
-                        status="not_met",
-                        required=True,
-                        userValue=request.isRelocating,
-                        requiredValue=requirements_data["relocatingProject"],
-                        notes="This program requires relocating production",
-                    )
-                )
-                requirements_not_met += 1
-                warnings.append("❌ This program is only for relocating productions")
-        else:
-            requirement_checks.append(
-                RequirementCheck(
-                    requirement="relocating_production",
-                    description="Relocating production from another jurisdiction",
-                    status="unknown",
-                    required=True,
-                    requiredValue=requirements_data["relocatingProject"],
-                    notes="Relocation status not specified",
-                )
-            )
-            requirements_unknown += 1
-
-    # Calculate estimated credit if compliant
+    # Calculate estimated credit if qualifying budget exists
     estimated_credit = None
-    if requirements_not_met == 0 and qualifying_budget:
+    if requirements_not_met == 0 and checker.qualifying_budget:
         if rule.percentage:
-            estimated_credit = qualifying_budget * (rule.percentage / 100)
+            estimated_credit = checker.qualifying_budget * (rule.percentage / 100)
             if rule.maxCredit and estimated_credit > rule.maxCredit:
                 estimated_credit = rule.maxCredit
 
-    # Determine overall compliance status
-    total_requirements = len(requirement_checks)
+    # Determine overall compliance status and next steps
+    next_steps = []
 
     if total_requirements == 0:
         overall_status = "insufficient_data"
@@ -714,7 +457,7 @@ async def check_compliance(request: ComplianceCheckRequest):
     elif requirements_not_met > 0:
         overall_status = "non_compliant"
         next_steps.append("❌ Address all failed requirements before applying")
-        next_steps.append(f"📧 Contact {jurisdiction.name} Film Office for guidance")
+        next_steps.append(f"📧 Contact {jurisdiction_name} Film Office for guidance")
     elif requirements_unknown > 0:
         overall_status = "partial"
         next_steps.append("⚠️ Confirm all unknown requirements")
@@ -722,21 +465,14 @@ async def check_compliance(request: ComplianceCheckRequest):
     else:
         overall_status = "compliant"
         next_steps.append(f"✅ Production qualifies for {rule.ruleName}")
-        next_steps.append(
-            f"💰 Estimated credit: ${estimated_credit:,.0f}" if estimated_credit else ""
-        )
-        next_steps.append(f"📋 Submit application to {jurisdiction.name} Film Office")
+        if estimated_credit:
+            next_steps.append(f"💰 Estimated credit: ${estimated_credit:,.0f}")
+        next_steps.append(f"📋 Submit application to {jurisdiction_name} Film Office")
         next_steps.append("📄 Prepare required documentation")
-
-    # Add warnings for close calls
-    if budget and rule.minSpend and budget < (rule.minSpend * 1.1):
-        warnings.append(
-            f"⚠️ Budget is close to minimum threshold (${rule.minSpend:,.0f})"
-        )
 
     return ComplianceCheckResponse(
         overallCompliance=overall_status,
-        jurisdiction=jurisdiction.name,
+        jurisdiction=jurisdiction_name,
         ruleName=rule.ruleName,
         ruleCode=rule.ruleCode,
         totalRequirements=total_requirements,
