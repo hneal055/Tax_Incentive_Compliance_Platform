@@ -6,7 +6,7 @@ import {
   Briefcase, DollarSign, Search, ExternalLink
 } from "lucide-react";
 
-const API = import.meta.env.VITE_API_URL || "https://pilotforge-5wiz.onrender.com";
+const API = import.meta.env.VITE_API_URL || "";
 
 const C = {
   sidebar: "#161b27", sidebarBorder: "#1e2535",

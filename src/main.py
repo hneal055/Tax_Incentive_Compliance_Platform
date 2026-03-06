@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.utils.config import settings
@@ -106,22 +106,6 @@ app.add_middleware(
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
-# Root endpoint
-@app.get("/", tags=["Root"])
-async def root():
-    """
-    Root endpoint - API information
-    """
-    return {
-        "message": "Welcome to PilotForge",
-        "tagline": "Tax Incentive Intelligence for Film & TV",
-        "version": settings.API_VERSION,
-        "status": "running",
-        "docs": "/docs",
-        "api": f"/api/{settings.API_VERSION}"
-    }
-
-
 # Health check endpoint
 @app.get("/health", tags=["Health"])
 async def health_check():
@@ -182,17 +166,20 @@ async def internal_error_handler(request, exc):
     )
 
 
-# Mount frontend static files if build exists
+# Serve frontend SPA
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    # Mount static assets (JS/CSS/images) at /assets
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    # Catch-all: serve index.html for all non-API routes (React Router)
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        return FileResponse(str(frontend_dist / "index.html"))
+
     logger.info(f"✅ Frontend mounted from {frontend_dist}")
-else:
-    # Fallback to old static directory
-    static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-        logger.info(f"✅ Static files mounted from {static_dir}")
 
 
 

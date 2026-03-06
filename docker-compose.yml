@@ -1,18 +1,15 @@
-version: '3.8'
-
 services:
   app:
     build: .
     container_name: tax-incentive-app
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/tax_incentive_db
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/pilotforge
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - .:/app
 
   # PostgreSQL Database
   postgres:
@@ -22,7 +19,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: tax_incentive_db
+      POSTGRES_DB: pilotforge
     ports:
       - "5432:5432"
     volumes:

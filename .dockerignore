@@ -1,0 +1,63 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Backups
+backup_*/
+
+# Development/test artifacts
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Node
+node_modules/
+pilotforge-dashboard/
+Tax_Incentive_Compliance_Dashboard_UI/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env files (injected at runtime)
+.env
+.env.*
+
+# Test fixtures / large data
+tests/fixtures/performance_samples/
+test_excel.xlsx
+calc_test.py
+
+# Docs
+docs/
+
+# Frontend source (only dist is needed)
+frontend/node_modules/
+frontend/src/
+frontend/public/
