@@ -71,7 +71,51 @@ jobs:
           echo "## 🎉 Test Results" >> $GITHUB_STEP_SUMMARY
           echo "All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
 
-  # Job 2: Linting & Code Quality
+  # Job 2: Frontend – typecheck, lint, test, build
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci --prefer-offline || npm install
+
+      - name: 🔍 Typecheck
+        run: |
+          cd frontend
+          npm run type-check
+        continue-on-error: true
+
+      - name: 🧹 Lint
+        run: |
+          cd frontend
+          npm run lint
+        continue-on-error: true
+
+      - name: 🧪 Run frontend tests
+        run: |
+          cd frontend
+          npm run test:run
+
+      - name: 🏗️ Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+  # Job 3: Linting & Code Quality
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
@@ -101,7 +145,7 @@ jobs:
         run: flake8 src/ tests/ --max-line-length=120
         continue-on-error: true
 
-  # Job 3: Security Scan
+  # Job 4: Security Scan
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -123,10 +167,10 @@ jobs:
         with:
           sarif_file: "trivy-results.sarif"
 
-  # Job 4: Build & Deploy to Render (on main branch)
+  # Job 5: Build & Deploy to Render (on main branch)
   deploy:
     name: Deploy to Production
-    needs: [test, lint]
+    needs: [test, frontend, lint]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -145,7 +189,7 @@ jobs:
           echo "PilotForge has been deployed to production" >> $GITHUB_STEP_SUMMARY
           echo "🌐 URL: https://pilotforge.onrender.com" >> $GITHUB_STEP_SUMMARY
 
-  # Job 5: Create Release (on version tags)
+  # Job 6: Create Release (on version tags)
   release:
     name: Create Release
     runs-on: ubuntu-latest

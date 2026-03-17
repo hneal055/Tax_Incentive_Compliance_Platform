@@ -6,7 +6,9 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6.svg)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](./LICENSE)
+[![CI](https://github.com/hneal055/Tax_Incentive_Compliance_Platform/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/hneal055/Tax_Incentive_Compliance_Platform/actions/workflows/ci-cd.yml)
+[![codecov](https://codecov.io/gh/hneal055/Tax_Incentive_Compliance_Platform/branch/main/graph/badge.svg)](https://codecov.io/gh/hneal055/Tax_Incentive_Compliance_Platform)
 
 ---
 
@@ -395,9 +397,13 @@ feedparser>=6.0           # RSS/Atom feed parsing
 
 ## License
 
-MIT License — Copyright (c) 2025-2026 Howard Neal - PilotForge
+**Proprietary** — Copyright (c) 2026 hneal055 / Howard Neal – PilotForge. All rights reserved.
 
-See [LICENSE](./docs/LICENSE) for full details.
+This software and its source code are proprietary and confidential. No license is granted
+to use, copy, modify, distribute, or sublicense this software except under a separate
+written agreement signed by the copyright holder.
+
+See [LICENSE](./LICENSE) for full terms.
 
 ## Support
 

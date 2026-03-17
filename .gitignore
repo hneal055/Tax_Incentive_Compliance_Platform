@@ -31,6 +31,7 @@ temp/
 secrets/
 # Backups / artifacts
 backup_*/
+*.backup
 htmlcov/
 .coverage
 coverage.xml
