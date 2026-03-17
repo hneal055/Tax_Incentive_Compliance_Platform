@@ -122,7 +122,7 @@ protobuf==6.33.2
 psutil==7.1.0
 psycopg2-binary==2.9.11
 pyarrow==22.0.0
-pyasn1==0.6.1
+pyasn1==0.6.3
 pycodestyle==2.14.0
 pycparser==2.23
 pydantic==2.12.5
