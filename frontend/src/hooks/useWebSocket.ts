@@ -38,8 +38,7 @@ export function useWebSocket(onEvent?: (event: MonitoringEvent) => void): void {
       unsubscribe();
       wsClient.disconnect();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [addEvent]);
 }
 
 export default useWebSocket;
