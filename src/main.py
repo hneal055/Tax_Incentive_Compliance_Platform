@@ -16,6 +16,7 @@ from src.utils.config import settings
 from src.utils.database import prisma
 from src.utils.auth_utils import hash_password
 from src.utils.seed import run_migrations, seed_all
+from src.utils.scheduler import start_scheduler, stop_scheduler
 from src.api.routes import router
 
 
@@ -59,15 +60,17 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Database connected")
         await _seed_admin()
         await seed_all()
+        start_scheduler()
     except Exception as e:
         logger.warning(f"⚠️  Database connection failed: {e}")
         logger.warning("   Application will run with limited functionality")
         # Don't raise in case we're running tests or without a database
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down PilotForge")
+    stop_scheduler()
     try:
         if prisma.is_connected():
             await prisma.disconnect()

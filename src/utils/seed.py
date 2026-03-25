@@ -254,6 +254,28 @@ _DEMO_MONITORING_SOURCES = [
         "sourceType": "web",
         "jurisdiction": "GA",
     },
+    # Sources with live RSS feeds for ingestion
+    {
+        "name": "UK Government — Film & TV Tax Relief News",
+        "url": "https://www.gov.uk/topic/business-tax/creative-industry-tax-reliefs",
+        "feedUrl": "https://www.gov.uk/search/news-and-communications.atom?keywords=film+tax+relief&order=updated-newest",
+        "sourceType": "atom",
+        "jurisdiction": "UK",
+    },
+    {
+        "name": "Variety — Business & Finance",
+        "url": "https://variety.com/v/biz/",
+        "feedUrl": "https://variety.com/v/biz/feed/",
+        "sourceType": "rss",
+        "jurisdiction": None,
+    },
+    {
+        "name": "Deadline — Business",
+        "url": "https://deadline.com/category/business/",
+        "feedUrl": "https://deadline.com/category/business/feed/",
+        "sourceType": "rss",
+        "jurisdiction": None,
+    },
 ]
 
 _DEMO_MONITORING_EVENTS = [
