@@ -171,7 +171,69 @@ async def _seed_rules() -> None:
         logger.info("ℹ️  Incentive rules already seeded — skipping")
 
 
+# ── Demo productions ──────────────────────────────────────────────────────────
+
+_DEMO_PRODUCTIONS = [
+    {
+        "title":            "The Silent Horizon",
+        "productionType":   "feature",
+        "jurisdictionCode": "GA",
+        "budgetTotal":      15000000.0,
+        "budgetQualifying": 12750000.0,
+        "status":           "production",
+        "productionCompany":"Horizon Pictures",
+        "startDate":        datetime(2026, 1, 15),
+    },
+    {
+        "title":            "Echoes of Midnight",
+        "productionType":   "tv_series",
+        "jurisdictionCode": "NY",
+        "budgetTotal":      8000000.0,
+        "budgetQualifying": 6400000.0,
+        "status":           "pre_production",
+        "productionCompany":"Midnight Studios",
+        "startDate":        datetime(2026, 3, 1),
+    },
+    {
+        "title":            "Neon Pulse",
+        "productionType":   "feature",
+        "jurisdictionCode": "CA",
+        "budgetTotal":      4500000.0,
+        "budgetQualifying": 3600000.0,
+        "status":           "planning",
+        "productionCompany":"PilotForge Studios",
+        "startDate":        datetime(2026, 6, 1),
+    },
+]
+
+
+async def _seed_productions() -> None:
+    existing = await prisma.production.find_many()
+    existing_titles = {p.title for p in existing}
+
+    jurisdictions = await prisma.jurisdiction.find_many()
+    jur_map = {j.code: j.id for j in jurisdictions}
+
+    added = 0
+    for prod in _DEMO_PRODUCTIONS:
+        if prod["title"] in existing_titles:
+            continue
+        jur_code = prod["jurisdictionCode"]
+        if jur_code not in jur_map:
+            continue
+        data = {k: v for k, v in prod.items() if k != "jurisdictionCode"}
+        data["jurisdictionId"] = jur_map[jur_code]
+        await prisma.production.create(data=data)
+        added += 1
+
+    if added:
+        logger.info(f"✅ Seeded {added} demo productions")
+    else:
+        logger.info("ℹ️  Demo productions already seeded — skipping")
+
+
 async def seed_all() -> None:
-    """Seed jurisdictions and incentive rules. Idempotent — safe on every startup."""
+    """Seed jurisdictions, incentive rules, and demo productions. Idempotent — safe on every startup."""
     await _seed_jurisdictions()
     await _seed_rules()
+    await _seed_productions()
