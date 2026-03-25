@@ -5,7 +5,9 @@ import type {
   IncentiveRule,
   Expense,
   CalculationResult,
-  HealthStatus
+  HealthStatus,
+  MonitoringEvent,
+  MonitoringSource,
 } from '../types';
 import { getFlagSnapshot } from '../contexts/FeatureFlagContext';
 import { mockApi } from '../mocks/api';
@@ -153,6 +155,60 @@ export const api = {
         () => mockApi.calculations.calculate(productionId, jurisdictionId),
         `calculations.calculate(${productionId}, ${jurisdictionId})`,
       ),
+  },
+
+  monitoring: {
+    events: {
+      list: (params?: { limit?: number; skip?: number; unread_only?: boolean }) =>
+        withFallback(
+          async () => {
+            const r = await apiClient.get('/monitoring/events', { params });
+            return r.data as { total: number; unread: number; events: MonitoringEvent[] };
+          },
+          async () => ({ total: 0, unread: 0, events: [] as MonitoringEvent[] }),
+          'monitoring.events.list',
+        ),
+
+      unreadCount: () =>
+        withFallback(
+          async () => { const r = await apiClient.get('/monitoring/events/unread-count'); return r.data as { count: number }; },
+          async () => ({ count: 0 }),
+          'monitoring.events.unreadCount',
+        ),
+
+      markRead: (id: string) =>
+        withFallback(
+          async () => { const r = await apiClient.patch(`/monitoring/events/${id}/read`); return r.data as MonitoringEvent; },
+          async () => ({} as MonitoringEvent),
+          `monitoring.events.markRead(${id})`,
+          false,
+        ),
+
+      markAllRead: () =>
+        withFallback(
+          async () => { const r = await apiClient.post('/monitoring/events/mark-all-read'); return r.data as { updated: number }; },
+          async () => ({ updated: 0 }),
+          'monitoring.events.markAllRead',
+          false,
+        ),
+    },
+
+    sources: {
+      list: () =>
+        withFallback(
+          async () => { const r = await apiClient.get('/monitoring/sources'); return r.data as { total: number; sources: MonitoringSource[] }; },
+          async () => ({ total: 0, sources: [] as MonitoringSource[] }),
+          'monitoring.sources.list',
+        ),
+
+      create: (data: Partial<MonitoringSource>) =>
+        withFallback(
+          async () => { const r = await apiClient.post('/monitoring/sources', data); return r.data as MonitoringSource; },
+          async () => ({} as MonitoringSource),
+          'monitoring.sources.create',
+          false,
+        ),
+    },
   },
 };
 

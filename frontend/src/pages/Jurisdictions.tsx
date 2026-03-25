@@ -1,30 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, RefreshCw, Bookmark, ChevronDown, X, ExternalLink, CheckCircle, Send, Loader2 } from 'lucide-react';
-import type { Jurisdiction, IncentiveRule } from '../types';
+import type { Jurisdiction, IncentiveRule, MonitoringEvent } from '../types';
 import api from '../api';
 
-// ─── Static data (regulatory feed — acceptable static content) ───────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const FEED_ITEMS = [
-  {
-    agency: 'California Film Commission',
-    url: 'https://www.film.ca.gov/',
-    time: '2h ago',
-    text: 'Proposed expansion of the 30-mile studio zone currently under committee review.',
-  },
-  {
-    agency: 'British Film Commission',
-    url: 'https://britishfilmcommission.org.uk/',
-    time: '5h ago',
-    text: 'New guidance issued for VFX expenditure qualification under updates.',
-  },
-  {
-    agency: 'Georgia Dept. of Econ Dev',
-    url: 'https://www.georgia.org/competitive-advantages/entertainment/georgia-film-tv-production',
-    time: '1d ago',
-    text: 'Fiscal year cap status: 65% utilized. Applications open.',
-  },
-];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+  if (mins  < 60)  return `${mins}m ago`;
+  if (hours < 24)  return `${hours}h ago`;
+  return `${days}d ago`;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -228,6 +217,8 @@ export default function Jurisdictions() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
   const [rules,         setRules]         = useState<IncentiveRule[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
+  const [feedEvents,    setFeedEvents]    = useState<MonitoringEvent[]>([]);
+  const [feedLoading,   setFeedLoading]   = useState(true);
 
   const [search,       setSearch]       = useState('');
   const [typeFilter,   setTypeFilter]   = useState('All Types');
@@ -243,6 +234,13 @@ export default function Jurisdictions() {
       .then(([jurs, rls]) => { setJurisdictions(jurs); setRules(rls); })
       .catch(() => {})
       .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    api.monitoring.events.list({ limit: 10 })
+      .then(res => setFeedEvents(res.events))
+      .catch(() => {})
+      .finally(() => setFeedLoading(false));
   }, []);
 
   // ── Client-side join helpers ─────────────────────────────────────────────────
@@ -334,22 +332,37 @@ export default function Jurisdictions() {
           </div>
 
           <div className="divide-y divide-white/8">
-            {FEED_ITEMS.map((item, i) => (
-              <div key={i} className="px-5 py-4 hover:bg-white/4 transition-colors group">
+            {feedLoading && (
+              <div className="px-5 py-6 flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+              </div>
+            )}
+            {!feedLoading && feedEvents.length === 0 && (
+              <div className="px-5 py-4 text-slate-500 text-xs text-center">No events yet.</div>
+            )}
+            {!feedLoading && feedEvents.map(event => (
+              <div key={event.id} className={`px-5 py-4 hover:bg-white/4 transition-colors group ${!event.isRead ? 'border-l-2 border-blue-500' : ''}`}>
                 <div className="flex items-center justify-between mb-1.5">
                   <a
-                    href={item.url}
+                    href={event.url ?? event.source?.url ?? '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 text-blue-400 text-xs font-semibold hover:text-blue-300 transition-colors"
-                    onClick={e => e.stopPropagation()}
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (!event.isRead) {
+                        api.monitoring.events.markRead(event.id)
+                          .then(() => setFeedEvents(prev => prev.map(ev => ev.id === event.id ? { ...ev, isRead: true } : ev)))
+                          .catch(() => {});
+                      }
+                    }}
                   >
-                    {item.agency}
+                    {event.source?.name ?? 'Regulatory Update'}
                     <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
-                  <span className="text-slate-500 text-xs">{item.time}</span>
+                  <span className="text-slate-500 text-xs">{timeAgo(event.publishedAt ?? event.createdAt)}</span>
                 </div>
-                <p className="text-slate-400 text-xs leading-relaxed">{item.text}</p>
+                <p className="text-slate-400 text-xs leading-relaxed">{event.summary ?? event.title}</p>
               </div>
             ))}
           </div>

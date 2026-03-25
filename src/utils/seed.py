@@ -232,8 +232,106 @@ async def _seed_productions() -> None:
         logger.info("ℹ️  Demo productions already seeded — skipping")
 
 
+_DEMO_MONITORING_SOURCES = [
+    {
+        "name": "California Film Commission",
+        "url": "https://film.ca.gov/",
+        "feedUrl": None,
+        "sourceType": "web",
+        "jurisdiction": "CA",
+    },
+    {
+        "name": "British Film Commission",
+        "url": "https://britishfilmcommission.org.uk/",
+        "feedUrl": None,
+        "sourceType": "web",
+        "jurisdiction": "UK",
+    },
+    {
+        "name": "Georgia Dept. of Economic Development",
+        "url": "https://www.georgia.org/film",
+        "feedUrl": None,
+        "sourceType": "web",
+        "jurisdiction": "GA",
+    },
+]
+
+_DEMO_MONITORING_EVENTS = [
+    {
+        "sourceName": "California Film Commission",
+        "title": "Studio Zone Expansion Under Review",
+        "summary": "Proposed expansion of the 30-mile studio zone currently under committee review.",
+        "url": "https://film.ca.gov/tax-credit/",
+        "severity": "info",
+        "publishedAt": datetime(2026, 3, 25, 10, 0, 0),
+    },
+    {
+        "sourceName": "British Film Commission",
+        "title": "VFX Expenditure Guidance Updated",
+        "summary": "New guidance issued for VFX expenditure qualification under the High-End TV and Film Tax Relief updates.",
+        "url": "https://britishfilmcommission.org.uk/",
+        "severity": "warning",
+        "publishedAt": datetime(2026, 3, 25, 7, 30, 0),
+    },
+    {
+        "sourceName": "Georgia Dept. of Economic Development",
+        "title": "FY Cap Status: 65% Utilized",
+        "summary": "Fiscal year cap status: 65% utilized. Applications remain open — plan submissions accordingly.",
+        "url": "https://www.georgia.org/film",
+        "severity": "info",
+        "publishedAt": datetime(2026, 3, 24, 9, 0, 0),
+    },
+]
+
+
+async def _seed_monitoring() -> None:
+    """Seed demo monitoring sources and events. Idempotent — skips if sources already exist."""
+    existing = await prisma.monitoringsource.find_many()
+    existing_names = {s.name for s in existing}
+
+    source_map: dict[str, str] = {s.name: s.id for s in existing}
+    added_sources = 0
+    for src in _DEMO_MONITORING_SOURCES:
+        if src["name"] in existing_names:
+            continue
+        record = await prisma.monitoringsource.create(data={
+            "name": src["name"],
+            "url": src["url"],
+            "feedUrl": src.get("feedUrl"),
+            "sourceType": src["sourceType"],
+            "jurisdiction": src.get("jurisdiction"),
+        })
+        source_map[record.name] = record.id
+        added_sources += 1
+
+    # Seed events (skip if any events already exist for this source)
+    added_events = 0
+    for ev in _DEMO_MONITORING_EVENTS:
+        src_id = source_map.get(ev["sourceName"])
+        if not src_id:
+            continue
+        existing_ev = await prisma.monitoringevent.find_first(where={"sourceId": src_id})
+        if existing_ev:
+            continue
+        await prisma.monitoringevent.create(data={
+            "sourceId": src_id,
+            "title": ev["title"],
+            "summary": ev["summary"],
+            "url": ev["url"],
+            "severity": ev["severity"],
+            "publishedAt": ev["publishedAt"],
+        })
+        added_events += 1
+
+    if added_sources or added_events:
+        logger.info(f"✅ Seeded {added_sources} monitoring sources, {added_events} events")
+    else:
+        logger.info("ℹ️  Monitoring data already seeded — skipping")
+
+
 async def seed_all() -> None:
-    """Seed jurisdictions, incentive rules, and demo productions. Idempotent — safe on every startup."""
+    """Seed jurisdictions, incentive rules, demo productions, and monitoring data. Idempotent — safe on every startup."""
     await _seed_jurisdictions()
     await _seed_rules()
     await _seed_productions()
+    await _seed_monitoring()

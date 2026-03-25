@@ -1,0 +1,102 @@
+"""
+Monitoring API endpoints — regulatory feed events and sources.
+"""
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
+from typing import Optional
+import logging
+from datetime import datetime
+
+from src.utils.database import prisma
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
+
+
+# ── Request / response models ─────────────────────────────────────────────────
+
+class SourceCreate(BaseModel):
+    name: str
+    url: str
+    feedUrl: Optional[str] = None
+    sourceType: str = "rss"
+    jurisdiction: Optional[str] = None
+
+
+class EventsResponse(BaseModel):
+    total: int
+    unread: int
+    events: list
+
+
+# ── Events ────────────────────────────────────────────────────────────────────
+
+@router.get("/events", summary="List monitoring events")
+async def list_events(
+    limit: int = 20,
+    skip: int = 0,
+    unread_only: bool = False,
+):
+    where = {"isRead": False} if unread_only else {}
+    events = await prisma.monitoringevent.find_many(
+        where=where,
+        include={"source": True},
+        order={"createdAt": "desc"},
+        take=limit,
+        skip=skip,
+    )
+    total = await prisma.monitoringevent.count(where=where)
+    unread = await prisma.monitoringevent.count(where={"isRead": False})
+    return {"total": total, "unread": unread, "events": events}
+
+
+@router.get("/events/unread-count", summary="Unread event count")
+async def unread_count():
+    count = await prisma.monitoringevent.count(where={"isRead": False})
+    return {"count": count}
+
+
+@router.patch("/events/{event_id}/read", summary="Mark event as read")
+async def mark_read(event_id: str):
+    event = await prisma.monitoringevent.find_unique(where={"id": event_id})
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    updated = await prisma.monitoringevent.update(
+        where={"id": event_id},
+        data={"isRead": True},
+    )
+    return updated
+
+
+@router.post("/events/mark-all-read", summary="Mark all events as read")
+async def mark_all_read():
+    result = await prisma.monitoringevent.update_many(
+        where={"isRead": False},
+        data={"isRead": True},
+    )
+    return {"updated": result.count}
+
+
+# ── Sources ───────────────────────────────────────────────────────────────────
+
+@router.get("/sources", summary="List monitoring sources")
+async def list_sources():
+    sources = await prisma.monitoringsource.find_many(
+        order={"createdAt": "asc"},
+    )
+    return {"total": len(sources), "sources": sources}
+
+
+@router.post("/sources", status_code=status.HTTP_201_CREATED, summary="Add monitoring source")
+async def create_source(data: SourceCreate):
+    source = await prisma.monitoringsource.create(
+        data={
+            "name": data.name,
+            "url": data.url,
+            "feedUrl": data.feedUrl,
+            "sourceType": data.sourceType,
+            "jurisdiction": data.jurisdiction,
+        }
+    )
+    logger.info(f"Monitoring source created: {source.name}")
+    return source
