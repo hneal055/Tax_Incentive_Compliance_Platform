@@ -1,158 +1,423 @@
-import React, { useEffect, useState } from 'react';
-import { Film, Plus, DollarSign, Calendar } from 'lucide-react';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import Input from '../components/Input';
-import Spinner from '../components/Spinner';
-import EmptyState from '../components/EmptyState';
-import { useAppStore } from '../store';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2 } from 'lucide-react';
+import type { Production, Jurisdiction } from '../types';
+import api from '../api';
 
-const Productions: React.FC = () => {
-  const { productions, fetchProductions, createProduction, isLoading } = useAppStore();
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    budget: '',
-  });
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    fetchProductions();
-  }, [fetchProductions]);
+type StatusKey = 'planning' | 'pre_production' | 'production' | 'post_production' | 'completed';
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createProduction({
-      title: formData.title,
-      budget: parseFloat(formData.budget),
-    });
-    setFormData({ title: '', budget: '' });
-    setShowForm(false);
-  };
+const STATUS_OPTIONS: { value: StatusKey; label: string }[] = [
+  { value: 'planning',        label: 'Planning' },
+  { value: 'pre_production',  label: 'Pre-Production' },
+  { value: 'production',      label: 'Production' },
+  { value: 'post_production', label: 'Post-Production' },
+  { value: 'completed',       label: 'Completed' },
+];
 
-  if (isLoading && productions.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
+const PROD_TYPES = [
+  { value: 'feature',      label: 'Feature Film' },
+  { value: 'tv_series',    label: 'TV Series' },
+  { value: 'commercial',   label: 'Commercial' },
+  { value: 'documentary',  label: 'Documentary' },
+];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            Productions
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your film and TV productions</p>
-        </div>
-        <Button 
-          onClick={() => setShowForm(!showForm)}
-          icon={showForm ? undefined : Plus}
-          variant={showForm ? 'secondary' : 'primary'}
-        >
-          {showForm ? 'Cancel' : 'New Production'}
-        </Button>
-      </div>
-
-      {showForm && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <Card title="Create New Production" subtitle="Enter production details to start tracking incentives">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Production Title"
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter production title"
-                required
-              />
-              <Input
-                label="Budget ($)"
-                type="number"
-                value={formData.budget}
-                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                placeholder="Enter budget amount"
-                required
-                min="0"
-                step="0.01"
-              />
-              <div className="flex space-x-2">
-                <Button type="submit" className="flex-1" icon={Plus}>
-                  Create Production
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
-        </motion.div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {productions.length === 0 ? (
-          <div className="col-span-full">
-            <Card>
-              <EmptyState
-                icon={Film}
-                title="No productions yet"
-                description="Create your first production to start tracking tax incentives, managing budgets, and ensuring compliance."
-                actionLabel="Create your first production"
-                onAction={() => setShowForm(true)}
-              />
-            </Card>
-          </div>
-        ) : (
-          productions.map((production, index) => (
-            <motion.div
-              key={production.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Card 
-                title={production.title}
-                hoverable
-                className="h-full"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gradient-to-br from-accent-blue/5 to-accent-teal/5 dark:from-accent-blue/10 dark:to-accent-teal/10 rounded-lg">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                      <DollarSign className="h-4 w-4" />
-                      <span>Budget</span>
-                    </div>
-                    <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
-                      ${production.budget.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <Calendar className="h-4 w-4" />
-                      <span>Created</span>
-                    </div>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium">
-                      {new Date(production.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button size="sm" variant="outline" className="w-full">
-                    View Details →
-                  </Button>
-                </div>
-              </Card>
-            </motion.div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+const STATUS_COLORS: Record<string, string> = {
+  planning:        'bg-blue-100 text-blue-800',
+  pre_production:  'bg-violet-100 text-violet-800',
+  production:      'bg-green-100 text-green-800',
+  post_production: 'bg-amber-100 text-amber-800',
+  completed:       'bg-slate-100 text-slate-700',
 };
 
-export default Productions;
+const EMPTY_FORM = {
+  title: '',
+  productionType: 'feature',
+  productionCompany: '',
+  budgetTotal: '',
+  startDate: '',
+  jurisdictionId: '',
+  status: 'planning' as StatusKey,
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function Productions() {
+  const [productions, setProductions] = useState<Production[]>([]);
+  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | StatusKey>('all');
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([api.productions.list(), api.jurisdictions.list()])
+      .then(([prods, jurs]) => { setProductions(prods); setJurisdictions(jurs); })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const jurName = (id: string) => jurisdictions.find(j => j.id === id)?.name ?? '—';
+
+  const filtered = productions.filter(p => {
+    const matchSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = filterStatus === 'all' || p.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+
+  function validate() {
+    const e: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+    if (!form.title.trim())           e.title           = 'Title is required';
+    if (!form.productionCompany.trim()) e.productionCompany = 'Company is required';
+    if (!form.startDate)              e.startDate       = 'Start date is required';
+    const b = Number(form.budgetTotal);
+    if (!form.budgetTotal || isNaN(b) || b <= 0) e.budgetTotal = 'Enter a valid budget';
+    return e;
+  }
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) { setErrors(errs); return; }
+
+    setSubmitting(true);
+    try {
+      const created = await api.productions.create({
+        title:             form.title.trim(),
+        productionType:    form.productionType,
+        productionCompany: form.productionCompany.trim(),
+        budgetTotal:       Number(form.budgetTotal),
+        startDate:         form.startDate,
+        jurisdictionId:    form.jurisdictionId || '',
+        status:            form.status,
+      });
+      setProductions(prev => [created, ...prev]);
+      setForm(EMPTY_FORM);
+      setErrors({});
+      setShowModal(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create production';
+      setErrors({ title: msg });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // ── Delete ──────────────────────────────────────────────────────────────────
+
+  async function handleDelete(id: string) {
+    setDeleteId(id);
+    try {
+      await api.productions.delete(id);
+      setProductions(prev => prev.filter(p => p.id !== id));
+    } catch {
+      // silent — production stays in list
+    } finally {
+      setDeleteId(null);
+    }
+  }
+
+  function handleClose() {
+    setShowModal(false);
+    setForm(EMPTY_FORM);
+    setErrors({});
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-8 py-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h1 className="text-[28px] font-bold text-slate-900">Productions</h1>
+            <p className="text-slate-500 mt-1 text-[15px]">Manage and track all film productions.</p>
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            New Production
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-8 max-w-6xl mx-auto">
+        {/* Search and Filter */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search productions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+          <button type="button" className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors text-slate-700 font-medium text-sm">
+            <Filter className="w-4 h-4" />
+            Filter
+          </button>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {(['all', ...STATUS_OPTIONS.map(s => s.value)] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                filterStatus === status
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-slate-700 border border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              {status === 'all' ? 'All' : STATUS_OPTIONS.find(s => s.value === status)?.label ?? status}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          </div>
+        )}
+
+        {/* Productions List */}
+        {!isLoading && (
+          <div className="space-y-4">
+            {filtered.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                      <h3 className="text-base font-bold text-slate-900">{p.title}</h3>
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[p.status] ?? 'bg-slate-100 text-slate-700'}`}>
+                        {STATUS_OPTIONS.find(s => s.value === p.status)?.label ?? p.status}
+                      </span>
+                    </div>
+                    <p className="text-slate-500 text-sm">
+                      {jurName(p.jurisdictionId)} • {p.productionCompany} • Started {p.startDate?.split('T')[0]}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      disabled={deleteId === p.id}
+                      title="Delete production"
+                      aria-label="Delete production"
+                      className="text-slate-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                    >
+                      {deleteId === p.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />
+                      }
+                    </button>
+                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-slate-500 text-xs font-medium mb-0.5">Budget</p>
+                    <p className="text-base font-bold text-slate-900">${(p.budgetTotal / 1_000_000).toFixed(1)}M</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 text-xs font-medium mb-0.5">Type</p>
+                    <p className="text-base font-bold text-slate-900">{PROD_TYPES.find(t => t.value === p.productionType)?.label ?? p.productionType}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 text-xs font-medium mb-0.5">Jurisdiction</p>
+                    <p className="text-base font-bold text-slate-900">{jurName(p.jurisdictionId)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {filtered.length === 0 && !isLoading && (
+              <div className="bg-white rounded-xl border border-slate-200 p-16 text-center">
+                {productions.length === 0 ? (
+                  <>
+                    <p className="text-slate-700 font-semibold mb-1">No productions yet</p>
+                    <p className="text-slate-500 text-sm">Click "New Production" to add your first production.</p>
+                  </>
+                ) : (
+                  <p className="text-slate-500 text-sm">No productions match your filters.</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* New Production Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
+
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">New Production</h2>
+                <p className="text-slate-500 text-sm mt-0.5">Add a new film production to track.</p>
+              </div>
+              <button type="button" onClick={handleClose} title="Close" aria-label="Close" className="text-slate-400 hover:text-slate-600 transition-colors mt-0.5">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Production Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. The Silent Horizon"
+                  value={form.title}
+                  onChange={e => { setForm(f => ({ ...f, title: e.target.value })); setErrors(er => ({ ...er, title: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.title ? 'border-red-400' : 'border-slate-300'}`}
+                  autoFocus
+                />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title}</p>}
+              </div>
+
+              {/* Production Type */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Production Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={form.productionType}
+                  onChange={e => setForm(f => ({ ...f, productionType: e.target.value }))}
+                  title="Production type"
+                  aria-label="Production type"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {PROD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+
+              {/* Production Company */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Production Company <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Horizon Films LLC"
+                  value={form.productionCompany}
+                  onChange={e => { setForm(f => ({ ...f, productionCompany: e.target.value })); setErrors(er => ({ ...er, productionCompany: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.productionCompany ? 'border-red-400' : 'border-slate-300'}`}
+                />
+                {errors.productionCompany && <p className="text-red-500 text-xs mt-1">{errors.productionCompany}</p>}
+              </div>
+
+              {/* Budget */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Total Budget (USD) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm select-none">$</span>
+                  <input
+                    type="number"
+                    placeholder="5000000"
+                    min="1"
+                    value={form.budgetTotal}
+                    onChange={e => { setForm(f => ({ ...f, budgetTotal: e.target.value })); setErrors(er => ({ ...er, budgetTotal: undefined })); }}
+                    className={`w-full pl-7 pr-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.budgetTotal ? 'border-red-400' : 'border-slate-300'}`}
+                  />
+                </div>
+                {errors.budgetTotal && <p className="text-red-500 text-xs mt-1">{errors.budgetTotal}</p>}
+              </div>
+
+              {/* Start Date */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  title="Start date"
+                  value={form.startDate}
+                  onChange={e => { setForm(f => ({ ...f, startDate: e.target.value })); setErrors(er => ({ ...er, startDate: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.startDate ? 'border-red-400' : 'border-slate-300'}`}
+                />
+                {errors.startDate && <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>}
+              </div>
+
+              {/* Jurisdiction */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Jurisdiction</label>
+                <select
+                  value={form.jurisdictionId}
+                  onChange={e => setForm(f => ({ ...f, jurisdictionId: e.target.value }))}
+                  title="Jurisdiction"
+                  aria-label="Jurisdiction"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700"
+                >
+                  <option value="">Select jurisdiction (optional)</option>
+                  {jurisdictions.map(j => (
+                    <option key={j.id} value={j.id}>{j.name} ({j.country})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                <select
+                  value={form.status}
+                  onChange={e => setForm(f => ({ ...f, status: e.target.value as StatusKey }))}
+                  title="Status"
+                  aria-label="Status"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {submitting ? 'Creating…' : 'Create Production'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -17,7 +17,7 @@ from src.utils.database import prisma
 router = APIRouter(prefix="/jurisdictions", tags=["Jurisdictions"])
 
 
-@router.get("/", response_model=JurisdictionList, summary="Get all jurisdictions")
+@router.get("", response_model=JurisdictionList, summary="Get all jurisdictions")
 async def get_jurisdictions(
     country: Optional[str] = None,
     type: Optional[str] = None,

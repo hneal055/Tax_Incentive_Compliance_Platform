@@ -1,17 +1,17 @@
-version: '3.8'
+name: pilotforge
 
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: tax-incentive-db
+    container_name: pilotforge-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: tax_incentive_db
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -19,10 +19,80 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - tax-incentive-network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pilotforge-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tax_incentive_db
+      APP_ENV: development
+      LOG_LEVEL: DEBUG
+      PYTHONUNBUFFERED: 1
+      API_VERSION: 0.1.0
+      JWT_SECRET: dev-only-change-in-production-pilotforge-2024
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_HOURS: 8
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/docs', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tax-incentive-network
+
+  # Frontend UI - React + Vite with Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pilotforge-ui
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - tax-incentive-network
+
+  # Nginx Reverse Proxy (optional, for routing)
+  nginx:
+    image: nginx:alpine
+    container_name: pilotforge-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - tax-incentive-network
 
 volumes:
   postgres_data:
 
 networks:
-  default:
-    name: tax-incentive-network
+  tax-incentive-network:
+    driver: bridge

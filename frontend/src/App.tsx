@@ -1,22 +1,41 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Productions from './pages/Productions';
-import Jurisdictions from './pages/Jurisdictions';
 import Calculator from './pages/Calculator';
+import Jurisdictions from './pages/Jurisdictions';
+import AIAdvisor from './components/AIAdvisor';
+import Login from './pages/Login';
+import { useAuthStore } from './store/auth';
+import { FeatureFlagPanel } from './components/DevTools/FeatureFlagPanel';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const { isAuthenticated, loadFromStorage } = useAuthStore();
+
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
+
+  const tabComponents: Record<string, React.ReactNode> = {
+    dashboard:    <Dashboard />,
+    productions:  <Productions />,
+    calculator:   <Calculator />,
+    jurisdictions: <Jurisdictions />,
+    advisor:      <AIAdvisor />,
+  };
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/productions" element={<Productions />} />
-          <Route path="/jurisdictions" element={<Jurisdictions />} />
-          <Route path="/calculator" element={<Calculator />} />
-        </Routes>
+    <>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+        {tabComponents[activeTab] || tabComponents.dashboard}
       </Layout>
-    </Router>
+      <FeatureFlagPanel />
+    </>
   );
 }
 

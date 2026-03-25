@@ -7,11 +7,7 @@ Jurisdictional rule engine for managing tax incentives for the film & television
 
 ### Backend
 ```powershell
-cd C:\Projects\PilotForge
-.\scripts\setup\setup.ps1
-.\venv\Scripts\Activate.ps1
-python -m uvicorn src.main:app --reload
-```
+src/mobile/src/screens/DeliveryDetailScreen.js
 
 Visit: http://localhost:8000/docs
 

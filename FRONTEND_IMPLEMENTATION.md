@@ -1,4 +1,4 @@
-# Frontend UI Project - Implementation Summary
+﻿# Frontend UI Project - Implementation Summary
 
 ## Overview
 

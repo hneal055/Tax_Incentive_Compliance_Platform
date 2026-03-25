@@ -17,7 +17,7 @@ from src.utils.database import prisma
 router = APIRouter(prefix="/incentive-rules", tags=["Incentive Rules"])
 
 
-@router.get("/", response_model=IncentiveRuleList, summary="Get all incentive rules")
+@router.get("", response_model=IncentiveRuleList, summary="Get all incentive rules")
 async def get_incentive_rules(
     jurisdiction_id: Optional[str] = None,
     incentive_type: Optional[str] = None,

@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     CORS_ALLOW_HEADERS: str = Field(default="*")
     CORS_ALLOW_CREDENTIALS: Optional[bool] = Field(default=None)
 
+    # JWT Authentication
+    JWT_SECRET: str = Field(default="change-me-in-production-this-is-insecure")
+    JWT_ALGORITHM: str = Field(default="HS256")
+    JWT_EXPIRE_HOURS: int = Field(default=8)
+
     # Phase 2+ (optional for Phase 1)
     DATABASE_URL: Optional[str] = Field(default=None)
 

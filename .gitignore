@@ -43,3 +43,40 @@ frontend/.env
 .env
 .env.backup
 create-db.py
+backup_*/
+
+# Backups (added during cleanup)
+backup_*/
+*.backup
+*.bak
+
+# Test artifacts
+test_*.pdf
+test_*.xlsx
+sample.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+

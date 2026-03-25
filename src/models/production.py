@@ -3,7 +3,7 @@ Pydantic models for Productions
 """
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
-from datetime import datetime, date
+from datetime import datetime
 
 
 class ProductionBase(BaseModel):
@@ -13,14 +13,12 @@ class ProductionBase(BaseModel):
     jurisdictionId: str = Field(..., description="Jurisdiction ID where production is based")
     budgetTotal: float = Field(..., description="Total production budget in USD")
     budgetQualifying: Optional[float] = Field(None, description="Qualifying budget for incentives")
-    startDate: date = Field(..., description="Production start date")
-    endDate: Optional[date] = Field(None, description="Production end date")
-    wrapDate: Optional[date] = Field(None, description="Production wrap date")
+    startDate: datetime = Field(..., description="Production start date")
+    endDate: Optional[datetime] = Field(None, description="Production end date")
     productionCompany: str = Field(..., description="Production company name")
-    accountant: Optional[str] = Field(None, description="Production accountant name")
-    contact: Optional[Dict[str, Any]] = Field(None, description="Contact information")
+    contact: Optional[str] = Field(None, description="Contact information")
     status: str = Field(..., description="Status: planning, pre_production, production, post_production, completed")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    metadata: Optional[str] = Field(None, description="Additional metadata as JSON string")
 
 
 class ProductionCreate(ProductionBase):
@@ -35,14 +33,12 @@ class ProductionUpdate(BaseModel):
     jurisdictionId: Optional[str] = None
     budgetTotal: Optional[float] = None
     budgetQualifying: Optional[float] = None
-    startDate: Optional[date] = None
-    endDate: Optional[date] = None
-    wrapDate: Optional[date] = None
+    startDate: Optional[datetime] = None
+    endDate: Optional[datetime] = None
     productionCompany: Optional[str] = None
-    accountant: Optional[str] = None
-    contact: Optional[Dict[str, Any]] = None
+    contact: Optional[str] = None
     status: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[str] = None
 
 
 class ProductionResponse(ProductionBase):

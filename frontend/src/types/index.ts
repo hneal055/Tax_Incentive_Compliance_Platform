@@ -1,10 +1,16 @@
 export interface Production {
   id: string;
   title: string;
-  budget: number;
-  jurisdiction_id?: string;
-  created_at: string;
-  updated_at: string;
+  productionType: string;
+  productionCompany: string;
+  budgetTotal: number;
+  budgetQualifying?: number;
+  startDate: string;
+  endDate?: string;
+  jurisdictionId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Jurisdiction {
@@ -13,20 +19,31 @@ export interface Jurisdiction {
   name: string;
   country: string;
   type: string;
-  created_at: string;
-  updated_at: string;
+  description?: string;
+  website?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IncentiveRule {
   id: string;
-  jurisdiction_id: string;
-  name: string;
-  type: string;
-  rate: number;
-  min_spend?: number;
-  max_credit?: number;
-  created_at: string;
-  updated_at: string;
+  jurisdictionId: string;
+  ruleName: string;
+  ruleCode: string;
+  incentiveType: string;
+  percentage?: number;
+  fixedAmount?: number;
+  minSpend?: number;
+  maxCredit?: number;
+  eligibleExpenses: string[];
+  excludedExpenses: string[];
+  effectiveDate: string;
+  expirationDate?: string;
+  requirements: Record<string, unknown>;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Expense {

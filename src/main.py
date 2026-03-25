@@ -14,6 +14,8 @@ from fastapi.staticfiles import StaticFiles
 
 from src.utils.config import settings
 from src.utils.database import prisma
+from src.utils.auth_utils import hash_password
+from src.utils.seed import run_migrations, seed_all
 from src.api.routes import router
 
 
@@ -23,6 +25,24 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+ADMIN_EMAIL = "admin@pilotforge.com"
+ADMIN_PASSWORD = "pilotforge2024"
+
+
+async def _seed_admin() -> None:
+    """Create the default admin account on first boot (idempotent)."""
+    count = await prisma.user.count()
+    if count == 0:
+        await prisma.user.create(data={
+            "email": ADMIN_EMAIL,
+            "passwordHash": hash_password(ADMIN_PASSWORD),
+            "role": "admin",
+            "isActive": True,
+        })
+        logger.info(f"✅ Admin user created: {ADMIN_EMAIL}")
+    else:
+        logger.info("ℹ️  Admin user already exists — skipping seed")
 
 
 @asynccontextmanager
@@ -34,8 +54,11 @@ async def lifespan(app: FastAPI):
     logger.info("🎬 Starting PilotForge")
     logger.info("   Tax Incentive Intelligence for Film & TV")
     try:
+        run_migrations()
         await prisma.connect()
         logger.info("✅ Database connected")
+        await _seed_admin()
+        await seed_all()
     except Exception as e:
         logger.warning(f"⚠️  Database connection failed: {e}")
         logger.warning("   Application will run with limited functionality")
@@ -70,9 +93,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:8000",
+        "http://localhost:8001",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
-        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -1,7 +1,16 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
+// Extend axios config type to carry per-request metadata
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    metadata?: { startTime: number };
+  }
+}
+
+// ?? instead of || so empty string (Docker: relative URL via nginx) is kept as-is
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_VERSION = import.meta.env.VITE_API_VERSION || '0.1.0';
+const TOKEN_KEY = 'pilotforge_token';
 
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api/${API_VERSION}`,
@@ -10,19 +19,49 @@ export const apiClient = axios.create({
   },
 });
 
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error);
-    return Promise.reject(error);
+// Request interceptor: inject Bearer token + record start time for timing
+apiClient.interceptors.request.use((config) => {
+  config.metadata = { startTime: performance.now() };
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
+
+// Response interceptor: dev logging with timing + 401 session clearing
+apiClient.interceptors.response.use(
+  (response) => {
+    if (import.meta.env.DEV) {
+      const ms = response.config.metadata
+        ? Math.round(performance.now() - response.config.metadata.startTime)
+        : '?';
+      console.log(
+        `[${response.status}] ${response.config.method?.toUpperCase()} ${response.config.url} — ${ms}ms`,
+      );
+    }
+    return response;
+  },
+  (error) => {
+    if (import.meta.env.DEV) {
+      const status = error.response?.status ?? 'ERR';
+      const ms = error.config?.metadata
+        ? Math.round(performance.now() - error.config.metadata.startTime)
+        : '?';
+      console.warn(
+        `[${status}] ${error.config?.method?.toUpperCase()} ${error.config?.url} — ${ms}ms`,
+        error.message,
+      );
+    }
+    if (error.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  },
 );
 
 export function getApiUrl(endpoint: string): string {
-  if (!API_VERSION) {
-    throw new Error('API version is not defined in environment variables.');
-  }
   return `/api/${API_VERSION}/${endpoint}`;
 }
 

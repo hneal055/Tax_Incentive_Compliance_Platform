@@ -4,6 +4,7 @@ Production API endpoints
 from fastapi import APIRouter, HTTPException, status
 from typing import Optional
 import logging
+from datetime import datetime
 
 from src.models.production import (
     ProductionCreate,
@@ -17,7 +18,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/productions", tags=["Productions"])
 
 
-@router.get("/", response_model=ProductionList, summary="Get all productions")
+def format_datetime(dt):
+    """Convert datetime to ISO-8601 with Z suffix"""
+    if dt is None:
+        return None
+    if isinstance(dt, datetime):
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return str(dt) + 'Z' if not str(dt).endswith('Z') else str(dt)
+
+
+@router.get("", response_model=ProductionList, summary="Get all productions")
 async def get_productions(
     production_type: Optional[str] = None,
     active: Optional[bool] = None
@@ -40,12 +50,11 @@ async def get_productions(
     }
 
 
-@router.post("/", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Create production")
+@router.post("", response_model=ProductionResponse, status_code=status.HTTP_201_CREATED, summary="Create production")
 async def create_production(production: ProductionCreate):
     """Create a new production."""
     try:
         logger.info(f"Creating production: {production.title}")
-        logger.info(f"Production data: {production.model_dump()}")
         
         # Verify jurisdiction exists
         jurisdiction = await prisma.jurisdiction.find_unique(
@@ -61,10 +70,25 @@ async def create_production(production: ProductionCreate):
         
         logger.info(f"Jurisdiction found: {jurisdiction.name}")
         
+        # Build data dict - use BOTH jurisdictionId AND relationship
+        data = {
+            "title": production.title,
+            "productionType": production.productionType,
+            "jurisdictionId": production.jurisdictionId,  # Required field
+            "budgetTotal": production.budgetTotal,
+            "budgetQualifying": production.budgetQualifying,
+            "startDate": format_datetime(production.startDate),
+            "endDate": format_datetime(production.endDate),
+            "productionCompany": production.productionCompany,
+            "status": production.status,
+            "contact": production.contact,
+            "metadata": production.metadata,
+        }
+        
+        logger.info(f"Data to create: {data}")
+        
         # Create production
-        new_production = await prisma.production.create(
-            data=production.model_dump()
-        )
+        new_production = await prisma.production.create(data=data)
         
         logger.info(f"Production created: {new_production.id}")
         return new_production
@@ -108,7 +132,28 @@ async def update_production(production_id: str, production: ProductionUpdate):
             detail=f"Production with ID {production_id} not found"
         )
     
-    update_data = production.model_dump(exclude_unset=True)
+    update_data = {}
+    
+    if production.title is not None:
+        update_data["title"] = production.title
+    if production.productionType is not None:
+        update_data["productionType"] = production.productionType
+    if production.budgetTotal is not None:
+        update_data["budgetTotal"] = production.budgetTotal
+    if production.budgetQualifying is not None:
+        update_data["budgetQualifying"] = production.budgetQualifying
+    if production.startDate is not None:
+        update_data["startDate"] = format_datetime(production.startDate)
+    if production.endDate is not None:
+        update_data["endDate"] = format_datetime(production.endDate)
+    if production.productionCompany is not None:
+        update_data["productionCompany"] = production.productionCompany
+    if production.status is not None:
+        update_data["status"] = production.status
+    if production.contact is not None:
+        update_data["contact"] = production.contact
+    if production.metadata is not None:
+        update_data["metadata"] = production.metadata
     
     updated = await prisma.production.update(
         where={"id": production_id},
