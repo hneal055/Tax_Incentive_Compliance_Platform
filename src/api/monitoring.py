@@ -100,3 +100,16 @@ async def create_source(data: SourceCreate):
     )
     logger.info(f"Monitoring source created: {source.name}")
     return source
+
+
+# ── Manual ingestion trigger ──────────────────────────────────────────────────
+
+@router.post("/ingest", summary="Manually trigger feed ingestion across all active sources")
+async def trigger_ingest():
+    """
+    Runs the same ingestion job the scheduler fires every 4 hours.
+    Useful for testing, seeding, or forcing an immediate refresh.
+    """
+    from src.services.feed_ingestion import ingest_all_sources
+    new_events = await ingest_all_sources()
+    return {"status": "ok", "new_events": new_events}
