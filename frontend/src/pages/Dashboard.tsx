@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import {
   Clapperboard,
   Globe,
@@ -20,6 +20,9 @@ import MetricCard from '../components/MetricCard';
 import MonthlyBarChart from '../components/MonthlyBarChart';
 import ExpenseDonutChart from '../components/ExpenseDonutChart';
 import Spinner from '../components/Spinner';
+import { ToastContainer, type ToastMessage } from '../components/Toast';
+import { useWebSocket } from '../hooks/useWebSocket';
+import type { MonitoringEvent } from '../types';
 
 const DONUT_COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'];
 
@@ -226,6 +229,35 @@ export default function Dashboard() {
     refreshAll,
     isLoading,
   } = useAppStore();
+
+  // ── Toast state ────────────────────────────────────────────
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // ── WebSocket: pipe critical events to toast notifications ─
+  const handleWsEvent = useCallback(
+    (event: MonitoringEvent) => {
+      // addEvent is called inside useWebSocket; here we only handle side-effects.
+      if (event.severity === 'critical') {
+        setToasts((prev) => [
+          ...prev,
+          {
+            id: event.id,
+            title: event.title,
+            summary: event.summary,
+            severity: 'critical' as const,
+          },
+        ]);
+      }
+    },
+    [],
+  );
+
+  // Mount the WebSocket connection – the hook manages connect/disconnect.
+  useWebSocket(handleWsEvent);
 
   useEffect(() => {
     refreshAll();
@@ -453,6 +485,9 @@ export default function Dashboard() {
           <QuickProductionList />
         </div>
       </div>
+
+      {/* Toast notifications for real-time critical alerts */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

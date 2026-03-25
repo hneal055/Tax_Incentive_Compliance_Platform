@@ -1,6 +1,7 @@
 """
 Monitoring API endpoints for real-time jurisdiction monitoring
 """
+import logging
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from typing import Optional
 from datetime import datetime, timezone
@@ -17,6 +18,8 @@ from src.models.monitoring import (
 )
 from src.utils.database import prisma
 from src.services.websocket_manager import connection_manager
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/monitoring", tags=["Monitoring"])
 
@@ -229,6 +232,7 @@ async def websocket_endpoint(websocket: WebSocket, jurisdiction_ids: Optional[st
                 await websocket.send_json({"type": "pong"})
             
     except WebSocketDisconnect:
-        connection_manager.disconnect(websocket)
+        await connection_manager.disconnect(websocket)
     except Exception as e:
-        connection_manager.disconnect(websocket)
+        logger.error("WebSocket error: %s", e)
+        await connection_manager.disconnect(websocket)

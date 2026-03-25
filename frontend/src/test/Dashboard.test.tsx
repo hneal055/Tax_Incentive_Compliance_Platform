@@ -9,10 +9,23 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+// Mock the WebSocket hook so Dashboard tests don't need a real WS connection
+vi.mock('../hooks/useWebSocket', () => ({
+  useWebSocket: vi.fn(),
+  default: vi.fn(),
+}));
+
 const mockSelectProduction = vi.fn();
 const mockRefreshAll = vi.fn().mockResolvedValue(undefined);
 vi.mock('../store', () => ({
-  useAppStore: vi.fn(() => ({
+  useAppStore: vi.fn((selector?: (s: ReturnType<typeof buildState>) => unknown) => {
+    const state = buildState();
+    return selector ? selector(state) : state;
+  }),
+}))
+
+function buildState() {
+  return {
     productions: [
       { id: '1', title: 'Bad Boys', budgetTotal: 35000000, status: 'PRODUCTION', productionCompany: 'Neal Studio' },
       { id: '2', title: 'Test Movie', budgetTotal: 5000000, status: 'planning', productionCompany: 'Default Co' },
@@ -37,13 +50,15 @@ vi.mock('../store', () => ({
       { id: 'e3', title: 'Flag Raised', summary: 'Review needed', eventType: 'compliance', severity: 'critical', detectedAt: new Date().toISOString(), jurisdictionId: 'j1', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
     ],
     unreadEventCount: 3,
+    addEvent: vi.fn(),
+    markRead: vi.fn(),
     refreshAll: mockRefreshAll,
     fetchProductions: vi.fn().mockResolvedValue([]),
     fetchJurisdictions: vi.fn().mockResolvedValue([]),
     selectProduction: mockSelectProduction,
     isLoading: false,
-  })),
-}))
+  };
+}
 
 global.fetch = vi.fn().mockResolvedValue({
   ok: true,
@@ -157,3 +172,4 @@ describe('Dashboard Page', () => {
     })
   })
 })
+

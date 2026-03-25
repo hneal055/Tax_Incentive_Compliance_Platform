@@ -5,9 +5,10 @@ Copyright (c) 2025-2026 Howard Neal - PilotForge
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
 from contextlib import asynccontextmanager
+import asyncio
 import logging
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +18,7 @@ from src.utils.database import prisma
 from src.api.routes import router
 from src.services.monitoring_service import monitoring_service
 from src.services.scheduler_service import scheduler_service
+from src.services.websocket_manager import connection_manager, HEARTBEAT_INTERVAL
 
 
 # Configure logging
@@ -25,6 +27,20 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+async def _heartbeat_loop():
+    """Periodically send heartbeat pings to all WebSocket clients.
+
+    Runs for the lifetime of the application.  Dead connections are
+    cleaned up automatically by :meth:`ConnectionManager.broadcast`.
+    """
+    while True:
+        await asyncio.sleep(HEARTBEAT_INTERVAL)
+        try:
+            await connection_manager.send_heartbeat()
+        except Exception as exc:  # pragma: no cover
+            logger.warning("Heartbeat error: %s", exc)
 
 
 @asynccontextmanager
@@ -50,11 +66,21 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Monitoring services initialized")
     except Exception as e:
         logger.warning(f"⚠️  Monitoring service initialization failed: {e}")
-    
+
+    # Start WebSocket heartbeat background task
+    heartbeat_task = asyncio.create_task(_heartbeat_loop())
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down PilotForge")
+
+    # Cancel heartbeat task
+    heartbeat_task.cancel()
+    try:
+        await heartbeat_task
+    except asyncio.CancelledError:
+        pass
     
     # Shutdown monitoring services
     try:
@@ -106,7 +132,48 @@ app.add_middleware(
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 
 
-# Health check endpoint
+# ─── Dedicated real-time WebSocket endpoint ─────────────────────────────────
+@app.websocket("/ws/events")
+async def ws_events(websocket: WebSocket, jurisdiction_ids: str | None = None):
+    """WebSocket endpoint for real-time monitoring event push.
+
+    URL: ``ws://localhost:8000/ws/events``
+
+    **Query parameters**
+    - ``jurisdiction_ids``: comma-separated list of jurisdiction IDs to
+      subscribe to.  Omit to receive events for *all* jurisdictions.
+
+    **Protocol**
+    - On connect: server sends ``{"type": "connection", "status": "connected"}``.
+    - Server → client: ``{"type": "monitoring_event", "event": {...}}`` for
+      every new monitoring event.
+    - Server → client: ``{"type": "heartbeat"}`` every 30 s – clients may
+      reply with ``"ping"`` and the server will respond with
+      ``{"type": "pong"}``.
+    - Client → server: ``"ping"`` → server replies ``{"type": "pong"}``.
+    """
+    subscribed: set[str] | None = None
+    if jurisdiction_ids:
+        subscribed = set(jurisdiction_ids.split(","))
+
+    await connection_manager.connect(websocket, subscribed)
+
+    try:
+        await websocket.send_json({
+            "type": "connection",
+            "status": "connected",
+            "subscriptions": list(subscribed) if subscribed else "all",
+        })
+
+        while True:
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        await connection_manager.disconnect(websocket)
+    except Exception as exc:
+        logger.warning("ws/events error: %s", exc)
+        await connection_manager.disconnect(websocket)
 @app.get("/health", tags=["Health"])
 async def health_check():
     """
