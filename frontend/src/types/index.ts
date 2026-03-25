@@ -72,3 +72,29 @@ export interface HealthStatus {
   version: string;
   environment: string;
 }
+
+export interface MonitoringSource {
+  id: string;
+  name: string;
+  url: string;
+  feedUrl?: string;
+  sourceType: string;
+  jurisdiction?: string;
+  active: boolean;
+  lastFetched?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MonitoringEvent {
+  id: string;
+  sourceId: string;
+  source?: MonitoringSource;
+  title: string;
+  summary?: string;
+  url?: string;
+  severity: 'info' | 'warning' | 'critical';
+  isRead: boolean;
+  publishedAt?: string;
+  createdAt: string;
+}
