@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Clapperboard } from 'lucide-react';
+import { Menu, X, Clapperboard, Bell } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useAppStore } from '../store';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const unreadCount = useAppStore((s) => s.unreadEventCount);
+  const markRead = useAppStore((s) => s.markRead);
+
   const navItems = [
     { path: '/', label: 'Dashboard' },
     { path: '/productions', label: 'Productions' },
@@ -51,6 +54,24 @@ const Navbar: React.FC = () => {
           {/* Right side actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
+
+            {/* Notification bell */}
+            <button
+              type="button"
+              onClick={markRead}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            >
+              <Bell className="h-5 w-5 text-white" />
+              {unreadCount > 0 && (
+                <span
+                  data-testid="notification-badge"
+                  className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
             
             {/* Mobile menu button */}
             <button

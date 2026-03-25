@@ -41,6 +41,8 @@ interface AppState {
   fetchAllRulesGrouped: () => Promise<void>;
   fetchIncentiveRulesForJurisdiction: (id: string) => Promise<IncentiveRuleDetailed[]>;
   fetchMonitoringEvents: () => Promise<void>;
+  addEvent: (event: MonitoringEvent) => void;
+  markRead: () => void;
   computeDashboardMetrics: () => void;
   refreshAll: () => Promise<void>;
   selectProduction: (production: Production | null) => void;
@@ -154,6 +156,17 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch {
       // Non-critical; monitoring may not be running
     }
+  },
+
+  addEvent: (event: MonitoringEvent) => {
+    set((state) => ({
+      monitoringEvents: [event, ...state.monitoringEvents],
+      unreadEventCount: state.unreadEventCount + 1,
+    }));
+  },
+
+  markRead: () => {
+    set({ unreadEventCount: 0 });
   },
 
   computeDashboardMetrics: () => {
