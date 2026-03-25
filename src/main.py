@@ -48,27 +48,38 @@ async def _seed_admin() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Lifespan context manager for startup and shutdown events
-    """
-    # Startup
+    """Lifespan context manager — startup and shutdown."""
+
+    # ── Startup ───────────────────────────────────────────────────────────────
+    print("\n" + "=" * 70)
+    print("🎬  PilotForge — Tax Incentive Intelligence for Film & TV")
+    print(f"📊  API Version : {settings.API_VERSION}")
+    print(f"🌍  Environment : {settings.APP_ENV}")
+    print(f"🔗  Docs        : http://{settings.APP_HOST}:{settings.APP_PORT}/docs")
+    print("=" * 70 + "\n")
+
     logger.info("🎬 Starting PilotForge")
-    logger.info("   Tax Incentive Intelligence for Film & TV")
+
+    # Database init — isolated so a DB failure degrades gracefully
     try:
         run_migrations()
         await prisma.connect()
         logger.info("✅ Database connected")
         await _seed_admin()
         await seed_all()
+    except Exception as e:
+        logger.warning(f"⚠️  Database init failed: {e}")
+        logger.warning("   Application will run with limited functionality")
+
+    # Scheduler starts unconditionally after DB init — never silently skipped
+    try:
         start_scheduler()
     except Exception as e:
-        logger.warning(f"⚠️  Database connection failed: {e}")
-        logger.warning("   Application will run with limited functionality")
-        # Don't raise in case we're running tests or without a database
+        logger.error(f"❌ Scheduler failed to start: {e}")
 
     yield
 
-    # Shutdown
+    # ── Shutdown ──────────────────────────────────────────────────────────────
     logger.info("🛑 Shutting down PilotForge")
     stop_scheduler()
     try:
@@ -116,7 +127,6 @@ if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
     logger.info(f"✅ Frontend mounted from {frontend_dist}")
 else:
-    # Fallback to old static directory
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
         app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
@@ -126,9 +136,6 @@ else:
 # Root endpoint
 @app.get("/", tags=["Root"])
 async def root():
-    """
-    Root endpoint - API information
-    """
     return {
         "message": "Welcome to PilotForge",
         "tagline": "Tax Incentive Intelligence for Film & TV",
@@ -142,25 +149,16 @@ async def root():
 # Health check endpoint
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """
-    Health check endpoint
-    """
     try:
-        # Check database connection
         await prisma.query_raw("SELECT 1")
         db_status = "connected"
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        db_status = "disconnected"
         return JSONResponse(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "database": db_status,
-                "error": str(e)
-            }
+            content={"status": "unhealthy", "database": "disconnected", "error": str(e)}
         )
-    
+
     return {
         "status": "healthy",
         "database": db_status,
@@ -172,52 +170,28 @@ async def health_check():
 # Error handlers
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    """Handle 404 errors"""
     return JSONResponse(
         status_code=404,
-        content={
-            "detail": "Resource not found",
-            "path": str(request.url.path)
-        }
+        content={"detail": "Resource not found", "path": str(request.url.path)}
     )
 
 
 @app.exception_handler(500)
 async def internal_error_handler(request, exc):
-    """Handle 500 errors"""
     logger.error(f"Internal error: {exc}")
     return JSONResponse(
         status_code=500,
-        content={
-            "detail": "Internal server error",
-            "message": "An unexpected error occurred"
-        }
+        content={"detail": "Internal server error", "message": "An unexpected error occurred"}
     )
 
 
-# Startup banner
-@app.on_event("startup")
-async def startup_banner():
-    """Display startup banner"""
-    print("\n" + "=" * 70)
-    print("🎬  PilotForge")
-    print("   Tax Incentive Intelligence for Film & TV")
-    print("=" * 70)
-    print(f"📊 API Version: {settings.API_VERSION}")
-    print(f"🌍 Environment: {settings.ENVIRONMENT}")
-    print(f"🔗 Docs: http://{settings.HOST}:{settings.PORT}/docs")
-    print(f"🚀 API: http://{settings.HOST}:{settings.PORT}/api/{settings.API_VERSION}")
-    print("=" * 70 + "\n")
-
-
-# Development server (optional - for direct python execution)
+# Development server
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "src.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.RELOAD,
+        host=settings.APP_HOST,
+        port=settings.APP_PORT,
         log_level=settings.LOG_LEVEL.lower()
     )
