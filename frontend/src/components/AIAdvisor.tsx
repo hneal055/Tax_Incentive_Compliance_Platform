@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Zap, RotateCcw } from 'lucide-react';
+import api from '../api';
+import type { Production } from '../types';
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 
@@ -10,13 +12,6 @@ const SUGGESTED_PROMPTS = [
   'How do I stack federal and state incentives?',
   'What is the minimum spend for UK production incentives?',
   'What documentation is required for Louisiana credit applications?',
-];
-
-const CONTEXT_PRODUCTIONS = [
-  { id: 'none', title: 'No production selected' },
-  { id: 'p1',   title: 'The Silent Horizon — $15M' },
-  { id: 'p2',   title: 'Echoes of Midnight — $8M' },
-  { id: 'p3',   title: 'Neon Pulse — $4M' },
 ];
 
 const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
@@ -89,7 +84,12 @@ function AIAdvisor() {
   const [input, setInput]       = useState('');
   const [typing, setTyping]     = useState(false);
   const [production, setProd]   = useState('none');
+  const [productions, setProductions] = useState<Production[]>([]);
   const bottomRef               = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    api.productions.list().then(setProductions).catch(() => {});
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -148,8 +148,11 @@ function AIAdvisor() {
             aria-label="Production context"
             className="select-arrow w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
           >
-            {CONTEXT_PRODUCTIONS.map(p => (
-              <option key={p.id} value={p.id}>{p.title}</option>
+            <option value="none">No production selected</option>
+            {productions.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.title}{p.budgetTotal ? ` — $${(p.budgetTotal / 1_000_000).toFixed(1)}M` : ''}
+              </option>
             ))}
           </select>
           {production !== 'none' && (

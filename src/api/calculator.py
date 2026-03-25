@@ -4,6 +4,7 @@ Calculator API endpoints - Tax credit calculations
 from fastapi import APIRouter, HTTPException, status
 import json
 from typing import Dict, Any
+from pydantic import BaseModel
 
 from src.models.calculator import (
     SimpleCalculateRequest,
@@ -26,6 +27,44 @@ from src.models.calculator import (
 from src.utils.database import prisma
 
 router = APIRouter(prefix="/calculate", tags=["Calculator"])
+
+
+class QuickCalcRequest(BaseModel):
+    production_id: str
+    jurisdiction_id: str
+
+
+@router.post("", summary="Quick calculation: production + jurisdiction → incentive estimate")
+async def calculate_quick(request: QuickCalcRequest):
+    """
+    Calculate estimated tax credit given a production ID and jurisdiction ID.
+    Uses production's budgetTotal/budgetQualifying and the jurisdiction's first active incentive rule.
+    """
+    production = await prisma.production.find_unique(where={"id": request.production_id})
+    if not production:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Production not found")
+
+    rules = await prisma.incentiverule.find_many(
+        where={"jurisdictionId": request.jurisdiction_id, "active": True},
+        order={"percentage": "desc"},
+        take=1,
+    )
+
+    total_expenses = production.budgetTotal
+    qualified_expenses = production.budgetQualifying if production.budgetQualifying else total_expenses * 0.8
+    rate = (rules[0].percentage / 100) if rules and rules[0].percentage else 0.20
+    max_credit = rules[0].maxCredit if rules and rules[0].maxCredit else float("inf")
+    incentive_amount = min(qualified_expenses * rate, max_credit)
+    effective_rate = incentive_amount / qualified_expenses if qualified_expenses > 0 else 0.0
+
+    return {
+        "production_id": request.production_id,
+        "jurisdiction_id": request.jurisdiction_id,
+        "total_expenses": total_expenses,
+        "qualified_expenses": qualified_expenses,
+        "incentive_amount": incentive_amount,
+        "effective_rate": effective_rate,
+    }
 
 
 def parse_json_field(field: Any) -> Dict:
