@@ -1,50 +1,50 @@
 # PilotForge
 > Tax Incentive Intelligence for Film & TV
 
-Jurisdictional rule engine for managing tax incentives for the film & television industry.
+A full-stack compliance platform for managing film and television production tax incentives across 23 jurisdictions in the USA, Canada, and internationally.
+
+---
 
 ## Quick Start
 
-### Backend
+**Requires:** Docker Desktop running on Windows.
+
 ```powershell
-src/mobile/src/screens/DeliveryDetailScreen.js
-
-Visit: http://localhost:8000/docs
-
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
+.\start.ps1
 ```
 
-Visit: http://localhost:3000
+Opens `http://localhost:3000` automatically. Login: `admin@pilotforge.com` / `pilotforge2024`
+
+For full setup instructions, troubleshooting, and developer notes → **[SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+---
 
 ## Features
 
-- Multi-jurisdictional tax incentive rules
-- Production expense tracking
-- Automated incentive calculations
-- Compliance verification
-- Audit trail
-- **Modern React UI** with Dashboard, Productions, Jurisdictions, and Calculator
+- **Executive Dashboard** — budget volume, estimated credits, active projects, spend chart
+- **Productions** — create and manage film/TV productions linked to jurisdictions
+- **Incentive Calculator** — real-time credit calculation across all jurisdictions
+- **Jurisdictions** — 23 jurisdictions, 35 incentive rules (USA, Canada, UK, EU, AU, NZ)
+- **AI Advisor** — chat interface for jurisdiction comparisons, qualification guidance, stacking strategies
 
-## Technology
+## Tech Stack
 
-### Backend
-- **Python 3.12** (FastAPI)
-- PostgreSQL 16
-- Prisma ORM
-- Pytest
+| Layer    | Technology                                      |
+| -------- | ----------------------------------------------- |
+| Frontend | React 19 · TypeScript · Tailwind CSS v4 · Vite  |
+| Backend  | FastAPI · Prisma ORM · Python 3.12              |
+| Database | PostgreSQL 16                                   |
+| Infra    | Docker · Nginx                                  |
 
-### Frontend
-- React 19 + TypeScript
-- Vite 7
-- TailwindCSS 4
-- Zustand (State Management)
-- React Router v7
+## Docker Images
 
-## Documentation
+| Image    | Tag                                        |
+| -------- | ------------------------------------------ |
+| Backend  | `hneal1038/pilotforge-backend:latest`      |
+| Frontend | `hneal1038/pilotforge-frontend:latest`     |
 
-See `docs/QUICK_START.md` for detailed setup instructions.
-See `frontend/FRONTEND_README.md` for frontend-specific documentation.
+## Repository
+
+- **Working branch:** `feature/test-ci`
+- **Stable branch:** `main`
+- **Docker Hub:** [hub.docker.com/u/hneal1038](https://hub.docker.com/u/hneal1038)
