@@ -1,6 +1,7 @@
 # PilotForge — One-command startup
 # Usage:  .\start.ps1
-# Opens http://localhost:3000 automatically after services are healthy.
+# Works on any machine — pulls images from Docker Hub if not present locally.
+# Opens http://localhost:3000 automatically once all services are healthy.
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
@@ -8,20 +9,37 @@ Write-Host "  PilotForge  —  Tax Incentive Platform" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── Guard: Docker must be running ────────────────────────────────────────────
+# ── [1] Guard: Docker must be running ────────────────────────────────────────
 try {
     docker info 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) { throw }
-    Write-Host "  [1/3] Docker is running." -ForegroundColor Green
+    Write-Host "  [1/4] Docker is running." -ForegroundColor Green
 } catch {
-    Write-Host "  Docker Desktop is not running. Please start it first." -ForegroundColor Red
+    Write-Host "  ERROR: Docker Desktop is not running. Please start it first." -ForegroundColor Red
     exit 1
 }
 
-# ── Remove orphaned containers (not part of this project) ────────────────────
-$all = docker ps -q 2>$null
-if ($all) {
-    foreach ($id in $all) {
+# ── [2] Pull images if not present locally ───────────────────────────────────
+$backendExists  = docker image inspect hneal1038/pilotforge-backend:latest  2>$null
+$frontendExists = docker image inspect hneal1038/pilotforge-frontend:latest 2>$null
+
+if (-not $backendExists -or -not $frontendExists) {
+    Write-Host "  [2/4] Images not found locally — pulling from Docker Hub..." -ForegroundColor Yellow
+    Set-Location $PSScriptRoot
+    docker compose pull
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Pull failed. Check your internet connection or run: docker login" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "  [2/4] Images ready." -ForegroundColor Green
+} else {
+    Write-Host "  [2/4] Images already present — skipping pull." -ForegroundColor Green
+}
+
+# ── [3] Remove orphaned containers (not part of this project) ────────────────
+$running = docker ps -q 2>$null
+if ($running) {
+    foreach ($id in $running) {
         $cname = docker inspect --format "{{.Name}}" $id 2>$null
         if ($cname -notmatch "pilotforge") {
             Write-Host "  Removing orphaned container: $cname" -ForegroundColor Yellow
@@ -30,25 +48,25 @@ if ($all) {
     }
 }
 
-# ── Start all services ────────────────────────────────────────────────────────
-Write-Host "  [2/3] Starting containers..." -ForegroundColor White
+# ── [4] Start all services ────────────────────────────────────────────────────
+Write-Host "  [3/4] Starting containers..." -ForegroundColor White
 Set-Location $PSScriptRoot
 docker compose up -d 2>&1 | ForEach-Object { Write-Host "         $_" -ForegroundColor DarkGray }
 
-# ── Wait for backend healthy ──────────────────────────────────────────────────
-Write-Host "  [3/3] Waiting for backend..." -ForegroundColor White
+# ── Wait for backend to be healthy ───────────────────────────────────────────
+Write-Host "  [4/4] Waiting for backend to be ready..." -ForegroundColor White
 $waited = 0
 do {
     Start-Sleep -Seconds 2
     $waited += 2
     $health = docker inspect --format "{{.State.Health.Status}}" pilotforge-api 2>$null
-} while ($health -ne "healthy" -and $waited -lt 40)
+} while ($health -ne "healthy" -and $waited -lt 60)
 
 Write-Host ""
 if ($health -eq "healthy") {
     Write-Host "  All services healthy." -ForegroundColor Green
 } else {
-    Write-Host "  Services starting (may need a moment to finish seeding)." -ForegroundColor Yellow
+    Write-Host "  Still starting up — dashboard may take a few more seconds." -ForegroundColor Yellow
 }
 
 Write-Host ""
