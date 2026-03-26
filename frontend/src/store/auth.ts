@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 const TOKEN_KEY = 'pilotforge_token';
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
 const API_PREFIX = '/api/0.1.0';
 
 interface AuthUser {

@@ -61,3 +61,4 @@ async def me(current_user: TokenData = Depends(get_current_user)):
         role=user.role,
         isActive=user.isActive,
     )
+    )
