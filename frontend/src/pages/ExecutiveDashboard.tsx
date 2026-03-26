@@ -25,30 +25,10 @@ export default function ExecutiveDashboard() {
   ];
 
   const metrics: MetricCard[] = [
-    {
-      title: 'Budget Volume',
-      value: '$23.5M',
-      subtitle: 'Total planned',
-      iconChar: '📋',
-    },
-    {
-      title: 'Est. Tax Credits',
-      value: '$3.5M',
-      subtitle: 'Avg 25% rate',
-      iconChar: '📈',
-    },
-    {
-      title: 'Active Projects',
-      value: '3',
-      subtitle: 'Tracked productions',
-      iconChar: '🏢',
-    },
-    {
-      title: 'Alerts',
-      value: '3',
-      subtitle: 'Action required',
-      iconChar: '⏰',
-    },
+    { title: 'Budget Volume',    value: '$23.5M', subtitle: 'Total planned',        iconChar: '📋' },
+    { title: 'Est. Tax Credits', value: '$3.5M',  subtitle: 'Avg 25% rate',         iconChar: '📈' },
+    { title: 'Active Projects',  value: '3',      subtitle: 'Tracked productions',  iconChar: '🏢' },
+    { title: 'Alerts',           value: '3',      subtitle: 'Action required',      iconChar: '⏰' },
   ];
 
   return (
@@ -139,37 +119,5 @@ export default function ExecutiveDashboard() {
             {/* Chart Section */}
             <div className="bg-white border border-gray-300 p-6 rounded mt-6">
               <h2 className="text-xl font-bold text-black mb-6">Budget vs. Actual Spend</h2>
-              
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fill: '#374151', fontSize: 12 }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#374151', fontSize: 12 }}
-                    axisLine={{ stroke: '#d1d5db' }}
-                    tickFormatter={(value) => `$${(value / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip 
-                    formatter={(value: number | undefined) => `$${((value || 0) / 1000000).toFixed(1)}M`}
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="budget" fill="#3b82f6" name="Budget" />
-                  <Bar dataKey="actual" fill="#8b5cf6" name="Actual Spend" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+
+              <ResponsiveContainer width="100%

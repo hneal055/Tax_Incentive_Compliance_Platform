@@ -24,10 +24,10 @@ export default function Dashboard() {
   const alertCount   = productions.filter(p => p.status === 'planning').length;
 
   const metrics = [
-    { title: 'Budget Volume',  value: fmtMoney(totalBudget), subtitle: 'Total planned',       icon: Wallet,      iconClass: 'bg-blue-500'   },
-    { title: 'Est. Tax Credits', value: fmtMoney(estCredits), subtitle: 'Avg 25% rate',       icon: TrendingUp,  iconClass: 'bg-emerald-500'},
-    { title: 'Active Projects', value: String(activeCount),   subtitle: 'Tracked productions', icon: Users,       iconClass: 'bg-violet-500' },
-    { title: 'Alerts',          value: String(alertCount),    subtitle: 'Action required',     icon: AlertCircle, iconClass: 'bg-orange-500' },
+    { title: 'Budget Volume',    value: fmtMoney(totalBudget), subtitle: 'Total planned',        icon: Wallet,      iconClass: 'bg-blue-500'    },
+    { title: 'Est. Tax Credits', value: fmtMoney(estCredits),  subtitle: 'Avg 25% rate',         icon: TrendingUp,  iconClass: 'bg-emerald-500' },
+    { title: 'Active Projects',  value: String(activeCount),   subtitle: 'Tracked productions',  icon: Users,       iconClass: 'bg-violet-500'  },
+    { title: 'Alerts',           value: String(alertCount),    subtitle: 'Action required',      icon: AlertCircle, iconClass: 'bg-orange-500'  },
   ];
 
   // ── Chart data — top 5 by budget ─────────────────────────────────────────────
@@ -119,7 +119,7 @@ export default function Dashboard() {
                 />
                 <Tooltip
                   cursor={{ fill: 'rgba(148,163,184,0.08)' }}
-                  formatter={(value: number | undefined) => [(value !== undefined ? `$${value}M` : ''), '']}
+                  formatter={(value: unknown) => [`$${Number(value)}M`, '']}
                   contentStyle={{
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
@@ -127,7 +127,7 @@ export default function Dashboard() {
                   }}
                 />
                 <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={52} name="Budget" />
-                <Bar dataKey="actual"  fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual"  />
+                <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual"  />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -135,4 +135,3 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}

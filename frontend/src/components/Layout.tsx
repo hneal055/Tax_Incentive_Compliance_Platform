@@ -1,4 +1,4 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut, FlaskConical, Settings } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useFeatureFlag, features } from '../contexts/FeatureFlagContext';
 
@@ -14,7 +14,10 @@ const tabs = [
   { id: 'calculator', label: 'Incentive Calculator', icon: Calculator },
   { id: 'jurisdictions', label: 'Jurisdictions', icon: Globe },
   { id: 'advisor', label: 'AI Advisor', icon: Bot, badge: 'NEW' },
+  { id: 'settings', label: 'Notifications', icon: Bell },
 ];
+
+const adminTab = { id: 'admin', label: 'Admin', icon: Settings };
 
 function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   const { user, logout } = useAuthStore();

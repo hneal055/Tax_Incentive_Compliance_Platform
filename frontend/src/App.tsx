@@ -6,6 +6,7 @@ import Calculator from './pages/Calculator';
 import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
 import Admin from './pages/Admin';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { useAuthStore } from './store/auth';
 import { FeatureFlagPanel } from './components/DevTools/FeatureFlagPanel';
@@ -25,6 +26,7 @@ function App() {
     jurisdictions: <Jurisdictions />,
     advisor:      <AIAdvisor />,
     admin:        <Admin />,
+    settings:     <Settings />,
   };
 
   if (!isAuthenticated) {
