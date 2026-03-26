@@ -8,7 +8,7 @@ declare module 'axios' {
 }
 
 // ?? instead of || so empty string (Docker: relative URL via nginx) is kept as-is
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '';
 const API_VERSION = import.meta.env.VITE_API_VERSION || '0.1.0';
 const TOKEN_KEY = 'pilotforge_token';
 
