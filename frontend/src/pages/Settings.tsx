@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, BellOff, Save, Trash2, Check } from 'lucide-react';
+import { Bell, BellOff, Save, Check } from 'lucide-react';
 import api from '../api';
 import type { Jurisdiction, NotificationPreference } from '../types';
 
