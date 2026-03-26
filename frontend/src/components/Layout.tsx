@@ -1,4 +1,4 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut, FlaskConical } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, LogOut, FlaskConical, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { useFeatureFlag, features } from '../contexts/FeatureFlagContext';
 
@@ -69,6 +69,19 @@ function Layout({ children, activeTab, onTabChange }: LayoutProps) {
               </button>
             );
           })}
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => onTabChange(adminTab.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === adminTab.id
+                  ? 'bg-[#2563eb] text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Settings className="w-[18px] h-[18px] shrink-0" />
+              <span className="flex-1 text-left">{adminTab.label}</span>
+            </button>
+          )}
         </nav>
 
         {/* User section */}

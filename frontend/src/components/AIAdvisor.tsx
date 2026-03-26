@@ -16,6 +16,10 @@ const SUGGESTED_PROMPTS = [
 
 const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
 
+const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') as string;
+const API_VERSION = (import.meta.env.VITE_API_VERSION || '0.1.0') as string;
+const TOKEN_KEY = 'pilotforge_token';
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Message {
@@ -23,38 +27,6 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   ts: Date;
-}
-
-// ─── AI response simulation ───────────────────────────────────────────────────
-
-function getAIResponse(message: string): string {
-  const q = message.toLowerCase();
-
-  if (q.includes('highest') || q.includes('best rate') || q.includes('which jurisdiction')) {
-    return `Based on current incentive programs, **Ontario, Canada** offers the highest base rate at **35%** on 75% qualified spend — an effective rate of ~26% of total budget.\n\nFor US-only productions:\n\n- **New York** — 30% on ~80% qualified → ~24% effective rate\n- **California** — 25% on ~80% qualified → ~20% effective rate\n- **Louisiana** — 25% on ~85% qualified → ~21% effective rate\n- **Georgia** — 20% on ~85% qualified → ~17% effective rate\n\nNew York and Ontario are the strongest programs right now. New York's credits are **refundable**, meaning you receive cash even with limited state tax liability — a major advantage for independent productions.`;
-  }
-
-  if (q.includes('georgia')) {
-    return `**Georgia Film Tax Credit — Qualifying Expenses**\n\nQualifying costs under O.C.G.A. § 48-7-40.26:\n\n✓ Cast and crew wages (Georgia residents and non-residents)\n✓ Payments to Georgia-registered vendors\n✓ Equipment rentals sourced within Georgia\n✓ Set construction and strike costs\n✓ Post-production services performed in Georgia\n✓ Lodging for cast and crew on active production days\n\n**Non-qualifying:**\n✗ Story rights and script acquisition\n✗ Marketing and distribution costs\n✗ Bond and insurance premiums\n✗ Financing fees\n\n**Rates:** 20% base, increases to **30%** with the Georgia promotional logo inclusion. Minimum qualified spend: **$500,000** in a single tax year.`;
-  }
-
-  if ((q.includes('new york') && q.includes('california')) || q.includes('compare')) {
-    return `**New York vs. California — Side by Side**\n\n| | New York | California |\n|---|---|---|\n| Credit Rate | 30% | 25% |\n| Refundable | Yes | No |\n| Transferable | Yes | No |\n| Min Spend | None | $1M |\n| Annual Cap | $420M | $330M |\n| Allocation | First-come | Lottery |\n\n**Bottom line:** New York is more favorable — higher rate, refundable and transferable credits, no minimum spend, and first-come-first-served allocation. California's non-refundable, non-transferable structure limits its value unless your entity has significant California tax liability.\n\nFor TV series, New York adds a **10% pilot bonus** on the first episode.`;
-  }
-
-  if (q.includes('stack') || q.includes('federal') || q.includes('combine')) {
-    return `**Stacking Federal and State Incentives**\n\nFederal and state incentives can generally be combined — they operate on different mechanisms and do not conflict.\n\n**Federal — Section 181:**\n- 100% first-year deduction on qualified production costs\n- Applies to productions under $15M budget ($20M in low-income areas)\n- This is a **deduction** against income, not a credit\n\n**How stacking works:**\n1. Spend $5M on Georgia-qualified costs\n2. Georgia issues a $1M (20%) tax credit\n3. On the federal return, deduct the full $5M via Section 181\n4. Both benefits apply to the same underlying spend\n\n**Caution:** Some states require reducing qualified costs by federal credits received. Confirm jurisdiction-specific rules with a production accountant before filing.`;
-  }
-
-  if (q.includes('uk') || q.includes('united kingdom') || q.includes('british')) {
-    return `**UK Audio-Visual Expenditure Credit (AVEC)**\n\nThe UK replaced Film Tax Relief with AVEC in April 2024. Key terms:\n\n- **Rate:** 25% on UK Qualifying Expenditure (UKQE)\n- **Minimum UK spend:** 10% of total production budget\n- **Cap:** None — full credit on all eligible UKQE\n- Administered by HMRC\n\n**Qualifying criteria:**\n✓ Must pass the BFI Cultural Test (or be an official co-production)\n✓ UK-based production company must be the qualifying co-producer\n✓ Intended for theatrical release or BFI-certified streaming\n\n**Why AVEC is more valuable than the old FTR:** It's an above-the-line credit, directly reducing your tax bill rather than enhancing losses. More beneficial for studios and streamers with existing UK tax exposure.`;
-  }
-
-  if (q.includes('louisiana') || q.includes('documentation') || q.includes('application') || q.includes('required')) {
-    return `**Louisiana Entertainment Incentive — Documentation Checklist**\n\n**Stage 1 — Initial Certification (pre-production):**\n✓ LA Form R-20200 — Entertainment Industry Incentive Application\n✓ Production summary with itemized budget breakdown\n✓ Corporate entity documentation\n✓ Estimated start and wrap dates\n\n**Stage 2 — Final Certification (post-wrap):**\n✓ Certified Audit Report from a Louisiana-licensed CPA\n✓ Final cost report itemized by expense category\n✓ Signed payroll registers for Louisiana residents\n✓ All vendor invoices and receipts\n✓ Proof of production insurance\n\n**Key figures:**\n- Base rate: **25%** + 5% bonus for Louisiana above-the-line residents\n- Minimum spend: **$300,000**\n- Project cap: $150M\n\nAllow 90–120 days for final certification after audit submission.`;
-  }
-
-  return `I can help you navigate tax incentives for your production. Here are areas I specialize in:\n\n- **Jurisdiction comparison** — credit rates, caps, and qualification rules across states and countries\n- **Expense qualification** — which costs count toward specific incentive programs\n- **Application guidance** — documentation requirements and submission timelines\n- **Incentive stacking** — combining federal, state, and local programs effectively\n- **Budget modeling** — optimizing spend allocation for maximum incentive yield\n\nTry asking something specific — for example: *"What's the best jurisdiction for a $10M TV series?"* or *"Does VFX work done remotely qualify for the Georgia credit?"*`;
 }
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
@@ -86,6 +58,8 @@ function AIAdvisor() {
   const [production, setProd]   = useState('none');
   const [productions, setProductions] = useState<Production[]>([]);
   const bottomRef               = useRef<HTMLDivElement>(null);
+  // Track the current streaming abort controller so we can cancel mid-stream
+  const abortRef                = useRef<AbortController | null>(null);
 
   useEffect(() => {
     api.productions.list().then(setProductions).catch(() => {});
@@ -95,25 +69,125 @@ function AIAdvisor() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
-  function sendMessage(text: string) {
+  async function sendMessage(text: string) {
     const trimmed = text.trim();
     if (!trimmed || typing) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: trimmed, ts: new Date() };
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: trimmed,
+      ts: new Date(),
+    };
+
+    // Snapshot history before state update for API payload
+    const historyForApi = [
+      ...messages.filter(m => m.id !== '0'),
+      userMsg,
+    ].map(m => ({ role: m.role, content: m.content }));
+
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setTyping(true);
 
-    const delay = 1400 + Math.random() * 800;
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id:      (Date.now() + 1).toString(),
-        role:    'assistant',
-        content: getAIResponse(trimmed),
-        ts:      new Date(),
-      }]);
+    const assistantId = (Date.now() + 1).toString();
+    const assistantTs = new Date();
+    let content = '';
+    let firstChunk = true;
+
+    const abort = new AbortController();
+    abortRef.current = abort;
+
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const response = await fetch(
+        `${API_BASE}/api/${API_VERSION}/advisor/chat`,
+        {
+          method: 'POST',
+          signal: abort.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            messages: historyForApi,
+            production_id: production !== 'none' ? production : undefined,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as { detail?: string }).detail ?? `HTTP ${response.status}`);
+      }
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        // Keep the last (potentially incomplete) line in the buffer
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6);
+          if (payload === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(payload) as { delta?: string; error?: string };
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.delta) {
+              content += parsed.delta;
+              if (firstChunk) {
+                firstChunk = false;
+                setTyping(false);
+                setMessages(prev => [
+                  ...prev,
+                  { id: assistantId, role: 'assistant', content, ts: assistantTs },
+                ]);
+              } else {
+                setMessages(prev =>
+                  prev.map(m => m.id === assistantId ? { ...m, content } : m)
+                );
+              }
+            }
+          } catch (parseErr) {
+            if ((parseErr as Error).message !== 'Unexpected end of JSON input') {
+              throw parseErr;
+            }
+          }
+        }
+      }
+
+      // If we never got a chunk (empty response), show a fallback
+      if (firstChunk) {
+        setTyping(false);
+        setMessages(prev => [
+          ...prev,
+          { id: assistantId, role: 'assistant', content: 'No response received. Please try again.', ts: assistantTs },
+        ]);
+      }
+    } catch (err: unknown) {
+      if ((err as { name?: string }).name === 'AbortError') return;
       setTyping(false);
-    }, delay);
+      const detail = err instanceof Error ? err.message : 'Unknown error';
+      const errorContent =
+        detail.includes('not configured') || detail.includes('503')
+          ? 'AI Advisor is currently unavailable — the service is not configured on the server.'
+          : `Sorry, I encountered an error: ${detail}. Please try again.`;
+      setMessages(prev => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: errorContent, ts: assistantTs },
+      ]);
+    } finally {
+      abortRef.current = null;
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -124,8 +198,10 @@ function AIAdvisor() {
   }
 
   function handleClear() {
+    abortRef.current?.abort();
     setMessages([{ id: '0', role: 'assistant', content: WELCOME, ts: new Date() }]);
     setInput('');
+    setTyping(false);
   }
 
   const fmt = (d: Date) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -201,8 +277,8 @@ function AIAdvisor() {
             <div>
               <h2 className="text-sm font-bold text-slate-900">AI Advisor</h2>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-xs text-slate-400">Ready</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${typing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} />
+                <span className="text-xs text-slate-400">{typing ? 'Thinking…' : 'Ready'}</span>
               </div>
             </div>
           </div>
@@ -247,7 +323,7 @@ function AIAdvisor() {
             </div>
           ))}
 
-          {/* Typing indicator */}
+          {/* Typing indicator — shown only before first chunk arrives */}
           {typing && (
             <div className="flex gap-3">
               <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center shrink-0 mt-0.5">

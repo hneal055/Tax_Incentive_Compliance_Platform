@@ -122,6 +122,18 @@ async def ingest_source(source_id: str) -> int:
         })
         new_count += 1
 
+        # Fire email notifications for matching subscribers (best-effort, non-blocking)
+        try:
+            await _notify_subscribers(
+                title=title[:255],
+                url=url,
+                source_name=source.name,
+                jurisdiction=source.jurisdiction,
+                severity=severity,
+            )
+        except Exception as exc:
+            logger.warning(f"Notification dispatch failed for event '{title[:60]}': {exc}")
+
     await prisma.monitoringsource.update(
         where={"id": source_id},
         data={"lastFetched": datetime.now(timezone.utc)},
@@ -133,6 +145,39 @@ async def ingest_source(source_id: str) -> int:
         logger.info(f"ℹ️  {source.name}: no new events")
 
     return new_count
+
+
+async def _notify_subscribers(
+    title: str,
+    url: Optional[str],
+    source_name: str,
+    jurisdiction: Optional[str],
+    severity: str,
+) -> None:
+    """
+    Send email alerts to all active NotificationPreference records whose
+    jurisdiction filter matches (or is empty, meaning subscribe to all).
+    """
+    from src.utils.email import send_email, build_monitoring_alert_html  # lazy import
+
+    prefs = await prisma.notificationpreference.find_many(where={"active": True})
+    if not prefs:
+        return
+
+    html = build_monitoring_alert_html(
+        event_title=title,
+        event_url=url,
+        source_name=source_name,
+        jurisdiction=jurisdiction,
+        severity=severity,
+    )
+    subject = f"[PilotForge] Regulatory Alert: {title[:80]}"
+
+    for pref in prefs:
+        # Empty jurisdictions list = subscribe to everything
+        if pref.jurisdictions and jurisdiction and jurisdiction.upper() not in [j.upper() for j in pref.jurisdictions]:
+            continue
+        await send_email(to=pref.emailAddress, subject=subject, body_html=html)
 
 
 async def ingest_all_sources() -> int:

@@ -12,6 +12,11 @@ from src.api.reports import router as reports_router
 from src.api.excel import router as excel_router
 from src.api.rule_engine import router as rule_engine_router
 from src.api.monitoring import router as monitoring_router
+from src.api.advisor import router as advisor_router
+from src.api.compliance import router as compliance_router
+from src.api.notifications import router as notifications_router
+from src.api.admin import router as admin_router
+from src.api.production_expenses import router as production_expenses_router
 from src.utils.auth_utils import get_current_user
 
 API_PREFIX = "/api/0.1.0"
@@ -32,6 +37,11 @@ router.include_router(reports_router, dependencies=_auth_dep)
 router.include_router(excel_router, dependencies=_auth_dep)
 router.include_router(rule_engine_router, dependencies=_auth_dep)
 router.include_router(monitoring_router, dependencies=_auth_dep)
+router.include_router(advisor_router, dependencies=_auth_dep)
+router.include_router(compliance_router, dependencies=_auth_dep)
+router.include_router(notifications_router, dependencies=_auth_dep)
+router.include_router(admin_router, dependencies=_auth_dep)
+router.include_router(production_expenses_router, dependencies=_auth_dep)
 
 
 @router.get("/", tags=["Meta"])

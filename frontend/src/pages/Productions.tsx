@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2 } from 'lucide-react';
 import type { Production, Jurisdiction } from '../types';
 import api from '../api';
+import ProductionDetail from './ProductionDetail';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ export default function Productions() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([api.productions.list(), api.jurisdictions.list()])
@@ -133,6 +135,10 @@ export default function Productions() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
+  if (selectedId) {
+    return <ProductionDetail productionId={selectedId} onBack={() => setSelectedId(null)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -202,7 +208,8 @@ export default function Productions() {
             {filtered.map((p) => (
               <div
                 key={p.id}
-                className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow group"
+                onClick={() => setSelectedId(p.id)}
+                className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow group cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1 min-w-0">
@@ -219,7 +226,7 @@ export default function Productions() {
                   <div className="flex items-center gap-2 ml-4 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleDelete(p.id)}
+                      onClick={e => { e.stopPropagation(); handleDelete(p.id); }}
                       disabled={deleteId === p.id}
                       title="Delete production"
                       aria-label="Delete production"

@@ -86,6 +86,47 @@ export interface MonitoringSource {
   updatedAt: string;
 }
 
+export interface ComplianceItem {
+  id: string;
+  productionId: string;
+  label: string;
+  category: string;
+  status: 'pending' | 'complete' | 'waived' | 'na';
+  notes?: string;
+  dueDate?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComplianceStats {
+  total: number;
+  complete: number;
+  pending: number;
+  waived: number;
+  pct: number;
+  items: ComplianceItem[];
+}
+
+export interface NotificationPreference {
+  id: string;
+  userId: string;
+  jurisdictions: string[];
+  emailAddress: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MonitoringEvent {
   id: string;
   sourceId: string;

@@ -8,6 +8,10 @@ import type {
   HealthStatus,
   MonitoringEvent,
   MonitoringSource,
+  ComplianceItem,
+  ComplianceStats,
+  NotificationPreference,
+  UserProfile,
 } from '../types';
 import { getFlagSnapshot } from '../contexts/FeatureFlagContext';
 import { mockApi } from '../mocks/api';
@@ -128,7 +132,7 @@ export const api = {
         `expenses.list(${productionId})`,
       ),
 
-    create: (productionId: string, data: Partial<Expense>) =>
+    create: (productionId: string, data: Partial<Expense> & { expenseDate?: string; isQualifying?: boolean; description?: string; vendorName?: string }) =>
       withFallback(
         async () => { const r = await apiClient.post(`/productions/${productionId}/expenses`, data); return r.data as Expense; },
         () => mockApi.expenses.create(productionId, data),
@@ -154,6 +158,118 @@ export const api = {
         },
         () => mockApi.calculations.calculate(productionId, jurisdictionId),
         `calculations.calculate(${productionId}, ${jurisdictionId})`,
+      ),
+  },
+
+  compliance: {
+    list: (productionId: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/productions/${productionId}/compliance`); return r.data as ComplianceStats; },
+        async () => ({ total: 0, complete: 0, pending: 0, waived: 0, pct: 0, items: [] as ComplianceItem[] }),
+        `compliance.list(${productionId})`,
+      ),
+
+    generate: (productionId: string) =>
+      withFallback(
+        async () => { const r = await apiClient.post(`/productions/${productionId}/compliance/generate`); return r.data as { created: number; items: ComplianceItem[] }; },
+        async () => ({ created: 0, items: [] as ComplianceItem[] }),
+        `compliance.generate(${productionId})`,
+        false,
+      ),
+
+    addItem: (productionId: string, data: { label: string; category?: string; notes?: string }) =>
+      withFallback(
+        async () => { const r = await apiClient.post(`/productions/${productionId}/compliance`, data); return r.data as ComplianceItem; },
+        async () => ({} as ComplianceItem),
+        `compliance.addItem(${productionId})`,
+        false,
+      ),
+
+    updateItem: (itemId: string, data: { status?: string; notes?: string; label?: string }) =>
+      withFallback(
+        async () => { const r = await apiClient.patch(`/compliance/${itemId}`, data); return r.data as ComplianceItem; },
+        async () => ({} as ComplianceItem),
+        `compliance.updateItem(${itemId})`,
+        false,
+      ),
+
+    deleteItem: (itemId: string) =>
+      withFallback(
+        async () => { await apiClient.delete(`/compliance/${itemId}`); },
+        async () => {},
+        `compliance.deleteItem(${itemId})`,
+        false,
+      ),
+  },
+
+  notifications: {
+    getPreferences: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/notifications/preferences'); return r.data as NotificationPreference | null; },
+        async () => null,
+        'notifications.getPreferences',
+      ),
+
+    upsertPreferences: (data: { emailAddress: string; jurisdictions: string[]; active: boolean }) =>
+      withFallback(
+        async () => { const r = await apiClient.post('/notifications/preferences', data); return r.data as NotificationPreference; },
+        async () => ({} as NotificationPreference),
+        'notifications.upsertPreferences',
+        false,
+      ),
+
+    deletePreferences: () =>
+      withFallback(
+        async () => { await apiClient.delete('/notifications/preferences'); },
+        async () => {},
+        'notifications.deletePreferences',
+        false,
+      ),
+  },
+
+  admin: {
+    listUsers: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/admin/users'); return r.data as { total: number; users: UserProfile[] }; },
+        async () => ({ total: 0, users: [] as UserProfile[] }),
+        'admin.listUsers',
+      ),
+
+    createUser: (data: { email: string; password: string; role: string }) =>
+      withFallback(
+        async () => { const r = await apiClient.post('/admin/users', data); return r.data as UserProfile; },
+        async () => ({} as UserProfile),
+        'admin.createUser',
+        false,
+      ),
+
+    updateUser: (userId: string, data: { role?: string; isActive?: boolean; password?: string }) =>
+      withFallback(
+        async () => { const r = await apiClient.patch(`/admin/users/${userId}`, data); return r.data as UserProfile; },
+        async () => ({} as UserProfile),
+        `admin.updateUser(${userId})`,
+        false,
+      ),
+
+    deleteUser: (userId: string) =>
+      withFallback(
+        async () => { await apiClient.delete(`/admin/users/${userId}`); },
+        async () => {},
+        `admin.deleteUser(${userId})`,
+        false,
+      ),
+  },
+
+  advisor: {
+    summarizeEvent: (eventId: string) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.post(`/advisor/summarize-event/${eventId}`);
+          return r.data as MonitoringEvent;
+        },
+        async () => ({} as MonitoringEvent),
+        `advisor.summarizeEvent(${eventId})`,
+        false,
       ),
   },
 
