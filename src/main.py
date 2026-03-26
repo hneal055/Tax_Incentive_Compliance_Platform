@@ -4,6 +4,7 @@ Copyright (c) 2025-2026 Howard Neal - PilotForge
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
+
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
@@ -22,8 +23,7 @@ from src.api.routes import router
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -35,12 +35,14 @@ async def _seed_admin() -> None:
     """Create the default admin account on first boot (idempotent)."""
     count = await prisma.user.count()
     if count == 0:
-        await prisma.user.create(data={
-            "email": ADMIN_EMAIL,
-            "passwordHash": hash_password(ADMIN_PASSWORD),
-            "role": "admin",
-            "isActive": True,
-        })
+        await prisma.user.create(
+            data={
+                "email": ADMIN_EMAIL,
+                "passwordHash": hash_password(ADMIN_PASSWORD),
+                "role": "admin",
+                "isActive": True,
+            }
+        )
         logger.info(f"✅ Admin user created: {ADMIN_EMAIL}")
     else:
         logger.info("ℹ️  Admin user already exists — skipping seed")
@@ -97,7 +99,7 @@ app = FastAPI(
     version="v1",
     lifespan=lifespan,
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 
@@ -110,6 +112,7 @@ app.add_middleware(
         "http://localhost:8001",
         "http://127.0.0.1:8000",
         "http://127.0.0.1:3000",
+        "https://pilotforge-5wiz.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -124,7 +127,9 @@ app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 # Mount frontend static files if build exists
 frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    app.mount(
+        "/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend"
+    )
     logger.info(f"✅ Frontend mounted from {frontend_dist}")
 else:
     static_dir = Path(__file__).parent / "static"
@@ -142,7 +147,7 @@ async def root():
         "version": settings.API_VERSION,
         "status": "running",
         "docs": "/docs",
-        "api": f"/api/{settings.API_VERSION}"
+        "api": f"/api/{settings.API_VERSION}",
     }
 
 
@@ -156,14 +161,18 @@ async def health_check():
         logger.error(f"Health check failed: {e}")
         return JSONResponse(
             status_code=503,
-            content={"status": "unhealthy", "database": "disconnected", "error": str(e)}
+            content={
+                "status": "unhealthy",
+                "database": "disconnected",
+                "error": str(e),
+            },
         )
 
     return {
         "status": "healthy",
         "database": db_status,
         "version": settings.API_VERSION,
-        "environment": "production"
+        "environment": "production",
     }
 
 
@@ -172,7 +181,7 @@ async def health_check():
 async def not_found_handler(request, exc):
     return JSONResponse(
         status_code=404,
-        content={"detail": "Resource not found", "path": str(request.url.path)}
+        content={"detail": "Resource not found", "path": str(request.url.path)},
     )
 
 
@@ -181,7 +190,10 @@ async def internal_error_handler(request, exc):
     logger.error(f"Internal error: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "message": "An unexpected error occurred"}
+        content={
+            "detail": "Internal server error",
+            "message": "An unexpected error occurred",
+        },
     )
 
 
@@ -193,5 +205,5 @@ if __name__ == "__main__":
         "src.main:app",
         host=settings.APP_HOST,
         port=settings.APP_PORT,
-        log_level=settings.LOG_LEVEL.lower()
+        log_level=settings.LOG_LEVEL.lower(),
     )

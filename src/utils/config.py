@@ -54,6 +54,16 @@ class Settings(BaseSettings):
     # Phase 2+ (optional for Phase 1)
     DATABASE_URL: Optional[str] = Field(default=None)
 
+    # Phase C — AI Summarization
+    ANTHROPIC_API_KEY: Optional[str] = Field(default=None)
+
+    # Phase E — Email / SMTP
+    SMTP_HOST: str = Field(default="")
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: str = Field(default="")
+    SMTP_PASSWORD: str = Field(default="")
+    SMTP_FROM: str = Field(default="")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

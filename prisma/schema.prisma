@@ -15,7 +15,7 @@ model Jurisdiction {
   code           String          @unique
   country        String
   type           String
-  description    String? 
+  description    String?
   website        String?
   active         Boolean         @default(true)
   createdAt      DateTime        @default(now())
@@ -33,7 +33,7 @@ model IncentiveRule {
   ruleName         String
   ruleCode         String       @unique
   incentiveType    String
-  percentage       Float? 
+  percentage       Float?
   fixedAmount      Float?
   minSpend         Float?
   maxCredit        Float?
@@ -41,7 +41,7 @@ model IncentiveRule {
   excludedExpenses String[]
   effectiveDate    DateTime
   expirationDate   DateTime?
-  requirements     String? 
+  requirements     String?
   active           Boolean      @default(true)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
@@ -51,22 +51,23 @@ model IncentiveRule {
 }
 
 model Production {
-  id                String       @id @default(uuid())
+  id                String           @id @default(uuid())
   title             String
   productionType    String
   jurisdictionId    String
-  jurisdiction      Jurisdiction @relation(fields: [jurisdictionId], references: [id])
+  jurisdiction      Jurisdiction     @relation(fields: [jurisdictionId], references: [id])
   budgetTotal       Float
   budgetQualifying  Float?
   startDate         DateTime
   endDate           DateTime?
   productionCompany String
   status            String
-  contact           String? 
+  contact           String?
   metadata          String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   expenses          Expense[]
+  complianceItems   ComplianceItem[]
 
   @@index([jurisdictionId])
   @@index([status])
@@ -88,7 +89,7 @@ model Expense {
   vendorName     String?
   vendorLocation String?
   receiptNumber  String?
-  invoiceNumber  String? 
+  invoiceNumber  String?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -98,15 +99,46 @@ model Expense {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         String   @default("admin")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                     String                  @id @default(uuid())
+  email                  String                  @unique
+  passwordHash           String
+  role                   String                  @default("admin")
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  notificationPreference NotificationPreference?
 
   @@map("users")
+}
+
+model ComplianceItem {
+  id           String     @id @default(uuid())
+  productionId String
+  production   Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+  label        String
+  category     String     @default("general")
+  status       String     @default("pending")
+  notes        String?
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([productionId])
+  @@map("compliance_items")
+}
+
+model NotificationPreference {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jurisdictions String[]
+  emailAddress  String
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("notification_preferences")
 }
 
 model MonitoringSource {
