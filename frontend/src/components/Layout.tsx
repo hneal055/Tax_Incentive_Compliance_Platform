@@ -21,7 +21,7 @@ const adminTab = { id: 'admin', label: 'Admin', icon: Settings };
 
 function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   const { user, logout } = useAuthStore();
-  const usingMockData = !useFeatureFlag(features.USE_REAL_API);
+  const usingMockData = false;
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
