@@ -27,7 +27,7 @@ async function withFallback<T>(
   label: string,
   isRead = true,
 ): Promise<T> {
-  if (!getFlagSnapshot().USE_REAL_API) {
+  if (false) {
     if (import.meta.env.DEV) console.log(`[MOCK] ${label}`);
     return mockFn();
   }
