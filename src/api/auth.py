@@ -26,11 +26,13 @@ async def _authenticate(email: str, password: str) -> Token:
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_access_token({
-        "sub": user.id,
-        "email": user.email,
-        "role": user.role,
-    })
+    token = create_access_token(
+        {
+            "sub": user.id,
+            "email": user.email,
+            "role": user.role,
+        }
+    )
     return Token(access_token=token)
 
 
@@ -54,7 +56,9 @@ async def login(credentials: UserLogin):
 async def me(current_user: TokenData = Depends(get_current_user)):
     user = await prisma.user.find_unique(where={"id": current_user.sub})
     if not user or not user.isActive:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return UserResponse(
         id=user.id,
         email=user.email,
