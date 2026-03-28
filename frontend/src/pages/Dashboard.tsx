@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [productions, setProductions] = useState<Production[]>([]);
 
   useEffect(() => {
-    api.productions.list().then(setProductions).catch(() => {});
+    api.productions.list().then(data => setProductions(Array.isArray(data) ? data : [])).catch(() => {});
   }, []);
 
   // ── Derived metrics ──────────────────────────────────────────────────────────
