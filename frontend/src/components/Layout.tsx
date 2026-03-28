@@ -1,6 +1,6 @@
 import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
-import { useFeatureFlag, features } from '../contexts/FeatureFlagContext';
+
 
 interface LayoutProps {
   children: React.ReactNode;

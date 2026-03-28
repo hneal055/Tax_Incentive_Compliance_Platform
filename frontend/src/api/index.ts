@@ -13,7 +13,7 @@ import type {
   NotificationPreference,
   UserProfile,
 } from '../types';
-import { getFlagSnapshot } from '../contexts/FeatureFlagContext';
+
 import { mockApi } from '../mocks/api';
 
 // Wraps every API call with flag check + automatic mock fallback on failure.
