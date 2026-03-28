@@ -1,38 +1,84 @@
+"""
+PilotForge - Tax Incentive Intelligence for Film & TV
+"""
+from contextlib import asynccontextmanager
+import logging
+from pathlib import Path
 from fastapi import FastAPI
-from fastapi. middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI(
-    title="Tax Incentive Compliance Platform",
-    description="API for managing tax incentive compliance",
-    version="1.0.0"
-)
+from src.utils.config import settings
+from src.utils.database import prisma
+from src.utils.auth_utils import hash_password
+from src.utils.seed import run_migrations, seed_all
+from src.utils.scheduler import start_scheduler, stop_scheduler
+from src.api.routes import router
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure this properly for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to Tax Incentive Compliance Platform API",
-        "status": "operational"
-    }
+ADMIN_EMAIL = "admin@pilotforge.com"
+ADMIN_PASSWORD = "pilotforge2024"
 
-@app. get("/health")
+async def _seed_admin() -> None:
+    count = await prisma.user.count()
+    if count == 0:
+        await prisma.user.create(data={"email": ADMIN_EMAIL, "passwordHash": hash_password(ADMIN_PASSWORD), "role": "admin", "isActive": True})
+        logger.info(f"✅ Admin user created: {ADMIN_EMAIL}")
+    else:
+        logger.info("ℹ️  Admin user already exists — skipping seed")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("🎬 Starting PilotForge")
+    try:
+        run_migrations()
+        await prisma.connect()
+        logger.info("✅ Database connected")
+        await _seed_admin()
+        await seed_all()
+    except Exception as e:
+        logger.warning(f"⚠️  Database init failed: {e}")
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.error(f"❌ Scheduler failed to start: {e}")
+    yield
+    logger.info("🛑 Shutting down PilotForge")
+    stop_scheduler()
+    try:
+        if prisma.is_connected():
+            await prisma.disconnect()
+    except Exception as e:
+        logger.error(f"❌ Database disconnection failed: {e}")
+
+app = FastAPI(title="PilotForge API", description="Tax Incentive Intelligence for Film & TV Productions", version="v1", lifespan=lifespan, docs_url="/docs", redoc_url="/redoc")
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
+
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+else:
+    logger.warning("⚠️  Frontend dist not found")
+
+@app.get("/health", tags=["Health"])
 async def health_check():
-    return {"status": "healthy"}
+    try:
+        await prisma.query_raw("SELECT 1")
+        return {"status": "healthy", "database": "connected", "version": settings.API_VERSION}
+    except Exception as e:
+        return JSONResponse(status_code=503, content={"status": "unhealthy", "database": "disconnected", "error": str(e)})
 
-# Add your routes here
-# Example: 
-# @app.get("/api/v1/incentives")
-# async def get_incentives():
-#     return {"incentives": []}
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    return JSONResponse(status_code=404, content={"detail": "Resource not found", "path": str(request.url.path)})
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("src.main:app", host=settings.APP_HOST, port=settings.APP_PORT, log_level=settings.LOG_LEVEL.lower())
