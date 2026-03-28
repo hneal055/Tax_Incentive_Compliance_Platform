@@ -7,6 +7,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Mount frontend static files if build exists
+from pathlib import Path
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
