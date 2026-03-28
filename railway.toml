@@ -2,6 +2,5 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "sh -c 'uvicorn src.main:app --host 0.0.0.0 --port $PORT'"
+startCommand = "sh -c 'cd frontend && npm install && npm run build && cd .. && uvicorn src.main:app --host 0.0.0.0 --port $PORT'"
 restartPolicyType = "ON_FAILURE"
-# force rebuild 03/28/2026 11:07:36
