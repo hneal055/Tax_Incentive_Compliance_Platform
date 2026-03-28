@@ -180,6 +180,8 @@ function AIAdvisor() {
       const errorContent =
         detail.includes('not configured') || detail.includes('503')
           ? 'AI Advisor is currently unavailable — the service is not configured on the server.'
+          : detail.includes('credit balance') || detail.includes('billing') || detail.includes('402')
+          ? 'AI Advisor is temporarily unavailable. Please contact your administrator to resolve the service configuration.'
           : `Sorry, I encountered an error: ${detail}. Please try again.`;
       setMessages(prev => [
         ...prev,
