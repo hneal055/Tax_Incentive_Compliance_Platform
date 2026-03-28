@@ -132,10 +132,7 @@ if frontend_dist.exists():
     )
     logger.info(f"✅ Frontend mounted from {frontend_dist}")
 else:
-    static_dir = Path(__file__).parent / "static"
-    if static_dir.exists():
-        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-        logger.info(f"✅ Static files mounted from {static_dir}")
+
 
 
 # Root endpoint
@@ -207,3 +204,4 @@ if __name__ == "__main__":
         port=settings.APP_PORT,
         log_level=settings.LOG_LEVEL.lower(),
     )
+
