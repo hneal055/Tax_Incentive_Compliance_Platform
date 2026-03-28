@@ -12,6 +12,7 @@ from src.api.reports import router as reports_router
 from src.api.excel import router as excel_router
 from src.api.rule_engine import router as rule_engine_router
 from src.api.monitoring import router as monitoring_router
+from src.api.georgia import router as georgia_router
 from src.api.advisor import router as advisor_router
 from src.api.compliance import router as compliance_router
 from src.api.notifications import router as notifications_router
@@ -61,3 +62,4 @@ async def api_root():
             "health": "/health",
         },
     }
+
