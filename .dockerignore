@@ -69,3 +69,6 @@ yarn-error.log
 # Docker
 Dockerfile.dev
 .dockerignore
+
+# Explicitly include frontend dist
+!frontend/dist
