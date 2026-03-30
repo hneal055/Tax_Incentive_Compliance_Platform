@@ -10,6 +10,7 @@ import {
   Loader2,
   Copy,
   Printer,
+  FolderOpen,
 } from 'lucide-react';
 import type { Production, Jurisdiction } from '../types';
 import api from '../api';
@@ -45,8 +46,9 @@ export default function Calculator() {
   const [jurId,    setJurId]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const [result,   setResult]   = useState<CalcResult | null>(null);
-  const [reported, setReported] = useState(false);
-  const [copied,   setCopied]   = useState(false);
+  const [reported,          setReported]          = useState(false);
+  const [copied,            setCopied]            = useState(false);
+  const [downloadedFileName, setDownloadedFileName] = useState<string | null>(null);
   const [calcError, setCalcError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -127,16 +129,18 @@ export default function Calculator() {
 
   function handleDownload() {
     if (!result) return;
-    const text = buildReportText(result);
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `tax-incentive-report-${result.productionTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    const text     = buildReportText(result);
+    const fileName = `tax-incentive-report-${result.productionTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    const blob     = new Blob([text], { type: 'text/plain' });
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    a.href         = url;
+    a.download     = fileName;
     a.click();
     URL.revokeObjectURL(url);
     setReported(true);
-    setTimeout(() => setReported(false), 3000);
+    setDownloadedFileName(fileName);
+    setTimeout(() => { setReported(false); setDownloadedFileName(null); }, 8000);
   }
 
   function handleCopy() {
@@ -401,6 +405,22 @@ export default function Calculator() {
                 Recalculate
               </button>
             </div>
+
+            {/* Download confirmation banner */}
+            {downloadedFileName && (
+              <div className="flex items-start gap-3 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm">
+                <FolderOpen className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-emerald-800">Report saved to your Downloads folder</p>
+                  <p className="text-emerald-600 text-xs mt-0.5">
+                    File: <span className="font-mono">{downloadedFileName}</span>
+                  </p>
+                  <p className="text-emerald-600 text-xs mt-1">
+                    Open it in any text editor, or use <strong>Print</strong> above to save as PDF.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

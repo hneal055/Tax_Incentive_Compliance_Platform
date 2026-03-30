@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2 } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2, Pencil } from 'lucide-react';
 import type { Production, Jurisdiction } from '../types';
 import api from '../api';
 import ProductionDetail from './ProductionDetail';
@@ -55,6 +55,10 @@ export default function Productions() {
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editProduction, setEditProduction] = useState<Production | null>(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editErrors, setEditErrors] = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     Promise.all([api.productions.list(), api.jurisdictions.list()])
@@ -63,13 +67,19 @@ export default function Productions() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const jurName = (id: string) => jurisdictions.find(j => j.id === id)?.name ?? '—';
+  // Memoized jurisdiction name lookup — O(1) vs O(n) per card
+  const jurMap = useMemo(() =>
+    new Map(jurisdictions.map(j => [j.id, j.name])),
+  [jurisdictions]);
 
-  const filtered = productions.filter(p => {
+  const jurName = (id: string) => jurMap.get(id) ?? '—';
+
+  // Memoized filtered list
+  const filtered = useMemo(() => productions.filter(p => {
     const matchSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = filterStatus === 'all' || p.status === filterStatus;
     return matchSearch && matchStatus;
-  });
+  }), [productions, searchTerm, filterStatus]);
 
   // ── Validation ──────────────────────────────────────────────────────────────
 
@@ -131,6 +141,59 @@ export default function Productions() {
     setShowModal(false);
     setForm(EMPTY_FORM);
     setErrors({});
+  }
+
+  function handleEditOpen(e: React.MouseEvent, p: Production) {
+    e.stopPropagation();
+    setEditProduction(p);
+    setEditForm({
+      title:             p.title,
+      productionType:    p.productionType,
+      productionCompany: p.productionCompany,
+      budgetTotal:       String(p.budgetTotal),
+      startDate:         p.startDate?.split('T')[0] ?? '',
+      jurisdictionId:    p.jurisdictionId ?? '',
+      status:            p.status as StatusKey,
+    });
+    setEditErrors({});
+  }
+
+  function handleEditClose() {
+    setEditProduction(null);
+    setEditForm(EMPTY_FORM);
+    setEditErrors({});
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editProduction) return;
+    const errs: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+    if (!editForm.title.trim())             errs.title           = 'Title is required';
+    if (!editForm.productionCompany.trim()) errs.productionCompany = 'Company is required';
+    if (!editForm.startDate)                errs.startDate       = 'Start date is required';
+    const b = Number(editForm.budgetTotal);
+    if (!editForm.budgetTotal || isNaN(b) || b <= 0) errs.budgetTotal = 'Enter a valid budget';
+    if (Object.keys(errs).length) { setEditErrors(errs); return; }
+
+    setUpdating(true);
+    try {
+      const updated = await api.productions.update(editProduction.id, {
+        title:             editForm.title.trim(),
+        productionType:    editForm.productionType,
+        productionCompany: editForm.productionCompany.trim(),
+        budgetTotal:       Number(editForm.budgetTotal),
+        startDate:         editForm.startDate,
+        jurisdictionId:    editForm.jurisdictionId || '',
+        status:            editForm.status,
+      });
+      setProductions(prev => prev.map(p => p.id === editProduction.id ? updated : p));
+      handleEditClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update production';
+      setEditErrors({ title: msg });
+    } finally {
+      setUpdating(false);
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -226,6 +289,15 @@ export default function Productions() {
                   <div className="flex items-center gap-2 ml-4 shrink-0">
                     <button
                       type="button"
+                      onClick={e => handleEditOpen(e, p)}
+                      title="Edit production"
+                      aria-label="Edit production"
+                      className="text-slate-300 hover:text-blue-500 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={e => { e.stopPropagation(); handleDelete(p.id); }}
                       disabled={deleteId === p.id}
                       title="Delete production"
@@ -273,6 +345,102 @@ export default function Productions() {
           </div>
         )}
       </div>
+
+      {/* Edit Production Modal */}
+      {editProduction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleEditClose} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Edit Production</h2>
+                <p className="text-slate-500 text-sm mt-0.5">{editProduction.title}</p>
+              </div>
+              <button type="button" onClick={handleEditClose} title="Close" aria-label="Close" className="text-slate-400 hover:text-slate-600 transition-colors mt-0.5">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Production Title <span className="text-red-500">*</span></label>
+                <input type="text" value={editForm.title}
+                  onChange={e => { setEditForm(f => ({ ...f, title: e.target.value })); setEditErrors(er => ({ ...er, title: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.title ? 'border-red-400' : 'border-slate-300'}`}
+                  autoFocus />
+                {editErrors.title && <p className="text-red-500 text-xs mt-1">{editErrors.title}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Production Type</label>
+                <select value={editForm.productionType} onChange={e => setEditForm(f => ({ ...f, productionType: e.target.value }))}
+                  title="Production type" aria-label="Production type"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  {PROD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Production Company <span className="text-red-500">*</span></label>
+                <input type="text" title="Production company" placeholder="e.g. Horizon Films LLC" value={editForm.productionCompany}
+                  onChange={e => { setEditForm(f => ({ ...f, productionCompany: e.target.value })); setEditErrors(er => ({ ...er, productionCompany: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.productionCompany ? 'border-red-400' : 'border-slate-300'}`} />
+                {editErrors.productionCompany && <p className="text-red-500 text-xs mt-1">{editErrors.productionCompany}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Total Budget (USD) <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm select-none">$</span>
+                  <input type="number" title="Total budget" placeholder="5000000" min="1" value={editForm.budgetTotal}
+                    onChange={e => { setEditForm(f => ({ ...f, budgetTotal: e.target.value })); setEditErrors(er => ({ ...er, budgetTotal: undefined })); }}
+                    className={`w-full pl-7 pr-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.budgetTotal ? 'border-red-400' : 'border-slate-300'}`} />
+                </div>
+                {editErrors.budgetTotal && <p className="text-red-500 text-xs mt-1">{editErrors.budgetTotal}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Start Date <span className="text-red-500">*</span></label>
+                <input type="date" title="Start date" value={editForm.startDate}
+                  onChange={e => { setEditForm(f => ({ ...f, startDate: e.target.value })); setEditErrors(er => ({ ...er, startDate: undefined })); }}
+                  className={`w-full px-3.5 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.startDate ? 'border-red-400' : 'border-slate-300'}`} />
+                {editErrors.startDate && <p className="text-red-500 text-xs mt-1">{editErrors.startDate}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Jurisdiction</label>
+                <select value={editForm.jurisdictionId} onChange={e => setEditForm(f => ({ ...f, jurisdictionId: e.target.value }))}
+                  title="Jurisdiction" aria-label="Jurisdiction"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-700">
+                  <option value="">No jurisdiction</option>
+                  {jurisdictions.map(j => <option key={j.id} value={j.id}>{j.name} ({j.country})</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Status</label>
+                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as StatusKey }))}
+                  title="Status" aria-label="Status"
+                  className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                  {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={handleEditClose}
+                  className="flex-1 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={updating}
+                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                  {updating && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {updating ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* New Production Modal */}
       {showModal && (
