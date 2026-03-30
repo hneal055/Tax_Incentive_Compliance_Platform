@@ -8,6 +8,8 @@ import {
   RotateCcw,
   CheckCircle,
   Loader2,
+  Copy,
+  Printer,
 } from 'lucide-react';
 import type { Production, Jurisdiction } from '../types';
 import api from '../api';
@@ -44,6 +46,7 @@ export default function Calculator() {
   const [loading,  setLoading]  = useState(false);
   const [result,   setResult]   = useState<CalcResult | null>(null);
   const [reported, setReported] = useState(false);
+  const [copied,   setCopied]   = useState(false);
   const [calcError, setCalcError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -100,9 +103,52 @@ export default function Calculator() {
     setCalcError(null);
   }
 
+  function buildReportText(r: CalcResult): string {
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const qualPct = r.totalBudget > 0 ? ((r.qualifiedExpenses / r.totalBudget) * 100).toFixed(0) : '0';
+    return [
+      'TAX INCENTIVE CALCULATION REPORT',
+      `Generated: ${date}`,
+      '',
+      `Production:          ${r.productionTitle}`,
+      `Jurisdiction:        ${r.jurisdictionName}`,
+      '',
+      `Total Budget:        $${r.totalBudget.toLocaleString()}`,
+      `Qualified Expenses:  $${r.qualifiedExpenses.toLocaleString()}`,
+      `Qualified Ratio:     ${qualPct}% of budget`,
+      `Credit Rate:         ${r.creditRate.toFixed(0)}%`,
+      `Estimated Tax Credit: $${r.estimatedCredit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+      `Effective Rate:      ${r.effectiveRate.toFixed(1)}%`,
+      '',
+      'This estimate is for planning purposes only.',
+      'Consult a qualified production accountant for final tax decisions.',
+    ].join('\n');
+  }
+
   function handleDownload() {
+    if (!result) return;
+    const text = buildReportText(result);
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `tax-incentive-report-${result.productionTitle.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
     setReported(true);
     setTimeout(() => setReported(false), 3000);
+  }
+
+  function handleCopy() {
+    if (!result) return;
+    navigator.clipboard.writeText(buildReportText(result)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    });
+  }
+
+  function handlePrint() {
+    window.print();
   }
 
   const canCalculate = !!prodId && !!jurId && !dataLoading;
@@ -309,7 +355,7 @@ export default function Calculator() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={handleDownload}
@@ -320,9 +366,31 @@ export default function Calculator() {
                 }`}
               >
                 {reported
-                  ? <><CheckCircle className="w-4 h-4" /> Report Generated</>
+                  ? <><CheckCircle className="w-4 h-4" /> Downloaded</>
                   : <><Download className="w-4 h-4" /> Download Report</>
                 }
+              </button>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className={`flex items-center gap-2 px-5 py-2.5 border rounded-lg text-sm font-semibold transition-colors ${
+                  copied
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {copied
+                  ? <><CheckCircle className="w-4 h-4" /> Copied</>
+                  : <><Copy className="w-4 h-4" /> Copy Report</>
+                }
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <Printer className="w-4 h-4" />
+                Print
               </button>
               <button
                 type="button"
