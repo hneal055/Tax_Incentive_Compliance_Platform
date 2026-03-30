@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search, RefreshCw, Bookmark, ChevronDown, X, ExternalLink, CheckCircle, Send, Loader2 } from 'lucide-react';
 import type { Jurisdiction, IncentiveRule, MonitoringEvent } from '../types';
 import api from '../api';
+import JurisdictionDetail from '../components/JurisdictionDetail';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -315,6 +316,17 @@ export default function Jurisdictions() {
 
   const selectedJur = selectedId ? jurisdictions.find(j => j.id === selectedId) ?? null : null;
 
+  // Full detail view when a jurisdiction is selected
+  if (selectedJur) {
+    return (
+      <JurisdictionDetail
+        code={selectedJur.code}
+        name={selectedJur.name}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
+
   return (
     <div className="flex gap-6 h-full min-h-0">
 
@@ -525,7 +537,7 @@ export default function Jurisdictions() {
               return (
                 <div
                   key={j.id}
-                  onClick={() => setSelectedId(prev => prev === j.id ? null : j.id)}
+                  onClick={() => setSelectedId(j.id)}
                   className={`bg-white rounded-xl border-2 p-5 cursor-pointer flex flex-col gap-3 transition-all duration-150
                     ${isSelected
                       ? 'border-blue-500 shadow-md shadow-blue-100'
