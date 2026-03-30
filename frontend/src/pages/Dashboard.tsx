@@ -40,9 +40,6 @@ export default function Dashboard() {
       actual: 0,
     }));
 
-  const maxBudget = chartData.length ? Math.max(...chartData.map(d => d.budget)) : 20;
-  const yMax      = Math.ceil(maxBudget / 4) * 4 || 20;
-  const yTicks    = Array.from({ length: 5 }, (_, i) => parseFloat(((yMax / 4) * i).toFixed(2)));
 
   return (
     <div className="space-y-8">
@@ -78,12 +75,12 @@ export default function Dashboard() {
             No productions yet - add one to see chart data.
           </div>
         ) : (
-          <div className="h-[380px]">
+          <div style={{ width: '100%', height: 380 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }} barCategoryGap="35%" barGap={3}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(v) => `$${v}M`} domain={[0, yMax]} ticks={yTicks} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(v) => `$${v}M`} />
                 <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} formatter={(value: number | string | undefined) => [`$${Number(value ?? 0)}M`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 13 }} />
                 <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={52} name="Budget" />
                 <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual" />
