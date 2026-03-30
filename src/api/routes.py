@@ -43,6 +43,7 @@ router.include_router(compliance_router, dependencies=_auth_dep)
 router.include_router(notifications_router, dependencies=_auth_dep)
 router.include_router(admin_router, dependencies=_auth_dep)
 router.include_router(production_expenses_router, dependencies=_auth_dep)
+router.include_router(georgia_router, dependencies=_auth_dep)
 
 
 @router.get("/", tags=["Meta"])

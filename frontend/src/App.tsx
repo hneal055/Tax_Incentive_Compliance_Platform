@@ -5,6 +5,7 @@ import Productions from './pages/Productions';
 import Calculator from './pages/Calculator';
 import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
+import Georgia from './pages/Georgia';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -25,6 +26,7 @@ function App() {
     calculator:   <Calculator />,
     jurisdictions: <Jurisdictions />,
     advisor:      <AIAdvisor />,
+    georgia:      <Georgia />,
     admin:        <Admin />,
     settings:     <Settings />,
   };

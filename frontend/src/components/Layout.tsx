@@ -1,4 +1,4 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings, MapPin } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 
 
@@ -14,6 +14,7 @@ const tabs = [
   { id: 'calculator', label: 'Incentive Calculator', icon: Calculator },
   { id: 'jurisdictions', label: 'Jurisdictions', icon: Globe },
   { id: 'advisor', label: 'AI Advisor', icon: Bot, badge: 'NEW' },
+  { id: 'georgia', label: 'Georgia', icon: MapPin },
   { id: 'settings', label: 'Notifications', icon: Bell },
 ];
 

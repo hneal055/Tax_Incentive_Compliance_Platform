@@ -260,6 +260,44 @@ export const api = {
       ),
   },
 
+  georgia: {
+    getJurisdiction: (code: string) =>
+      withFallback(
+        async () => { const r = await apiClient.get(`/georgia/jurisdictions/${code}`); return r.data as { id: string; code: string; name: string; country: string; type: string; description: string | null; website: string | null; active: boolean }; },
+        async () => ({ id: '', code, name: 'Georgia', country: 'USA', type: 'state', description: null, website: null, active: true }),
+        `georgia.getJurisdiction(${code})`,
+      ),
+
+    getPrograms: (code: string) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.get(`/georgia/jurisdictions/${code}/programs`);
+          return r.data as {
+            jurisdiction_id: string;
+            jurisdiction_name: string;
+            jurisdiction_code: string;
+            total: number;
+            programs: Array<{
+              id: string;
+              name: string;
+              code: string;
+              incentive_type: string;
+              percentage: number;
+              min_spend: number | null;
+              max_credit: number | null;
+              eligible_expenses: string[] | null;
+              excluded_expenses: string[] | null;
+              requirements: string[] | null;
+              effective_date: string | null;
+              active: boolean;
+            }>;
+          };
+        },
+        async () => ({ jurisdiction_id: '', jurisdiction_name: 'Georgia', jurisdiction_code: code, total: 0, programs: [] }),
+        `georgia.getPrograms(${code})`,
+      ),
+  },
+
   advisor: {
     summarizeEvent: (eventId: string) =>
       withFallback(

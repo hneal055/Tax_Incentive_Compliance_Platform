@@ -32,11 +32,11 @@ export default function Dashboard() {
   ];
 
   const chartData = [...safeProductions]
-    .sort((a, b) => b.budgetTotal - a.budgetTotal)
+    .sort((a, b) => (b.budgetTotal ?? 0) - (a.budgetTotal ?? 0))
     .slice(0, 5)
     .map(p => ({
-      name:   p.title.length > 16 ? p.title.slice(0, 14) + '...' : p.title,
-      budget: parseFloat((p.budgetTotal / 1_000_000).toFixed(2)),
+      name:   (p.title ?? '').length > 16 ? (p.title ?? '').slice(0, 14) + '...' : (p.title ?? ''),
+      budget: parseFloat(((p.budgetTotal ?? 0) / 1_000_000).toFixed(2)),
       actual: 0,
     }));
 
@@ -84,7 +84,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(v) => `$${v}M`} domain={[0, yMax]} ticks={yTicks} />
-                <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} formatter={(value: unknown) => [`$${Number(value)}M`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} formatter={(value: number | string | undefined) => [`$${Number(value ?? 0)}M`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 13 }} />
                 <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={52} name="Budget" />
                 <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual" />
               </BarChart>

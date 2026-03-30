@@ -3,7 +3,7 @@ from src.utils.database import prisma
 import logging
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1/admin", tags=["Legacy Rules Engine"])
+router = APIRouter(prefix="/georgia", tags=["Georgia"])
 
 @router.get("/health")
 async def legacy_health():
