@@ -24,9 +24,11 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api/v1")
 
 # Serve static files (rules viewer, integration demo, etc.)
-_static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static")
-if os.path.exists(_static_dir):
-    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+# Walk up from app/main.py → app/ → backend/ → static/
+_here = os.path.dirname(os.path.abspath(__file__))
+_static_dir = os.path.join(_here, "..", "static")
+_static_dir = os.path.normpath(_static_dir)
+app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 @app.get("/")
 async def root():
