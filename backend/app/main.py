@@ -1,6 +1,8 @@
 """Main FastAPI application."""
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api.v1 import router as api_router
 
 app = FastAPI(
@@ -20,6 +22,11 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+# Serve static files (rules viewer, integration demo, etc.)
+_static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "static")
+if os.path.exists(_static_dir):
+    app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 @app.get("/")
 async def root():
