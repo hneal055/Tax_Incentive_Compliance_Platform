@@ -6,6 +6,7 @@ import Calculator from './pages/Calculator';
 import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
 import Georgia from './pages/Georgia';
+import MMBConnector from './pages/MMBConnector';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -27,6 +28,7 @@ function App() {
     jurisdictions: <Jurisdictions />,
     advisor:      <AIAdvisor />,
     georgia:      <Georgia />,
+    mmb:          <MMBConnector />,
     admin:        <Admin />,
     settings:     <Settings />,
   };

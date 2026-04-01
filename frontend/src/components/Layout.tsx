@@ -1,4 +1,4 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings, MapPin } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings, MapPin, Link2 } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 
 
@@ -15,6 +15,7 @@ const tabs = [
   { id: 'jurisdictions', label: 'Jurisdictions', icon: Globe },
   { id: 'advisor', label: 'AI Advisor', icon: Bot, badge: 'NEW' },
   { id: 'georgia', label: 'Georgia', icon: MapPin },
+  { id: 'mmb', label: 'MMB Connector', icon: Link2, badge: 'NEW' },
   { id: 'settings', label: 'Notifications', icon: Bell },
 ];
 
