@@ -1,6 +1,36 @@
-.venv/
+# Python
 __pycache__/
-*.pyc
-tax_incentive.db
+*.py[cod]
+*.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
 *.log
+logs/
+
+# Environment
+.env
+.env.local
+
+# Railway
+.railway/

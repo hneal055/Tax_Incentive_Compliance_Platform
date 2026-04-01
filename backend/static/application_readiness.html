@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PilotForge — Application Readiness</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Navigation Bar Styles */
+        .nav-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 18px;
+            color: #1e3c72;
+        }
+        .logo span { color: #3b82f6; }
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-link:not(.active) {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .nav-link:not(.active):hover {
+            background: #e5e7eb;
+        }
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-online { background: #d1fae5; color: #065f46; }
+        .status-offline { background: #fee2e2; color: #991b1b; }
+        
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 28px; color: #1e3c72; margin-bottom: 8px; }
+        .header h1 span { color: #3b82f6; }
+        .header p { color: #6b7280; font-size: 16px; }
+        
+        /* Production Banner */
+        .production-banner {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e3c72 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 20px 32px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .production-title h2 { font-size: 24px; margin-bottom: 4px; }
+        .production-title p { opacity: 0.9; font-size: 14px; }
+        .readiness-score {
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 12px;
+        }
+        .score-number { font-size: 36px; font-weight: bold; }
+        .score-label { font-size: 12px; opacity: 0.9; }
+        
+        /* Main Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 12px;
+        }
+        
+        /* Checklist Items */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist-status {
+            width: 32px;
+            flex-shrink: 0;
+        }
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-complete { background: #d1fae5; color: #10b981; }
+        .status-waived { background: #e5e7eb; color: #6b7280; }
+        .status-na { background: #f3f4f6; color: #9ca3af; }
+        
+        .checklist-content { flex: 1; }
+        .checklist-title { font-weight: 500; margin-bottom: 4px; }
+        .checklist-desc { font-size: 12px; color: #6b7280; }
+        
+        /* Progress Bar */
+        .progress-section { margin: 20px 0; }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: #3b82f6;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-jurisdiction { background: #e0e7ff; color: #4338ca; }
+        .badge-score { background: #d1fae5; color: #065f46; }
+        
+        /* Action Button */
+        .action-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .action-button:hover { background: #2563eb; }
+        .action-button.secondary {
+            background: #10b981;
+            margin-top: 12px;
+        }
+        
+        /* Coming Soon Banner */
+        .coming-soon {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .coming-soon h4 { color: #92400e; margin-bottom: 4px; }
+        .coming-soon p { color: #b45309; font-size: 14px; }
+        .phase-badge {
+            background: #92400e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .production-banner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="container">
+        <div class="nav-bar">
+            <div class="logo">Pilot<span>Forge</span></div>
+            <div class="nav-links">
+                <a href="/static/rules_viewer.html" class="nav-link">📋 Georgia Rules</a>
+                <a href="/static/application_readiness.html" class="nav-link active">✅ Application Readiness</a>
+                <a href="/static/integration_demo.html" class="nav-link">🔗 Largo Integration</a>
+            </div>
+            <div id="apiStatusNav" class="status-badge status-offline">🔴 API Offline</div>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>Application <span>Readiness</span></h1>
+            <p>Auto-generated compliance checklists tied to jurisdiction rules — tracked, flagged, and audit-ready.</p>
+        </div>
+
+        <!-- Production Banner -->
+        <div class="production-banner">
+            <div class="production-title">
+                <h2>🎬 Midnight in Atlanta</h2>
+                <p>Production ID: PRD-2025-001 | Georgia Film Tax Credit</p>
+            </div>
+            <div class="readiness-score">
+                <div class="score-number">78<span style="font-size: 20px;">%</span></div>
+                <div class="score-label">Application Readiness Score</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid-2">
+            <!-- Compliance Checklist -->
+            <div class="card">
+                <h3>
+                    <span>📋</span> Compliance Checklist
+                    <span style="margin-left: auto; font-size: 12px; font-weight: normal;">Auto-generated from Georgia rules</span>
+                </h3>
+                
+                <div class="progress-section">
+                    <div class="progress-label">
+                        <span>Overall Progress</span>
+                        <span id="progressCount">11/14 items complete</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 78%"></div>
+                    </div>
+                </div>
+                
+                <div id="checklistContainer">
+                    <!-- Checklist items will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Supporting Documents & Next Steps -->
+            <div class="card">
+                <h3>
+                    <span>📎</span> Document Tracking
+                </h3>
+                <div id="documentList" style="margin-bottom: 24px;">
+                    <!-- Document list populated by JS -->
+                </div>
+                
+                <div style="background: #f3f4f6; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-weight: 500;">📄 Application Package</span>
+                        <span class="badge badge-score" id="packageReady">78% ready</span>
+                    </div>
+                    <div style="font-size: 13px; color: #4b5563;">Pre-filled application ready for review</div>
+                </div>
+                
+                <button class="action-button" id="generateAppBtn">
+                    📄 Generate Pre-Filled Application
+                </button>
+                <button class="action-button secondary" id="auditPackBtn" style="background: #6b7280;">
+                    🔍 Export Audit-Ready Pack
+                </button>
+            </div>
+        </div>
+
+        <!-- Phase 2 Coming Soon -->
+        <div class="coming-soon">
+            <div>
+                <h4>🚀 Auto-Submittal — Coming in Phase 2</h4>
+                <p>One-click submission to state film offices. Direct integration with Georgia, California, New York, and more.</p>
+            </div>
+            <div class="phase-badge">Phase 2 — Q3 2025</div>
+        </div>
+    </div>
+
+    <script>
+        // Checklist data derived from Georgia Film Tax Credit rules
+        const checklistItems = [
+            { id: 1, title: "Georgia Film Office Registration", description: "Production company must be registered with the Georgia Film Office", category: "Pre-Certification", status: "complete", required: true },
+            { id: 2, title: "Georgia Entertainment Industry Promotion Act (GEIPA) Form", description: "Submit GEIPA form with initial application", category: "Application", status: "complete", required: true },
+            { id: 3, title: "Affidavit of Georgia Spend", description: "Notarized affidavit certifying qualified expenditures in Georgia", category: "Documentation", status: "complete", required: true },
+            { id: 4, title: "Shooting Day Logs", description: "Daily logs documenting filming dates and locations in Georgia", category: "Production Records", status: "complete", required: true },
+            { id: 5, title: "Payroll Records", description: "Detailed payroll reports for all Georgia-resident crew", category: "Labor Documentation", status: "pending", required: true },
+            { id: 6, title: "Vendor Invoices & Contracts", description: "Invoices from Georgia-based vendors with proof of payment", category: "Expenditure Documentation", status: "pending", required: true },
+            { id: 7, title: "Local Hire Verification", description: "Documentation showing Georgia resident crew ≥ 15% of total crew", category: "Bonus Qualification", status: "pending", required: false },
+            { id: 8, title: "Georgia Promotional Logo Confirmation", description: "Confirmation that Georgia logo will appear in credits (for 10% bonus)", category: "Bonus Qualification", status: "complete", required: false },
+            { id: 9, title: "Qualified Expenditure Summary", description: "Summary report of all eligible spend by category", category: "Financial", status: "complete", required: true },
+            { id: 10, title: "Principal Photography Start Notice", description: "Notice of principal photography commencement date", category: "Timeline", status: "complete", required: true },
+            { id: 11, title: "Post-Production Location Report", description: "Documentation of post-production work performed in Georgia", category: "Production Records", status: "waived", required: false },
+            { id: 12, title: "Diversity in Key Creative Roles", description: "Documentation of diversity in director, writer, producer, department heads", category: "Bonus Qualification", status: "pending", required: false },
+            { id: 13, title: "Interim Progress Report", description: "Annual progress report (due 12 months after principal photography)", category: "Compliance", status: "na", required: true },
+            { id: 14, title: "Final Claim Submission", description: "Final incentive claim package with all supporting documentation", category: "Submission", status: "pending", required: true }
+        ];
+        
+        const statusConfig = {
+            complete: { label: "Complete", class: "status-complete", icon: "✓" },
+            pending: { label: "Pending", class: "status-pending", icon: "⏳" },
+            waived: { label: "Waived", class: "status-waived", icon: "○" },
+            na: { label: "N/A", class: "status-na", icon: "—" }
+        };
+        
+        function renderChecklist() {
+            const container = document.getElementById('checklistContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const categories = [...new Set(checklistItems.map(item => item.category))];
+            
+            categories.forEach(category => {
+                const categoryItems = checklistItems.filter(item => item.category === category);
+                const categoryDiv = document.createElement('div');
+                categoryDiv.style.marginBottom = '20px';
+                categoryDiv.innerHTML = `<div style="font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">${category}</div>`;
+                
+                categoryItems.forEach(item => {
+                    const status = statusConfig[item.status] || statusConfig.pending;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'checklist-item';
+                    itemDiv.innerHTML = `
+                        <div class="checklist-status">
+                            <div class="status-icon ${status.class}">${status.icon}</div>
+                        </div>
+                        <div class="checklist-content">
+                            <div class="checklist-title">
+                                ${item.title}
+                                ${!item.required ? '<span style="font-size: 10px; color: #10b981;"> (Optional Bonus)</span>' : ''}
+                            </div>
+                            <div class="checklist-desc">${item.description}</div>
+                        </div>
+                        <div style="font-size: 12px; color: #6b7280;">${status.label}</div>
+                    `;
+                    categoryDiv.appendChild(itemDiv);
+                });
+                container.appendChild(categoryDiv);
+            });
+        }
+        
+        function renderDocuments() {
+            const container = document.getElementById('documentList');
+            if (!container) return;
+            
+            const docs = [
+                { name: "Georgia Film Office Registration", status: "uploaded", size: "245 KB" },
+                { name: "GEIPA Form", status: "uploaded", size: "128 KB" },
+                { name: "Affidavit of Georgia Spend", status: "uploaded", size: "89 KB" },
+                { name: "Shooting Day Logs", status: "uploaded", size: "1.2 MB" },
+                { name: "Payroll Reports", status: "missing", size: null },
+                { name: "Vendor Invoices", status: "partial", size: null }
+            ];
+            
+            container.innerHTML = '';
+            
+            docs.forEach(doc => {
+                let statusHtml = '';
+                if (doc.status === 'uploaded') statusHtml = '<span style="color: #10b981;">✓ Uploaded</span>';
+                else if (doc.status === 'partial') statusHtml = '<span style="color: #f59e0b;">⚠️ Partial</span>';
+                else statusHtml = '<span style="color: #ef4444;">✗ Missing</span>';
+                
+                const docDiv = document.createElement('div');
+                docDiv.style.display = 'flex';
+                docDiv.style.justifyContent = 'space-between';
+                docDiv.style.padding = '10px 0';
+                docDiv.style.borderBottom = '1px solid #f3f4f6';
+                docDiv.innerHTML = `
+                    <span style="font-size: 14px;">📄 ${doc.name}</span>
+                    <span style="font-size: 12px;">${statusHtml} ${doc.size ? `(${doc.size})` : ''}</span>
+                `;
+                container.appendChild(docDiv);
+            });
+        }
+        
+        function updateReadinessScore() {
+            const completed = checklistItems.filter(i => i.status === 'complete').length;
+            const total = checklistItems.filter(i => i.status !== 'na').length;
+            const score = Math.round((completed / total) * 100);
+            
+            const scoreElement = document.querySelector('.score-number');
+            const progressFill = document.getElementById('progressFill');
+            const progressCount = document.getElementById('progressCount');
+            const packageReady = document.getElementById('packageReady');
+            
+            if (scoreElement) scoreElement.innerHTML = `${score}<span style="font-size: 20px;">%</span>`;
+            if (progressFill) progressFill.style.width = `${score}%`;
+            if (progressCount) progressCount.innerHTML = `${completed}/${total} items complete`;
+            if (packageReady) packageReady.innerHTML = `${score}% ready`;
+        }
+        
+        async function checkApiStatus() {
+            const statusDiv = document.getElementById('apiStatusNav');
+            if (!statusDiv) return;
+            try {
+                const response = await fetch('/health');
+                if (response.ok) {
+                    statusDiv.innerHTML = '🟢 API Online';
+                    statusDiv.className = 'status-badge status-online';
+                } else {
+                    throw new Error();
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '🔴 API Offline';
+                statusDiv.className = 'status-badge status-offline';
+            }
+        }
+        
+        // Action button handlers
+        const generateBtn = document.getElementById('generateAppBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                alert('📄 Pre-filled Georgia Film Tax Credit Application\n\n✓ Production information auto-populated\n✓ Qualified spend summary included\n✓ Supporting documents attached\n\nReady for final review before submission.');
+            });
+        }
+        
+        const auditBtn = document.getElementById('auditPackBtn');
+        if (auditBtn) {
+            auditBtn.addEventListener('click', () => {
+                alert('🔍 Audit-Ready Pack Export\n\nIncludes:\n• Completed application\n• All 14 checklist items with status\n• Uploaded documents (6 files)\n• Qualified spend summary\n• Georgia rule set (version 2025.01)\n\nZIP file ready for download.');
+            });
+        }
+        
+        // Initialize
+        renderChecklist();
+        renderDocuments();
+        updateReadinessScore();
+        checkApiStatus();
+        setInterval(checkApiStatus, 30000);
+    </script>
+</body>
+</html>
