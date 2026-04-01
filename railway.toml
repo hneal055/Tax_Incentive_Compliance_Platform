@@ -1,7 +1,1 @@
-[build]
-builder = "NIXPACKS"
-buildCommand = "cd frontend && npm install && npm run build"
-
-[deploy]
-startCommand = "sh -c 'uvicorn src.main:app --host 0.0.0.0 --port $PORT'"
-restartPolicyType = "ON_FAILURE"
+[build]`nbuilder = "NIXPACKS"`n`n[build.environment]`nPYTHON_VERSION = "3.12"`n`n[deploy]`nstartCommand = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"`n`n[deploy.volumes]`n/data = "/app/backend"
