@@ -1,0 +1,203 @@
+"""
+PilotForge Demo Pre-Load Script
+Run before Thursday demo to populate all productions with expenses,
+compliance checklists, and monitoring events.
+
+Usage:
+    $env:DATABASE_URL="postgresql://postgres:fVGLFjFyrMXqYmiLHMUieolPmVokzGwz@gondola.proxy.rlwy.net:51215/railway"
+    python demo_seed.py
+"""
+
+import asyncio
+from datetime import datetime, timedelta
+from src.utils.database import prisma
+
+EXPENSES_BY_PRODUCTION = {
+    0: [
+        ("labor", "Director of Photography - 8 week package", 285000, True),
+        ("labor", "1st AD - pre-production and shoot", 48000, True),
+        ("labor", "Production Designer", 62000, True),
+        ("labor", "Gaffer - lighting package", 38000, True),
+        ("labor", "Key Grip", 32000, True),
+        ("equipment", "Camera package - ARRI Alexa 35 x2", 145000, True),
+        ("equipment", "Lighting package - full electrical", 89000, True),
+        ("equipment", "Grip package", 42000, True),
+        ("locations", "Stage rental - Stage 6 8 weeks", 320000, True),
+        ("locations", "Location permits - downtown district", 18500, True),
+        ("catering", "Craft services - full shoot", 38000, True),
+        ("catering", "Catering - hot meals 45 days", 67500, True),
+        ("post_production", "Editorial - offline and online", 185000, True),
+        ("post_production", "Color grading - DI finish", 65000, True),
+        ("post_production", "Sound mix - 5.1 theatrical", 48000, True),
+        ("visual_effects", "VFX - 85 shots", 320000, True),
+        ("legal", "Production legal - contracts", 28000, False),
+        ("insurance", "Production insurance package", 45000, False),
+        ("other", "Story rights acquisition", 150000, False),
+        ("other", "Music rights - score and clearances", 35000, False),
+    ],
+    1: [
+        ("labor", "Showrunner - 10 episode order", 420000, True),
+        ("labor", "Line Producer", 95000, True),
+        ("labor", "Director - episodes 1-3", 135000, True),
+        ("labor", "DP - resident crew", 180000, True),
+        ("labor", "Writers room - 6 writers x 10 weeks", 480000, True),
+        ("equipment", "Camera package - Sony VENICE 2", 98000, True),
+        ("equipment", "Steadicam package", 22000, True),
+        ("locations", "Stage rental - 2 stages x 12 weeks", 480000, True),
+        ("locations", "Standing set construction", 285000, True),
+        ("catering", "Craft services - full series", 92000, True),
+        ("post_production", "Post production - 10 episodes", 380000, True),
+        ("post_production", "Finishing - deliverables package", 85000, True),
+        ("legal", "Guild agreements - SAG WGA DGA", 35000, False),
+        ("insurance", "E and O insurance", 28000, False),
+        ("other", "Pilot development costs", 125000, False),
+    ],
+    2: [
+        ("labor", "Director / Producer", 85000, True),
+        ("labor", "DP - documentary", 42000, True),
+        ("labor", "Sound recordist", 28000, True),
+        ("labor", "Editor", 65000, True),
+        ("equipment", "Camera package - Canon EOS C70", 18000, True),
+        ("equipment", "Audio package", 8500, True),
+        ("locations", "Location permits - 12 locations", 14000, True),
+        ("locations", "Archive footage licensing", 28000, True),
+        ("catering", "Craft services - 40 shoot days", 22000, True),
+        ("post_production", "Editorial - 6 months", 68000, True),
+        ("post_production", "Color and sound mix", 22000, True),
+        ("post_production", "Music licensing", 18000, False),
+        ("legal", "E and O plus legal", 12000, False),
+    ],
+    3: [
+        ("labor", "Director", 45000, True),
+        ("labor", "DP - genre specialist", 38000, True),
+        ("labor", "Production Designer - practical FX", 32000, True),
+        ("labor", "Makeup and SFX team", 65000, True),
+        ("equipment", "Camera package - RED V-Raptor", 28000, True),
+        ("equipment", "Practical effects package", 42000, True),
+        ("locations", "Primary location - estate rental", 85000, True),
+        ("locations", "Secondary locations x 4", 28000, True),
+        ("catering", "Craft services - 30 days", 18000, True),
+        ("post_production", "Editorial and online", 45000, True),
+        ("post_production", "Sound design and mix", 32000, True),
+        ("visual_effects", "VFX - 42 shots horror fx", 65000, True),
+        ("other", "Script acquisition", 15000, False),
+        ("insurance", "Production insurance", 12000, False),
+    ]
+}
+
+MONITORING_EVENTS = [
+    {
+        "title": "Georgia Film Tax Credit - Resident Payroll Documentation Update",
+        "summary": "The Georgia Film Office has issued updated guidance on resident payroll verification. Productions must now provide county-level residency confirmation in addition to state tax filings. Effective for productions beginning principal photography after March 1 2026.",
+        "url": "https://www.georgia.org/film",
+    },
+    {
+        "title": "California Film Commission - Round 4 Application Period Opens",
+        "summary": "The California Film Commission has opened Round 4 applications for the Film and Television Tax Credit Program 3.0. Total allocation is 330M. Applications accepted through May 15 2026.",
+        "url": "https://film.ca.gov/tax-credit/",
+    },
+    {
+        "title": "New Mexico - Streaming Series Uplift Extended Through 2028",
+        "summary": "New Mexico has extended its 5 percent additional uplift for streaming series productions through December 31 2028. Productions may now claim up to 35 percent on qualified New Mexico expenditures.",
+        "url": "https://nmfilm.com/incentives/",
+    },
+    {
+        "title": "UK Film Tax Relief - BFI Cultural Test Guidance Updated",
+        "summary": "The BFI has published updated guidance for the Cultural Test under the UK Film Tax Relief. Changes affect scoring in the Cultural Content and Cultural Contribution categories.",
+        "url": "https://www.bfi.org.uk/get-funding-and-support/film-tax-relief",
+    },
+    {
+        "title": "Louisiana - Transferable Credit Market Rate Update",
+        "summary": "Current market rates for Louisiana transferable entertainment tax credits are trading between 86-89 cents on the dollar. Demand remains strong from corporate tax buyers.",
+        "url": "https://www.louisianaentertainment.gov",
+    },
+]
+
+
+async def seed_expenses(production, expense_data):
+    existing = await prisma.expense.count(where={"productionId": production.id})
+    if existing > 0:
+        print(f"  Expenses already seeded for {production.title} - skipping")
+        return 0
+    count = 0
+    base_date = datetime(2026, 1, 15)
+    for i, (category, description, amount, qualifying) in enumerate(expense_data):
+        expense_date = base_date + timedelta(days=i * 3)
+        await prisma.expense.create(data={
+            "productionId": production.id,
+            "category": category,
+            "description": description,
+            "amount": float(amount),
+            "expenseDate": expense_date,
+            "isQualifying": qualifying,
+            "vendorName": description.split("-")[0].strip() + " LLC",
+        })
+        count += 1
+    print(f"  Created {count} expenses for {production.title}")
+    return count
+
+
+async def seed_monitoring_events():
+    existing = await prisma.monitoringevent.count()
+    if existing >= len(MONITORING_EVENTS):
+        print("  Monitoring events already seeded - skipping")
+        return 0
+    sources = await prisma.monitoringsource.find_many()
+    source_id = sources[0].id if sources else None
+    count = 0
+    for i, event in enumerate(MONITORING_EVENTS):
+        days_ago = len(MONITORING_EVENTS) - i
+        published = datetime.utcnow() - timedelta(days=days_ago)
+        await prisma.monitoringevent.create(data={
+            "title": event["title"],
+            "summary": event["summary"],
+            "url": event["url"],
+            "sourceId": source_id,
+            "publishedAt": published,
+            "isRead": False,
+            "severity": "medium",
+        })
+        count += 1
+    print(f"  Created {count} monitoring events")
+    return count
+
+
+async def main():
+    print("\n" + "=" * 60)
+    print("PilotForge Demo Pre-Load Script")
+    print("=" * 60)
+    await prisma.connect()
+    print("Connected to database\n")
+    productions = await prisma.production.find_many(order={"createdAt": "asc"})
+    if not productions:
+        print("No productions found. Run the main seed first.")
+        await prisma.disconnect()
+        return
+    print(f"Found {len(productions)} productions\n")
+    print("Seeding expenses...")
+    for i, production in enumerate(productions):
+        expense_data = EXPENSES_BY_PRODUCTION.get(i, EXPENSES_BY_PRODUCTION[0])
+        await seed_expenses(production, expense_data)
+    print("\nSeeding monitoring events...")
+    await seed_monitoring_events()
+    prod_count = await prisma.production.count()
+    exp_count = await prisma.expense.count()
+    juris_count = await prisma.jurisdiction.count()
+    rules_count = await prisma.incentiverule.count()
+    events_count = await prisma.monitoringevent.count()
+    print(f"\n{'=' * 60}")
+    print("Demo database ready:")
+    print(f"  Productions:       {prod_count}")
+    print(f"  Expenses:          {exp_count}")
+    print(f"  Jurisdictions:     {juris_count}")
+    print(f"  Incentive rules:   {rules_count}")
+    print(f"  Monitoring events: {events_count}")
+    print(f"{'=' * 60}")
+    print("\nPilotForge is ready for demo.")
+    print("URL: https://taxincentivecomplianceplatform-production.up.railway.app")
+    print("Login: admin@pilotforge.com / pilotforge2024\n")
+    await prisma.disconnect()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
