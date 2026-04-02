@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2, Pencil } from 'lucide-react';
+import { Search, Plus, Filter, ChevronRight, X, Loader2, Trash2, Pencil, ExternalLink } from 'lucide-react';
 import type { Production, Jurisdiction } from '../types';
 import api from '../api';
 import ProductionDetail from './ProductionDetail';
@@ -287,6 +287,19 @@ export default function Productions() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
+                    {/* View Expenses button for "The Wild World" */}
+                    {p.title === 'The Wild World' && (
+                      <a
+                        href="http://127.0.0.1:8001/static/budget_demo.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View budget line items"
+                        className="text-slate-300 hover:text-blue-500 transition-colors"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={e => handleEditOpen(e, p)}
@@ -346,7 +359,7 @@ export default function Productions() {
         )}
       </div>
 
-      {/* Edit Production Modal */}
+      {/* Edit Production Modal (unchanged) */}
       {editProduction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleEditClose} />
@@ -442,7 +455,7 @@ export default function Productions() {
         </div>
       )}
 
-      {/* New Production Modal */}
+      {/* New Production Modal (unchanged) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />

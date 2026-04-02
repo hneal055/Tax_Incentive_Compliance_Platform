@@ -94,7 +94,7 @@ EXPENSES_BY_PRODUCTION = {
         ("visual_effects", "VFX — 42 shots horror fx", 65000, True),
         ("other", "Script acquisition", 15000, False),
         ("insurance", "Production insurance", 12000, False),
-    ]
+    ],
 }
 
 MONITORING_EVENTS = [
@@ -132,9 +132,7 @@ MONITORING_EVENTS = [
 
 
 async def seed_expenses(production, expense_data):
-    existing = await prisma.expense.count(
-        where={"productionId": production.id}
-    )
+    existing = await prisma.expense.count(where={"productionId": production.id})
     if existing > 0:
         print(f"  Expenses already seeded for {production.title} — skipping")
         return 0
@@ -143,15 +141,17 @@ async def seed_expenses(production, expense_data):
     base_date = datetime(2026, 1, 15)
     for i, (category, description, amount, qualifying) in enumerate(expense_data):
         expense_date = base_date + timedelta(days=i * 3)
-        await prisma.expense.create(data={
-            "productionId": production.id,
-            "category": category,
-            "description": description,
-            "amount": float(amount),
-            "expenseDate": expense_date,
-            "isQualifying": qualifying,
-            "vendorName": f"{description.split('—')[0].strip()} LLC",
-        })
+        await prisma.expense.create(
+            data={
+                "productionId": production.id,
+                "category": category,
+                "description": description,
+                "amount": float(amount),
+                "expenseDate": expense_date,
+                "isQualifying": qualifying,
+                "vendorName": f"{description.split('—')[0].strip()} LLC",
+            }
+        )
         count += 1
 
     print(f"  Created {count} expenses for {production.title}")
@@ -171,15 +171,17 @@ async def seed_monitoring_events():
     for i, event in enumerate(MONITORING_EVENTS):
         days_ago = len(MONITORING_EVENTS) - i
         published = datetime.utcnow() - timedelta(days=days_ago)
-        await prisma.monitoringevent.create(data={
-            "title": event["title"],
-            "summary": event["summary"],
-            "url": event["url"],
-            "sourceId": source_id,
-            "publishedAt": published,
-            "isRead": False,
-            "severity": "medium",
-        })
+        await prisma.monitoringevent.create(
+            data={
+                "title": event["title"],
+                "summary": event["summary"],
+                "url": event["url"],
+                "sourceId": source_id,
+                "publishedAt": published,
+                "isRead": False,
+                "severity": "medium",
+            }
+        )
         count += 1
 
     print(f"  Created {count} monitoring events")
@@ -194,9 +196,7 @@ async def main():
     await prisma.connect()
     print("Connected to database\n")
 
-    productions = await prisma.production.find_many(
-        order={"createdAt": "asc"}
-    )
+    productions = await prisma.production.find_many(order={"createdAt": "asc"})
 
     if not productions:
         print("No productions found. Run the main seed first.")

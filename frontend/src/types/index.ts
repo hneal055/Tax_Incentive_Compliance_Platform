@@ -1,3 +1,5 @@
+// frontend/src/types.ts
+
 export interface Production {
   id: string;
   title: string;
@@ -5,6 +7,7 @@ export interface Production {
   productionCompany: string;
   budgetTotal: number;
   budgetQualifying?: number;
+  budget_id?: string;            // <-- ADD THIS LINE
   startDate: string;
   endDate?: string;
   jurisdictionId: string;
@@ -13,6 +16,7 @@ export interface Production {
   updatedAt: string;
 }
 
+// All other interfaces remain unchanged...
 export interface Jurisdiction {
   id: string;
   code: string;

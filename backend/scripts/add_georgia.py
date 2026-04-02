@@ -12,7 +12,11 @@ def add_georgia():
         if existing:
             logger.info(f"Georgia already exists: {existing.id}")
             return existing.id
-        georgia = Jurisdiction(id=str(uuid.uuid4()), name="Georgia", type="state")
+        georgia = Jurisdiction(
+            id=str(uuid.uuid4()),
+            name="Georgia",
+            type="state"
+        )
         db.add(georgia)
         db.commit()
         logger.info(f"✅ Created Georgia: {georgia.id}")

@@ -1,13 +1,13 @@
-"""Seed Georgia Film Tax Credit program."""
-import sys, os, uuid, json, logging
-from datetime import datetime
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from app.db.session import SessionLocal
-from app.models.jurisdiction import Jurisdiction
-from app.models.program import Program
-logger = logging.getLogger(__name__)
+import sys
+import os
+import json
 
-GEORGIA_RULES = {
+sys.path.insert(0, 'backend')
+from app.db.session import SessionLocal
+from app.models.program import Program
+
+# Correct, clean JSON structure
+corrected_rules = {
     "program_name": "Georgia Film Tax Credit",
     "jurisdiction": "Georgia",
     "version": "2025.01",
@@ -22,8 +22,13 @@ GEORGIA_RULES = {
         }
     ],
     "qualified_expenditure_categories": [
-        "above_the_line", "below_the_line", "post_production",
-        "visual_effects", "music_production", "transportation", "lodging"
+        "above_the_line",
+        "below_the_line",
+        "post_production",
+        "visual_effects",
+        "music_production",
+        "transportation",
+        "lodging"
     ],
     "minimum_requirements": [
         {
@@ -49,14 +54,12 @@ GEORGIA_RULES = {
     "local_hire_bonus": {
         "rate": 0.05,
         "threshold": 0.15,
-        "description": "Additional 5% when Georgia resident crew exceeds 15% of total crew",
-        "condition": "local_hire_percentage >= 0.15"
+        "description": "Additional 5% when Georgia resident crew exceeds 15% of total crew"
     },
     "diversity_bonus": {
         "rate": 0.02,
         "threshold": 0.20,
-        "description": "Additional 2% for diversity in key creative roles",
-        "condition": "diversity_score >= 0.20"
+        "description": "Additional 2% for diversity in key creative roles"
     },
     "application_deadlines": {
         "initial_application": {
@@ -76,50 +79,24 @@ GEORGIA_RULES = {
     ],
     "transferability": {
         "allowed": True,
-        "fee_market_range": "0.88 - 0.94 per dollar",
-        "notes": "Credits are transferable; typically sold at 88-94% of face value"
+        "fee_market_range": "0.88 - 0.94 per dollar"
     },
     "sunset_date": "2028-12-31"
 }
 
-def seed_georgia():
-    db = SessionLocal()
-    try:
-        georgia = db.query(Jurisdiction).filter(Jurisdiction.name == "Georgia").first()
-        if not georgia:
-            logger.error("Georgia jurisdiction not found. Run add_georgia first.")
-            return None
-        
-        existing = db.query(Program).filter(
-            Program.name == "Georgia Film Tax Credit",
-            Program.jurisdiction_id == georgia.id
-        ).first()
-        
-        if existing:
-            existing.rules = json.dumps(GEORGIA_RULES)
-            existing.updated_at = datetime.utcnow()
-            logger.info(f"Updated existing program: {existing.id}")
-            return existing.id
-        else:
-            program = Program(
-                id=str(uuid.uuid4()),
-                jurisdiction_id=georgia.id,
-                name="Georgia Film Tax Credit",
-                description="Georgia's film tax credit program offers 20% base credit with bonuses.",
-                rules=json.dumps(GEORGIA_RULES),
-                active=True
-            )
-            db.add(program)
-            db.commit()
-            logger.info(f"Created new program: {program.id}")
-            return program.id
-            
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        db.rollback()
-        raise
-    finally:
-        db.close()
-
-if __name__ == "__main__":
-    seed_georgia()
+db = SessionLocal()
+try:
+    program = db.query(Program).filter(Program.name == "Georgia Film Tax Credit").first()
+    if program:
+        program.rules = json.dumps(corrected_rules, indent=2)
+        db.commit()
+        print("✅ Georgia rules updated with correct JSON structure.")
+        print(f"Program ID: {program.id}")
+        print(f"Base credit rate: {corrected_rules['base_credit_rate']*100}%")
+    else:
+        print("❌ Program not found. Run seed_georgia.py first.")
+except Exception as e:
+    print(f"Error: {e}")
+    db.rollback()
+finally:
+    db.close()
