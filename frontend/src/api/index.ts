@@ -118,7 +118,7 @@ export const api = {
 
     getByJurisdiction: (jurisdictionId: string) =>
       withFallback(
-        async () => { const r = await apiClient.get(`/jurisdictions/${jurisdictionId}/incentive-rules`); return r.data as IncentiveRule[]; },
+        async () => { const r = await apiClient.get(`/incentive-rules?jurisdiction_id=${jurisdictionId}`); return (r.data.rules ?? r.data) as IncentiveRule[]; },
         () => mockApi.incentiveRules.getByJurisdiction(jurisdictionId),
         `incentiveRules.getByJurisdiction(${jurisdictionId})`,
       ),
@@ -127,7 +127,7 @@ export const api = {
   expenses: {
     list: (productionId: string) =>
       withFallback(
-        async () => { const r = await apiClient.get(`/productions/${productionId}/expenses`); return r.data as Expense[]; },
+        async () => { const r = await apiClient.get(`/productions/${productionId}/expenses`); return (r.data.expenses ?? r.data) as Expense[]; },
         () => mockApi.expenses.list(productionId),
         `expenses.list(${productionId})`,
       ),

@@ -15,6 +15,7 @@ from src.utils.auth_utils import hash_password
 from src.utils.seed import run_migrations, seed_all
 from src.utils.scheduler import start_scheduler, stop_scheduler
 from src.api.routes import router
+from src.api.largo import router as largo_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -59,13 +60,7 @@ app = FastAPI(title="PilotForge API", description="Tax Incentive Intelligence fo
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
-
-frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
-if frontend_dist.exists():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
-    logger.info(f"✅ Frontend mounted from {frontend_dist}")
-else:
-    logger.warning("⚠️  Frontend dist not found")
+app.include_router(largo_router)  # mounts at /api/v1/integrations (its own prefix)
 
 @app.get("/health", tags=["Health"])
 async def health_check():
@@ -74,6 +69,20 @@ async def health_check():
         return {"status": "healthy", "database": "connected", "version": settings.API_VERSION}
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "unhealthy", "database": "disconnected", "error": str(e)})
+
+backend_static = Path(__file__).parent.parent / "backend" / "static"
+if backend_static.exists():
+    app.mount("/static", StaticFiles(directory=str(backend_static)), name="static")
+    logger.info(f"✅ Static demo pages mounted from {backend_static}")
+else:
+    logger.warning(f"⚠️  Backend static directory not found at {backend_static}")
+
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+    logger.info(f"✅ Frontend mounted from {frontend_dist}")
+else:
+    logger.warning("⚠️  Frontend dist not found")
 
 @app.exception_handler(404)
 async def not_found_handler(request, exc):

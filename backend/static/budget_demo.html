@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Budget Line Items Demo</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Budget Line Items for "The Wild World"</h1>
+    <div id="items">Loading...</div>
+    <script>
+        const budgetId = '792fa76e-4f7d-4773-aa22-4377466e29fe';
+        fetch(`http://127.0.0.1:8001/api/v1/budgets/${budgetId}/line_items`)
+            .then(res => res.json())
+            .then(data => {
+                const div = document.getElementById('items');
+                if (data.length === 0) {
+                    div.innerHTML = '<p>No items found.</p>';
+                } else {
+                    const table = '<table><tr><th>Description</th><th>Amount ($)</th><th>Category</th><th>Eligible</th></tr>' +
+                        data.map(item => `<tr><td>${item.description}</td><td>${item.amount.toLocaleString()}</td><td>${item.category}</td><td>${item.is_eligible ? '✅ Yes' : '❌ No'}</td></tr>`).join('') +
+                        '</table>';
+                    div.innerHTML = table;
+                }
+            })
+            .catch(err => {
+                document.getElementById('items').innerHTML = '<p>Error: ' + err.message + '</p>';
+            });
+    </script>
+</body>
+</html>

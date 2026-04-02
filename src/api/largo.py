@@ -13,80 +13,140 @@ router = APIRouter(prefix="/api/v1/integrations", tags=["Integrations"])
 
 
 class LargoProject(BaseModel):
-    title: str
-    production_type: Optional[str] = "feature_film"
-    budget_total: Optional[float] = 0
-    budget_qualifying: Optional[float] = None
-    jurisdictions: Optional[List[str]] = []
-    start_date: Optional[str] = None
-    production_company: Optional[str] = None
+    project_name: str
+    genre: Optional[str] = "drama"
+    budget: Optional[float] = 0
+    locations: Optional[List[str]] = []
+    audience_score: Optional[float] = None
+    include_logo: Optional[bool] = False
+    local_hire_pct: Optional[float] = 0.0
+    diversity_score: Optional[float] = 0.0
 
 
 @router.post("/largo/project", summary="Evaluate a project from Largo or MMB Connector")
 async def evaluate_largo_project(project: LargoProject):
-    jurisdiction_codes = [j.upper() for j in (project.jurisdictions or [])]
-    if not jurisdiction_codes:
-        all_j = await prisma.jurisdiction.find_many(where={"active": True}, order={"name": "asc"})
-        jurisdiction_codes = [j.code for j in all_j]
+    location_terms = [loc.strip() for loc in (project.locations or []) if loc.strip()]
 
-    results = []
-    for code in jurisdiction_codes:
-        j = await prisma.jurisdiction.find_first(
-            where={"OR": [{"code": code}, {"name": {"contains": code}}], "active": True}
+    # Collect unique jurisdictions matching any of the location terms
+    seen_ids: set = set()
+    jurisdictions = []
+    for term in location_terms:
+        matches = await prisma.jurisdiction.find_many(
+            where={
+                "OR": [
+                    {"code": {"equals": term.upper()}},
+                    {"name": {"contains": term}},
+                ],
+                "active": True,
+            }
         )
-        if not j:
-            continue
+        for j in matches:
+            if j.id not in seen_ids:
+                seen_ids.add(j.id)
+                jurisdictions.append(j)
+
+    if not jurisdictions:
+        jurisdictions = await prisma.jurisdiction.find_many(
+            where={"active": True}, order={"name": "asc"}, take=5
+        )
+
+    budget = project.budget or 0
+    qualifying_spend = budget * 0.8
+
+    recommendations = []
+    total_credits = 0.0
+
+    for j in jurisdictions:
         rules = await prisma.incentiverule.find_many(
             where={"jurisdictionId": j.id, "active": True},
-            order={"percentage": "desc"}
+            order={"percentage": "desc"},
         )
         if not rules:
             continue
+
         top_rule = rules[0]
-        qualifying = project.budget_qualifying or (project.budget_total * 0.8 if project.budget_total else 0)
         rate = (top_rule.percentage or 0) / 100
-        max_credit = top_rule.maxCredit
-        estimated_credit = qualifying * rate
-        if max_credit:
-            estimated_credit = min(estimated_credit, max_credit)
         min_spend = top_rule.minSpend or 0
-        qualifies = qualifying >= min_spend if min_spend else True
-        results.append({
-            "jurisdiction_id": j.id,
-            "jurisdiction_name": j.name,
-            "jurisdiction_code": j.code,
-            "country": j.country,
-            "website": j.website,
-            "top_rule": {
-                "name": top_rule.ruleName,
-                "code": top_rule.ruleCode,
-                "incentive_type": top_rule.incentiveType,
-                "percentage": top_rule.percentage,
-                "min_spend": top_rule.minSpend,
-                "max_credit": top_rule.maxCredit,
-            },
-            "analysis": {
-                "budget_total": project.budget_total,
-                "budget_qualifying": qualifying,
-                "estimated_credit": round(estimated_credit, 2),
-                "effective_rate": round(estimated_credit / project.budget_total * 100, 2) if project.budget_total else 0,
-                "meets_minimum_spend": qualifies,
-                "recommendation": "Strong candidate" if qualifies and estimated_credit > 0 else "Does not qualify",
-            }
+        eligible = qualifying_spend >= min_spend if min_spend else True
+        ineligibility_reason = None if eligible else f"Minimum qualifying spend of ${min_spend:,.0f} not met (current: ${qualifying_spend:,.0f})"
+
+        base_credit = qualifying_spend * rate if eligible else 0.0
+        if top_rule.maxCredit:
+            base_credit = min(base_credit, top_rule.maxCredit)
+
+        bonuses_applied = []
+        bonus_amount = 0.0
+
+        # Local hire bonus (5% if >= 15% local crew)
+        if eligible and (project.local_hire_pct or 0) >= 0.15:
+            bonus_rate = 0.05
+            bonus = qualifying_spend * bonus_rate
+            bonuses_applied.append({"name": "Local Hire Bonus", "rate": bonus_rate, "amount": round(bonus, 2)})
+            bonus_amount += bonus
+
+        # Georgia-specific: promotional logo bonus
+        if eligible and project.include_logo and j.code == "GA":
+            bonus_rate = 0.10
+            bonus = qualifying_spend * bonus_rate
+            bonuses_applied.append({"name": "Georgia Promotional Logo Bonus", "rate": bonus_rate, "amount": round(bonus, 2)})
+            bonus_amount += bonus
+
+        estimated_credit = round(base_credit + bonus_amount, 2)
+        effective_rate = round((estimated_credit / budget) if budget else 0, 4)
+
+        # Audit readiness score (simple heuristic)
+        audit_score = 60
+        if budget >= 1_000_000:
+            audit_score += 15
+        if (project.local_hire_pct or 0) >= 0.15:
+            audit_score += 10
+        if (project.diversity_score or 0) >= 0.20:
+            audit_score += 10
+        if project.include_logo:
+            audit_score += 5
+        audit_score = min(audit_score, 100)
+
+        # Pre-application checklist from rule requirements
+        checklist = [
+            {"item": "File production registration with state film office", "required": True},
+            {"item": f"Meet minimum qualifying spend of ${min_spend:,.0f}", "required": bool(min_spend)},
+            {"item": "Maintain detailed expense records by category", "required": True},
+            {"item": "Obtain certificate of good standing", "required": True},
+        ]
+        if j.code == "GA" and project.include_logo:
+            checklist.append({"item": "Include Georgia promotional logo in end credits", "required": True})
+        reqs = top_rule.requirements or {}
+        if isinstance(reqs, dict) and reqs.get("promotionalRequirements"):
+            if {"item": "Include Georgia promotional logo in end credits", "required": True} not in checklist:
+                checklist.append({"item": "Include Georgia promotional logo in end credits", "required": False})
+
+        if eligible:
+            total_credits += estimated_credit
+
+        recommendations.append({
+            "program_name": top_rule.ruleName,
+            "jurisdiction": f"{j.name}, {j.country}",
+            "eligible": eligible,
+            "estimated_credit": estimated_credit,
+            "credit_rate": effective_rate,
+            "ineligibility_reason": ineligibility_reason,
+            "qualified_spend": round(qualifying_spend, 2),
+            "qualified_categories": top_rule.eligibleExpenses or [],
+            "bonuses_applied": bonuses_applied,
+            "audit_readiness_score": audit_score,
+            "pre_application_checklist": checklist,
+            "transferable": False,
+            "sunset_date": top_rule.expirationDate.isoformat() if top_rule.expirationDate else None,
         })
 
-    results.sort(key=lambda x: x["analysis"]["estimated_credit"], reverse=True)
+    recommendations.sort(key=lambda r: r["estimated_credit"], reverse=True)
 
     return {
-        "project": {
-            "title": project.title,
-            "production_type": project.production_type,
-            "budget_total": project.budget_total,
-            "budget_qualifying": project.budget_qualifying,
-            "production_company": project.production_company,
-        },
-        "total_jurisdictions_analyzed": len(results),
-        "top_recommendation": results[0] if results else None,
-        "all_results": results,
-        "powered_by": "PilotForge Rules Engine v1 — Scene Reader Studio Technologies LLC"
+        "project_name": project.project_name,
+        "genre": project.genre,
+        "budget": budget,
+        "audience_score": project.audience_score,
+        "total_estimated_credits": round(total_credits, 2),
+        "recommendations": recommendations,
+        "powered_by": "PilotForge Rules Engine v1 — Scene Reader Studio Technologies LLC",
     }
