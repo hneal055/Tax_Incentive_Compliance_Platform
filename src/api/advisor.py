@@ -235,17 +235,9 @@ async def _stream_scripted(text: str) -> AsyncGenerator[str, None]:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _get_client():
-    """Return an AsyncAnthropic client, or None if not available (no key or package missing)."""
-    from src.utils.config import settings as _settings
-    api_key = _settings.ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return None
-    try:
-        import anthropic  # lazy import — optional dependency
-        return anthropic.AsyncAnthropic(api_key=api_key)
-    except ImportError:
-        logger.warning("anthropic package not installed — using scripted demo responses")
-        return None
+    """Return an AsyncAnthropic client, or None to use scripted demo responses."""
+    # DEMO MODE: always use scripted responses (no API key required)
+    return None
 
 
 async def _build_system_prompt(production_id: Optional[str]) -> str:
