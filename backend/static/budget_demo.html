@@ -1,35 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Budget Line Items Demo</title>
+    <title>Budget Line Items</title>
     <style>
-        body { font-family: sans-serif; margin: 40px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        body { font-family: sans-serif; margin: 40px; background: #f8fafc; color: #1e293b; }
+        h1 { font-size: 1.5rem; margin-bottom: 4px; }
+        .sub { color: #64748b; font-size: 0.875rem; margin-bottom: 24px; }
+        table { border-collapse: collapse; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; }
+        td { border-top: 1px solid #f1f5f9; padding: 10px 14px; font-size: 0.875rem; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+        .yes { background: #d1fae5; color: #065f46; }
+        .no  { background: #f1f5f9; color: #64748b; }
+        .summary { display: flex; gap: 24px; margin-bottom: 20px; }
+        .card { background: #fff; border-radius: 8px; padding: 14px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); min-width: 140px; }
+        .card-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 4px; }
+        .card-value { font-size: 1.25rem; font-weight: 700; color: #1e293b; }
+        .accent { background: #2563eb; color: #fff; }
+        .accent .card-label { color: #bfdbfe; }
+        .accent .card-value { color: #fff; }
+        .error { color: #dc2626; }
+        .empty { color: #64748b; font-style: italic; padding: 24px 0; }
     </style>
 </head>
 <body>
-    <h1>Budget Line Items for "The Wild World"</h1>
-    <div id="items">Loading...</div>
+    <h1 id="title">Budget Line Items</h1>
+    <p class="sub" id="sub">Loading…</p>
+    <div class="summary" id="summary" style="display:none">
+        <div class="card"><div class="card-label">Total Spend</div><div class="card-value" id="total">—</div></div>
+        <div class="card accent"><div class="card-label">Qualifying</div><div class="card-value" id="qualifying">—</div></div>
+        <div class="card"><div class="card-label">Non-Qualifying</div><div class="card-value" id="nonq">—</div></div>
+        <div class="card"><div class="card-label">Line Items</div><div class="card-value" id="count">—</div></div>
+    </div>
+    <div id="content">Loading…</div>
+
     <script>
-        const budgetId = '792fa76e-4f7d-4773-aa22-4377466e29fe';
-        fetch(`http://127.0.0.1:8001/api/v1/budgets/${budgetId}/line_items`)
-            .then(res => res.json())
-            .then(data => {
-                const div = document.getElementById('items');
-                if (data.length === 0) {
-                    div.innerHTML = '<p>No items found.</p>';
-                } else {
-                    const table = '<table><tr><th>Description</th><th>Amount ($)</th><th>Category</th><th>Eligible</th></tr>' +
-                        data.map(item => `<tr><td>${item.description}</td><td>${item.amount.toLocaleString()}</td><td>${item.category}</td><td>${item.is_eligible ? '✅ Yes' : '❌ No'}</td></tr>`).join('') +
-                        '</table>';
-                    div.innerHTML = table;
+        const BASE = window.location.origin;
+        const fmt = n => '$' + (n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : n.toFixed(0));
+
+        async function load() {
+            try {
+                // 1. Login
+                const loginRes = await fetch(`${BASE}/api/0.1.0/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@pilotforge.com', password: 'pilotforge2024' })
+                });
+                const { access_token } = await loginRes.json();
+                const headers = { Authorization: `Bearer ${access_token}` };
+
+                // 2. Get productions, pick first one
+                const prodsRes = await fetch(`${BASE}/api/0.1.0/productions`, { headers });
+                const prodsData = await prodsRes.json();
+                const productions = prodsData.productions ?? prodsData;
+                if (!productions.length) {
+                    document.getElementById('content').innerHTML = '<p class="empty">No productions found.</p>';
+                    return;
                 }
-            })
-            .catch(err => {
-                document.getElementById('items').innerHTML = '<p>Error: ' + err.message + '</p>';
-            });
+                const prod = productions[0];
+                document.getElementById('title').textContent = `Budget Line Items for "${prod.title}"`;
+                document.getElementById('sub').textContent = `${prod.productionCompany} · ${prod.productionType}`;
+
+                // 3. Fetch expenses
+                const expRes = await fetch(`${BASE}/api/0.1.0/productions/${prod.id}/expenses`, { headers });
+                const expData = await expRes.json();
+                const expenses = expData.expenses ?? expData;
+
+                // 4. Summary
+                const total = expenses.reduce((s, e) => s + e.amount, 0);
+                const qual  = expenses.reduce((s, e) => s + (e.isQualifying ? e.amount : 0), 0);
+                document.getElementById('total').textContent = fmt(total);
+                document.getElementById('qualifying').textContent = fmt(qual);
+                document.getElementById('nonq').textContent = fmt(total - qual);
+                document.getElementById('count').textContent = expenses.length;
+                document.getElementById('summary').style.display = 'flex';
+
+                // 5. Table
+                const content = document.getElementById('content');
+                if (!expenses.length) {
+                    content.innerHTML = '<p class="empty">No expenses logged yet.</p>';
+                    return;
+                }
+                content.innerHTML = '<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Vendor</th><th>Amount</th><th>Qualifying</th></tr></thead><tbody>' +
+                    expenses.map(e => `<tr>
+                        <td>${(e.expenseDate||'').split('T')[0]}</td>
+                        <td>${e.category}</td>
+                        <td>${e.description}</td>
+                        <td>${e.vendorName || '—'}</td>
+                        <td><strong>${fmt(e.amount)}</strong></td>
+                        <td><span class="badge ${e.isQualifying ? 'yes' : 'no'}">${e.isQualifying ? '✓ Yes' : 'No'}</span></td>
+                    </tr>`).join('') +
+                    '</tbody></table>';
+            } catch (err) {
+                document.getElementById('content').innerHTML = `<p class="error">Error: ${err.message}</p>`;
+            }
+        }
+        load();
     </script>
 </body>
 </html>
