@@ -447,61 +447,6 @@ export default function Jurisdictions() {
           </button>
         </div>
 
-        {/* ── Selected jurisdiction detail panel ─────────────── */}
-        {selectedJur && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 flex items-center gap-6">
-            {/* Rate badge */}
-            <div className="shrink-0 text-center">
-              <div className="text-3xl font-black text-blue-700 leading-none">{getBestRate(selectedJur.id)}%</div>
-              <div className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mt-0.5">Base Rate</div>
-            </div>
-
-            <div className="w-px h-10 bg-blue-200 shrink-0" />
-
-            {/* Details */}
-            <div className="flex-1 grid grid-cols-3 gap-4 min-w-0">
-              <div>
-                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Jurisdiction</p>
-                <p className="text-sm font-bold text-slate-900 truncate">
-                  <span className="text-slate-400 font-semibold mr-1">{selectedJur.code}</span>
-                  {selectedJur.name}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Country</p>
-                <p className="text-sm font-semibold text-slate-700 truncate">{selectedJur.country}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase mb-0.5">Min Spend · Type</p>
-                <p className="text-sm font-semibold text-slate-700">{getMinSpend(selectedJur.id)} · {capitalize(selectedJur.type)}</p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="shrink-0 flex items-center gap-2">
-              {selectedJur.website && (
-                <a
-                  href={selectedJur.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-blue-200 rounded-lg text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Official Site
-                </a>
-              )}
-              <button
-                type="button"
-                onClick={() => setSelectedId(null)}
-                title="Dismiss"
-                aria-label="Dismiss selected jurisdiction"
-                className="p-1.5 text-blue-300 hover:text-blue-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Loading */}
         {isLoading && (

@@ -92,13 +92,15 @@ export const mockApi = {
     create: (productionId: string, data: Partial<Expense>): Promise<Expense> => {
       const e: Expense = {
         id: uuid(),
-        production_id: productionId,
+        productionId,
         category: data.category ?? 'other',
+        description: data.description ?? '',
         amount: data.amount ?? 0,
-        date: data.date ?? now().split('T')[0],
-        vendor: data.vendor,
-        created_at: now(),
-        updated_at: now(),
+        expenseDate: data.expenseDate ?? now().split('T')[0],
+        isQualifying: data.isQualifying ?? true,
+        vendorName: data.vendorName,
+        createdAt: now(),
+        updatedAt: now(),
       };
       expenses[productionId] = [...(expenses[productionId] ?? []), e];
       return delay(e);
