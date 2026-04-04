@@ -16,9 +16,46 @@ const SUGGESTED_PROMPTS = [
 
 const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') as string;
-const API_VERSION = (import.meta.env.VITE_API_VERSION || '0.1.0') as string;
-const TOKEN_KEY = 'pilotforge_token';
+
+// ─── Client-side scripted demo responses ─────────────────────────────────────
+
+const SCRIPTED: [string[], string][] = [
+  [['georgia', 'expens', 'qualif'], `**Georgia Qualifying Expenses**\n\nGeorgia's Entertainment Industry Investment Act covers:\n\n**Eligible:** Below-the-line labor, equipment rentals, location fees, catering, post-production, and set construction.\n\n**Excluded:** Story rights, music rights, above-the-line compensation (unless resident).\n\nMinimum **$500k** qualified spend required. Georgia residents earn an additional **10% uplift** on their wages. The base credit is **20%**, rising to **30%** with the Georgia promotional logo included in end credits.`],
+  [['california', 'ca film'], `**California Film Tax Credit 3.0**\n\nCalifornia offers a **25% credit** on qualified expenditures.\n\n**Requirements:**\n- Minimum $1M qualified spend\n- 75% of principal photography must occur in California\n- Competitive allocation — projects are scored and ranked\n\n**Eligible:** Below-the-line labor, equipment, locations, post-production.\n\n**Max credit:** $25M per project. Apply through the California Film Commission.`],
+  [['new york', 'ny film'], `**New York Film Tax Credit**\n\nNew York provides a **25–35% credit** on qualified below-the-line costs.\n\n**Base rate:** 25% statewide\n**Upstate bonus:** Additional 10% for productions outside NYC\n\n**Requirements:**\n- Minimum $1M qualified spend\n- 75% of shooting days in New York\n- Non-competitive — credits issued as earned\n\n**Max credit:** $7M per project.`],
+  [['new mexico'], `**New Mexico Film Production Tax Credit**\n\nNew Mexico is one of the most competitive programs in the US:\n\n**Base credit:** 25% on all direct production expenditures\n**Rural bonus:** +5% for productions outside Bernalillo County\n**TV bonus:** +10% for series spending over $30M in NM\n\n**No minimum spend** — accessible to indie and large-budget productions alike. Credits are refundable.`],
+  [['louisiana', ' la '], `**Louisiana Entertainment Tax Credit**\n\nLouisiana offers a **25% base rebate** plus a **15% resident payroll** uplift.\n\n**Requirements:** Minimum $300k qualified spend.\n\nCredits are fully transferable and can be sold to Louisiana taxpayers at 85–90 cents on the dollar, effectively converting them to cash.`],
+  [['illinois', 'chicago'], `**Illinois Film Production Tax Credit**\n\nIllinois offers a **30% base credit** on Illinois production spending.\n\n**Chicago Bonus:** An additional **15% uplift** applies for productions spending in underserved Chicago communities.\n\n**Requirements:**\n- Minimum $50k Illinois spend\n- No cap on credit amount\n- Transferable credits — can be sold or carried forward\n\nIllinois is one of the few states with no maximum credit cap.`],
+  [['uk', 'united kingdom', 'avec', 'british'], `**UK Audio-Visual Expenditure Credit (AVEC)**\n\nThe UK offers a **25% credit** (34% for animation and children's TV) on UK qualifying expenditure.\n\n**Requirements:**\n- At least 10% of total budget must be UK spend\n- Must pass the British Cultural Test\n- No minimum spend threshold\n\n**Eligible:** UK-based crew, facilities, locations, and post-production. The credit is payable even with no UK tax liability.`],
+  [['ireland', 'section 481'], `**Ireland Section 481 Film Tax Credit**\n\nIreland offers a **32% credit** on eligible Irish expenditure — one of the highest rates in Europe.\n\n**Requirements:**\n- No minimum spend threshold\n- Production must have cultural or creative merit\n- Some Irish-resident crew required\n\nApplies to features, animation, TV series, and documentaries.`],
+  [['stack', 'federal', 'section 181', '181'], `**Stacking Federal + State Incentives**\n\n**Section 181 (Federal):** Allows 100% first-year deduction for productions up to $15M ($20M in qualifying low-income communities).\n\n**How stacking works:**\n1. Section 181 reduces your federal taxable income\n2. State tax credit directly offsets your state tax liability\n3. Both are claimed independently\n\n**Example:** A $5M production in Georgia could claim 181 federally AND the 30% Georgia credit — effectively double-dipping on a legitimate, IRS-sanctioned basis.`],
+  [['document', 'application', 'require', 'checklist', 'submit'], `**Standard Application Requirements**\n\n**Pre-production (file before shooting):**\n- Production company registration in the state\n- Estimated budget with expense category breakdown\n- Shooting schedule with location-days by county\n- Proof of financing\n\n**Post-production (file after final delivery):**\n- Final cost report certified by a CPA\n- Payroll records with residency verification\n- Vendor invoices for all qualified expenditures\n\nMost states allow electronic filing. Allow 60–120 days for credit certification.`],
+  [['minimum spend', 'threshold', 'minimum budget'], `**Minimum Spend Requirements by Jurisdiction**\n\n| Jurisdiction | Minimum Spend |\n|---|---|\n| New Mexico | None |\n| Ireland | None |\n| UK | 10% UK spend |\n| Louisiana | $300K |\n| Georgia | $500K |\n| California | $1M |\n| New York | $1M |\n| Illinois | $50K |`],
+  [['compare', 'vs', 'versus', 'best', 'highest', 'top'], `**Top Film Incentive Jurisdictions — 2025**\n\n| Jurisdiction | Rate | Min Spend | Notes |\n|---|---|---|---|\n| New Mexico | 25–40% | None | Fully refundable |\n| Georgia | 20–30% | $500K | Logo bonus available |\n| Louisiana | 25%+15% | $300K | Transferable credits |\n| New York | 25–35% | $1M | Upstate bonus |\n| California | 25% | $1M | Competitive allocation |\n| UK | 25% | None | AVEC — cultural test |\n| Ireland | 32% | None | Section 481 |\n| Illinois | 30–45% | $50K | No credit cap |\n\nThe best jurisdiction depends on your budget, shooting locations, and crew residency.`],
+];
+
+const DEFAULT_RESPONSE = `That's a great question about film tax incentives. PilotForge tracks incentive programs across 23 jurisdictions globally.\n\nFor personalized analysis, try asking about:\n- **Specific jurisdictions** (Georgia, New York, California, UK, Ireland)\n- **Qualifying expenses** for a particular state\n- **Stacking strategies** to combine federal and state incentives\n- **Application requirements** and documentation\n- **Minimum spend** thresholds by jurisdiction`;
+
+function getScriptedResponse(q: string): string {
+  const lower = q.toLowerCase();
+  for (const [keywords, response] of SCRIPTED) {
+    if (keywords.some(kw => lower.includes(kw))) return response;
+  }
+  return DEFAULT_RESPONSE;
+}
+
+async function streamScripted(text: string, onChunk: (chunk: string) => void): Promise<void> {
+  const words = text.split(' ');
+  let chunk = '';
+  for (let i = 0; i < words.length; i++) {
+    chunk += (i === 0 ? '' : ' ') + words[i];
+    if ((i + 1) % 3 === 0 || i === words.length - 1) {
+      onChunk(chunk);
+      chunk = '';
+      await new Promise(r => setTimeout(r, 30));
+    }
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,8 +95,6 @@ function AIAdvisor() {
   const [production, setProd]   = useState('none');
   const [productions, setProductions] = useState<Production[]>([]);
   const bottomRef               = useRef<HTMLDivElement>(null);
-  // Track the current streaming abort controller so we can cancel mid-stream
-  const abortRef                = useRef<AbortController | null>(null);
 
   useEffect(() => {
     api.productions.list().then(setProductions).catch(() => {});
@@ -80,12 +115,6 @@ function AIAdvisor() {
       ts: new Date(),
     };
 
-    // Snapshot history before state update for API payload
-    const historyForApi = [
-      ...messages.filter(m => m.id !== '0'),
-      userMsg,
-    ].map(m => ({ role: m.role, content: m.content }));
-
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setTyping(true);
@@ -95,100 +124,29 @@ function AIAdvisor() {
     let content = '';
     let firstChunk = true;
 
-    const abort = new AbortController();
-    abortRef.current = abort;
-
     try {
-      const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch(
-        `${API_BASE}/api/${API_VERSION}/advisor/chat`,
-        {
-          method: 'POST',
-          signal: abort.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            messages: historyForApi,
-            production_id: production !== 'none' ? production : undefined,
-          }),
+      // Demo mode: stream scripted responses client-side (no backend/API key needed)
+      await streamScripted(getScriptedResponse(trimmed), (chunk) => {
+        content += chunk;
+        if (firstChunk) {
+          firstChunk = false;
+          setTyping(false);
+          setMessages(prev => [
+            ...prev,
+            { id: assistantId, role: 'assistant', content, ts: assistantTs },
+          ]);
+        } else {
+          setMessages(prev =>
+            prev.map(m => m.id === assistantId ? { ...m, content } : m)
+          );
         }
-      );
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error((err as { detail?: string }).detail ?? `HTTP ${response.status}`);
-      }
-
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        // Keep the last (potentially incomplete) line in the buffer
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6);
-          if (payload === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(payload) as { delta?: string; error?: string };
-            if (parsed.error) throw new Error(parsed.error);
-            if (parsed.delta) {
-              content += parsed.delta;
-              if (firstChunk) {
-                firstChunk = false;
-                setTyping(false);
-                setMessages(prev => [
-                  ...prev,
-                  { id: assistantId, role: 'assistant', content, ts: assistantTs },
-                ]);
-              } else {
-                setMessages(prev =>
-                  prev.map(m => m.id === assistantId ? { ...m, content } : m)
-                );
-              }
-            }
-          } catch (parseErr) {
-            if ((parseErr as Error).message !== 'Unexpected end of JSON input') {
-              throw parseErr;
-            }
-          }
-        }
-      }
-
-      // If we never got a chunk (empty response), show a fallback
-      if (firstChunk) {
-        setTyping(false);
-        setMessages(prev => [
-          ...prev,
-          { id: assistantId, role: 'assistant', content: 'No response received. Please try again.', ts: assistantTs },
-        ]);
-      }
+      });
     } catch (err: unknown) {
-      if ((err as { name?: string }).name === 'AbortError') return;
       setTyping(false);
-      const detail = err instanceof Error ? err.message : 'Unknown error';
-      const errorContent =
-        detail.includes('not configured') || detail.includes('503')
-          ? 'AI Advisor is currently unavailable — the service is not configured on the server.'
-          : detail.includes('credit balance') || detail.includes('billing') || detail.includes('402')
-          ? 'AI Advisor is temporarily unavailable. Please contact your administrator to resolve the service configuration.'
-          : `Sorry, I encountered an error: ${detail}. Please try again.`;
       setMessages(prev => [
         ...prev,
-        { id: assistantId, role: 'assistant', content: errorContent, ts: assistantTs },
+        { id: assistantId, role: 'assistant', content: 'Sorry, something went wrong. Please try again.', ts: assistantTs },
       ]);
-    } finally {
-      abortRef.current = null;
     }
   }
 
@@ -200,7 +158,6 @@ function AIAdvisor() {
   }
 
   function handleClear() {
-    abortRef.current?.abort();
     setMessages([{ id: '0', role: 'assistant', content: WELCOME, ts: new Date() }]);
     setInput('');
     setTyping(false);
