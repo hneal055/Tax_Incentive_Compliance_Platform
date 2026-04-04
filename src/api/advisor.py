@@ -236,7 +236,8 @@ async def _stream_scripted(text: str) -> AsyncGenerator[str, None]:
 
 def _get_client():
     """Return an AsyncAnthropic client, or None if not available (no key or package missing)."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    from src.utils.config import settings as _settings
+    api_key = _settings.ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return None
     try:
