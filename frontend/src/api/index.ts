@@ -147,6 +147,19 @@ export const api = {
         `expenses.delete(${productionId}/${expenseId})`,
         false,
       ),
+
+    generate: (productionId: string, replace = false) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.post(
+            `/productions/${productionId}/expenses/generate?replace=${replace}`
+          );
+          return r.data as { created: number; totalAmount: number; qualifyingAmount: number; expenses: Expense[] };
+        },
+        async () => ({ created: 0, totalAmount: 0, qualifyingAmount: 0, expenses: [] as Expense[] }),
+        `expenses.generate(${productionId})`,
+        false,
+      ),
   },
 
   calculations: {

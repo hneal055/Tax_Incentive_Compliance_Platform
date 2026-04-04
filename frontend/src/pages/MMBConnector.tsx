@@ -90,6 +90,55 @@ const GENRES = [
   'Documentary', 'Animation', 'Sci-Fi', 'Romance', 'TV Series',
 ];
 
+// ─── MMB CSV parser ──────────────────────────────────────────────────────────
+
+function toTitleCase(str: string): string {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function parseMMBCsv(text: string): { budget: number; locations: string; genre: string } {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const locationParts: string[] = [];
+  let budget = 0;
+  let genre = 'Drama';
+
+  for (const line of lines) {
+    if (line.startsWith('Account,')) continue; // header row
+    const cols = line.split(',');
+    if (cols.length < 9) continue;
+    const acct = parseInt(cols[0]);
+    if (isNaN(acct)) continue;
+    const desc = cols[1]?.trim() || '';
+    const qty = cols[2]?.trim();
+    const total = parseFloat(cols[8]) || 0;
+
+    // Infer genre from cast/story account descriptions
+    if (acct >= 1000 && acct < 2000) {
+      if (/documentary|research/i.test(desc)) genre = 'Documentary';
+      else if (/screenplay|script/i.test(desc)) genre = 'Drama';
+    }
+
+    // Extract locations from accounts 4100–4199
+    if (acct >= 4100 && acct <= 4199) {
+      const catMatch = desc.match(/LOCATIONS?\s*[-–—]\s*(.+)/i);
+      if (catMatch) {
+        locationParts.push(toTitleCase(catMatch[1].trim()));
+      } else {
+        const feeMatch = desc.match(/Location\s+Fees?\s*[-–—]\s*(.+)/i);
+        if (feeMatch) locationParts.push(feeMatch[1].trim());
+      }
+    }
+
+    // Budget: sum only line items (rows where qty is populated)
+    if (qty && total > 0) {
+      budget += total;
+    }
+  }
+
+  const unique = [...new Set(locationParts)];
+  return { budget: Math.round(budget), locations: unique.join(', '), genre };
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function StatBadge({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
@@ -406,10 +455,22 @@ export default function MMBConnector() {
                 type="file"
                 accept=".mmbx,.mdb,.csv,.xlsx,.xls"
                 className="hidden"
-                onChange={e => {
+                onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
                   setFile(f);
-                  if (f) setForm(prev => ({ ...prev, projectName: f.name.replace(/\.[^.]+$/, '') }));
+                  if (!f) return;
+                  const projectName = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+                  if (f.name.toLowerCase().endsWith('.csv')) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      const text = ev.target?.result as string;
+                      const parsed = parseMMBCsv(text);
+                      setForm(prev => ({ ...prev, projectName, ...parsed }));
+                    };
+                    reader.readAsText(f);
+                  } else {
+                    setForm(prev => ({ ...prev, projectName }));
+                  }
                 }}
               />
               {file ? (

@@ -93,6 +93,8 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [expenseForm, setExpenseForm] = useState({ category: 'labor', description: '', amount: '', expenseDate: new Date().toISOString().split('T')[0], isQualifying: true, vendorName: '' });
   const [expenseSaving, setExpenseSaving] = useState(false);
+  const [expenseGenerating, setExpenseGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
   const [rules, setRules] = useState<IncentiveRule[]>([]);
   const [calcResult, setCalcResult] = useState<CalculationResult | null>(null);
@@ -167,6 +169,19 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
       await api.expenses.delete(productionId, expenseId);
       loadExpenses();
     } catch { /* silent */ }
+  }
+
+  async function handleGenerateExpenses(replace = false) {
+    setExpenseGenerating(true);
+    setGenerateError(null);
+    try {
+      await api.expenses.generate(productionId, replace);
+      loadExpenses();
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : 'Generation failed');
+    } finally {
+      setExpenseGenerating(false);
+    }
   }
 
   async function handleCalculate() {
@@ -298,12 +313,41 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
             </div>
 
             {/* Toolbar */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-3">
               <p className="text-sm text-slate-500">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
-              <button type="button" onClick={() => setShowAddExpense(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
-                <Plus className="w-4 h-4" />{showAddExpense ? 'Cancel' : 'Add Expense'}
-              </button>
+              <div className="flex items-center gap-2">
+                {expenses.length === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateExpenses(false)}
+                    disabled={expenseGenerating}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {expenseGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Generate Line Items
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateExpenses(true)}
+                    disabled={expenseGenerating}
+                    title="Delete all existing expenses and regenerate from budget template"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    {expenseGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Regenerate
+                  </button>
+                )}
+                <button type="button" onClick={() => setShowAddExpense(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                  <Plus className="w-4 h-4" />{showAddExpense ? 'Cancel' : 'Add Expense'}
+                </button>
+              </div>
             </div>
+            {generateError && (
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <XCircle className="w-4 h-4 shrink-0" />{generateError}
+              </div>
+            )}
 
             {/* Add form */}
             {showAddExpense && (
@@ -328,7 +372,7 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Date</label>
-                    <input type="date" required value={expenseForm.expenseDate} onChange={e => setExpenseForm(f => ({ ...f, expenseDate: e.target.value }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                    <input type="date" required title="Expense date" value={expenseForm.expenseDate} onChange={e => setExpenseForm(f => ({ ...f, expenseDate: e.target.value }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Vendor (optional)</label>
@@ -377,7 +421,7 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
                         <td className="px-4 py-3 font-semibold text-slate-900">{fmt(exp.amount)}</td>
                         <td className="px-4 py-3">{exp.isQualifying ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-slate-300" />}</td>
                         <td className="px-4 py-3">
-                          <button onClick={() => handleDeleteExpense(exp.id)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button type="button" title="Delete expense" onClick={() => handleDeleteExpense(exp.id)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </tr>
                     ))}
