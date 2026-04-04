@@ -13,12 +13,15 @@ import {
   PlayCircle,
   ClipboardCheck,
   RefreshCw,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import api from '../api';
 import type {
   Production,
   Jurisdiction,
   IncentiveRule,
+  Expense,
   CalculationResult,
   ComplianceItem,
   ComplianceStats,
@@ -85,8 +88,11 @@ interface Props {
 export default function ProductionDetail({ productionId, onBack }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [production, setProduction] = useState<Production | null>(null);
-  const [budgetItems, setBudgetItems] = useState<any[]>([]);
-  const [budgetLoading, setBudgetLoading] = useState(false);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expensesLoading, setExpensesLoading] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({ category: 'labor', description: '', amount: '', expenseDate: new Date().toISOString().split('T')[0], isQualifying: true, vendorName: '' });
+  const [expenseSaving, setExpenseSaving] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
   const [rules, setRules] = useState<IncentiveRule[]>([]);
   const [calcResult, setCalcResult] = useState<CalculationResult | null>(null);
@@ -130,7 +136,38 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
 
   useEffect(() => {
     if (tab === 'compliance' && !compliance) loadCompliance();
-  }, [tab]);
+    if (tab === 'expenses') loadExpenses();
+  }, [tab]); // intentionally omits loadCompliance/loadExpenses to avoid infinite loop
+
+  function loadExpenses() {
+    setExpensesLoading(true);
+    api.expenses.list(productionId)
+      .then(data => setExpenses(data))
+      .catch(() => {})
+      .finally(() => setExpensesLoading(false));
+  }
+
+  async function handleAddExpense(e: React.FormEvent) {
+    e.preventDefault();
+    if (!expenseForm.description || !expenseForm.amount) return;
+    setExpenseSaving(true);
+    try {
+      await api.expenses.create(productionId, {
+        ...expenseForm,
+        amount: parseFloat(expenseForm.amount),
+      });
+      setExpenseForm({ category: 'labor', description: '', amount: '', expenseDate: new Date().toISOString().split('T')[0], isQualifying: true, vendorName: '' });
+      setShowAddExpense(false);
+      loadExpenses();
+    } catch { /* silent */ } finally { setExpenseSaving(false); }
+  }
+
+  async function handleDeleteExpense(expenseId: string) {
+    try {
+      await api.expenses.delete(productionId, expenseId);
+      loadExpenses();
+    } catch { /* silent */ }
+  }
 
   async function handleCalculate() {
     if (!calcJurId) return;
@@ -138,8 +175,8 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
     try {
       const result = await api.calculations.calculate(productionId, calcJurId);
       setCalcResult(result);
-    } catch (e: any) {
-      setCalcError(e.message);
+    } catch (e) {
+      setCalcError(e instanceof Error ? e.message : 'Calculation failed');
     } finally {
       setCalcLoading(false);
     }
@@ -162,24 +199,8 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
     } catch { /* silent */ }
   }
 
-  const totalSpend = budgetItems.reduce((s, i) => s + i.amount, 0);
-  const qualifyingSpend = budgetItems.reduce((s, i) => s + (i.is_eligible ? i.amount : 0), 0);
-  const nonQualifying = totalSpend - qualifyingSpend;
-
-  const byCategory = budgetItems.reduce<Record<string, any[]>>((acc, i) => {
-    const cat = i.category || 'other';
-    (acc[cat] ||= []).push(i);
-    return acc;
-  }, {});
-
-  const categoryRows = Object.entries(byCategory)
-    .map(([cat, items]) => ({
-      category: cat,
-      total: items.reduce((s, i) => s + i.amount, 0),
-      qualifying: items.reduce((s, i) => s + (i.is_eligible ? i.amount : 0), 0),
-      count: items.length,
-    }))
-    .sort((a, b) => b.total - a.total);
+  const totalSpend = expenses.reduce((s, i) => s + i.amount, 0);
+  const qualifyingSpend = expenses.reduce((s, i) => s + (i.isQualifying ? i.amount : 0), 0);
 
   const jur = jurisdictions.find(j => j.id === production?.jurisdictionId);
 
@@ -245,8 +266,8 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard label="Total Budget" value={fmt(production.budgetTotal)} />
-              <StatCard label="Total Spend" value={budgetItems.length ? fmt(totalSpend) : '—'} sub={`${budgetItems.length} items`} />
-              <StatCard label="Qualifying Spend" value={budgetItems.length ? fmt(qualifyingSpend) : '—'} sub={totalSpend ? fmtPct((qualifyingSpend / totalSpend) * 100) + ' of spend' : undefined} accent />
+              <StatCard label="Total Spend" value={expenses.length ? fmt(totalSpend) : '—'} sub={`${expenses.length} items`} />
+              <StatCard label="Qualifying Spend" value={expenses.length ? fmt(qualifyingSpend) : '—'} sub={totalSpend ? fmtPct((qualifyingSpend / totalSpend) * 100) + ' of spend' : undefined} accent />
               <StatCard label="Incentive Rules" value={String(rules.length)} sub={jur?.name ?? 'No jurisdiction'} />
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -266,18 +287,104 @@ export default function ProductionDetail({ productionId, onBack }: Props) {
           </div>
         )}
 
-        {/* Expenses Tab - Embedded working static page */}
+        {/* Expenses Tab */}
         {tab === 'expenses' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <iframe
-                src="http://127.0.0.1:8001/static/budget_demo.html"
-                title="Budget Line Items"
-                className="w-full border-0"
-                style={{ height: '600px' }}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              />
+          <div className="space-y-5">
+            {/* Summary bar */}
+            <div className="grid grid-cols-3 gap-4">
+              <StatCard label="Total Spend" value={expenses.length ? fmt(totalSpend) : '—'} sub={`${expenses.length} line items`} />
+              <StatCard label="Qualifying" value={expenses.length ? fmt(qualifyingSpend) : '—'} sub={totalSpend ? fmtPct((qualifyingSpend / totalSpend) * 100) + ' of spend' : undefined} accent />
+              <StatCard label="Non-Qualifying" value={expenses.length ? fmt(totalSpend - qualifyingSpend) : '—'} />
             </div>
+
+            {/* Toolbar */}
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-slate-500">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
+              <button type="button" onClick={() => setShowAddExpense(v => !v)} className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                <Plus className="w-4 h-4" />{showAddExpense ? 'Cancel' : 'Add Expense'}
+              </button>
+            </div>
+
+            {/* Add form */}
+            {showAddExpense && (
+              <form onSubmit={handleAddExpense} className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+                <h3 className="text-sm font-bold text-slate-900">New Expense</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Category</label>
+                    <select title="Expense category" value={expenseForm.category} onChange={e => setExpenseForm(f => ({ ...f, category: e.target.value }))} className="w-full px-3 py-2 border rounded-lg text-sm">
+                      {['labor','equipment','locations','post_production','travel','catering','legal','insurance','visual_effects','other'].map(c => (
+                        <option key={c} value={c}>{capitalize(c)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Amount ($)</label>
+                    <input type="number" min="0.01" step="0.01" required value={expenseForm.amount} onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Description</label>
+                    <input type="text" required value={expenseForm.description} onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Camera rental" className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Date</label>
+                    <input type="date" required value={expenseForm.expenseDate} onChange={e => setExpenseForm(f => ({ ...f, expenseDate: e.target.value }))} className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase mb-1 text-slate-500">Vendor (optional)</label>
+                    <input type="text" value={expenseForm.vendorName} onChange={e => setExpenseForm(f => ({ ...f, vendorName: e.target.value }))} placeholder="Vendor name" className="w-full px-3 py-2 border rounded-lg text-sm" />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="checkbox" checked={expenseForm.isQualifying} onChange={e => setExpenseForm(f => ({ ...f, isQualifying: e.target.checked }))} className="w-4 h-4 rounded" />
+                      <span className="font-medium text-slate-700">Qualifying expense</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowAddExpense(false)} className="px-4 py-2 text-sm border rounded-lg">Cancel</button>
+                  <button type="submit" disabled={expenseSaving} className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm rounded-lg disabled:opacity-50">
+                    {expenseSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}Save Expense
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Expense list */}
+            {expensesLoading ? (
+              <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
+            ) : expenses.length === 0 ? (
+              <div className="bg-white rounded-xl border p-16 text-center">
+                <DollarSign className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-700 font-semibold">No expenses yet</p>
+                <p className="text-slate-400 text-sm">Click "Add Expense" to log your first line item.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>{['Date','Category','Description','Vendor','Amount','Qualifying',''].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase text-slate-500">{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {expenses.map(exp => (
+                      <tr key={exp.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 text-slate-500">{exp.expenseDate?.split('T')[0]}</td>
+                        <td className="px-4 py-3"><span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">{capitalize(exp.category)}</span></td>
+                        <td className="px-4 py-3 font-medium text-slate-900">{exp.description}</td>
+                        <td className="px-4 py-3 text-slate-500">{exp.vendorName || '—'}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-900">{fmt(exp.amount)}</td>
+                        <td className="px-4 py-3">{exp.isQualifying ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-slate-300" />}</td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => handleDeleteExpense(exp.id)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

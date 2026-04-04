@@ -52,13 +52,17 @@ export interface IncentiveRule {
 
 export interface Expense {
   id: string;
-  production_id: string;
+  productionId: string;
   category: string;
+  subcategory?: string;
+  description: string;
   amount: number;
-  date: string;
-  vendor?: string;
-  created_at: string;
-  updated_at: string;
+  expenseDate: string;
+  isQualifying: boolean;
+  qualifyingNote?: string;
+  vendorName?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CalculationResult {
