@@ -2,9 +2,5 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
-[build.args]
-VITE_API_URL = "https://taxincentivecomplianceplatform-production-f11d.up.railway.app"
-NGINX_CONF = "nginx.railway.conf"
-
 [deploy]
 healthcheckPath = "/health"
