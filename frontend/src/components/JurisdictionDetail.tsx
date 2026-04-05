@@ -9,15 +9,31 @@ interface Program {
   name: string;
   code: string;
   incentive_type: string;
+  credit_type: string;
   percentage: number;
   min_spend: number | null;
   max_credit: number | null;
   eligible_expenses: string[] | null;
   excluded_expenses: string[] | null;
-  requirements: string[] | null;
+  requirements: string | null;
   effective_date: string | null;
   active: boolean;
 }
+
+const CREDIT_TYPE_STYLE: Record<string, string> = {
+  refundable:     'bg-emerald-100 text-emerald-700',
+  transferable:   'bg-blue-100 text-blue-700',
+  non_refundable: 'bg-amber-100 text-amber-700',
+  rebate:         'bg-violet-100 text-violet-700',
+  grant:          'bg-sky-100 text-sky-700',
+};
+const CREDIT_TYPE_LABEL: Record<string, string> = {
+  refundable:     'Refundable',
+  transferable:   'Transferable',
+  non_refundable: 'Non-Refundable',
+  rebate:         'Cash Rebate',
+  grant:          'Grant',
+};
 
 interface Props {
   code: string;
@@ -71,7 +87,12 @@ function ProgramCard({ program }: { program: Program }) {
             {program.max_credit != null && ` · Cap ${fmt$(program.max_credit)}`}
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {program.credit_type && (
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${CREDIT_TYPE_STYLE[program.credit_type] ?? 'bg-slate-100 text-slate-500'}`}>
+              {CREDIT_TYPE_LABEL[program.credit_type] ?? program.credit_type}
+            </span>
+          )}
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
             program.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
           }`}>
@@ -116,7 +137,10 @@ function ProgramCard({ program }: { program: Program }) {
             <div>
               <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-2">Requirements</p>
               <ul className="space-y-1">
-                {program.requirements.map((req, i) => (
+                {(typeof program.requirements === 'string'
+                  ? program.requirements.split('\n')
+                  : program.requirements as string[]
+                ).filter(Boolean).map((req, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
                     {req}
@@ -203,10 +227,12 @@ function Estimator({ programs }: { programs: Program[] }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function JurisdictionDetail({ code, name, onBack }: Props) {
-  const [programs,  setPrograms]  = useState<Program[]>([]);
-  const [website,   setWebsite]   = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error,     setError]     = useState<string | null>(null);
+  const [programs,       setPrograms]       = useState<Program[]>([]);
+  const [website,        setWebsite]        = useState<string | null>(null);
+  const [currency,       setCurrency]       = useState<string>('USD');
+  const [treatyPartners, setTreatyPartners] = useState<string[]>([]);
+  const [isLoading,      setIsLoading]      = useState(true);
+  const [error,          setError]          = useState<string | null>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -215,7 +241,11 @@ export default function JurisdictionDetail({ code, name, onBack }: Props) {
     setError(null);
 
     api.georgia.getPrograms(code)
-      .then(res => setPrograms(res.programs))
+      .then(res => {
+        setPrograms(res.programs);
+        setCurrency((res as Record<string, unknown>)['currency'] as string ?? 'USD');
+        setTreatyPartners((res as Record<string, unknown>)['treaty_partners'] as string[] ?? []);
+      })
       .catch(() => setError(`Failed to load incentive data for ${name}.`))
       .finally(() => setIsLoading(false));
 
@@ -310,6 +340,30 @@ export default function JurisdictionDetail({ code, name, onBack }: Props) {
             value={fmt$(minSpend)}
             sub="Minimum qualifying expenditure"
           />
+        )}
+
+        {/* Currency */}
+        {currency && currency !== 'USD' && (
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+            <p className="text-[11px] font-bold text-amber-700 tracking-widest uppercase mb-1">Currency</p>
+            <p className="text-lg font-black text-amber-800">{currency}</p>
+            <p className="text-[11px] text-amber-600 mt-1">Incentive paid in local currency — FX rate applies at claim date.</p>
+          </div>
+        )}
+
+        {/* Treaty Partners */}
+        {treatyPartners.length > 0 && (
+          <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+            <p className="text-[11px] font-bold text-indigo-600 tracking-widest uppercase mb-2">Co-Production Treaties</p>
+            <div className="flex flex-wrap gap-1.5">
+              {treatyPartners.map(t => (
+                <span key={t} className="px-2 py-0.5 bg-white border border-indigo-200 text-indigo-700 text-[11px] font-bold rounded">
+                  {t}
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-indigo-500 mt-2">Productions may qualify for incentives in multiple treaty countries simultaneously.</p>
+          </div>
         )}
 
         {/* Estimator */}

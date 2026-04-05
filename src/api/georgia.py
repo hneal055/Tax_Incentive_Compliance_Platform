@@ -28,7 +28,29 @@ async def get_programs(jid: str):
     if not j:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Jurisdiction not found")
     rules = await prisma.incentiverule.find_many(where={"jurisdictionId": j.id, "active": True}, order={"percentage": "desc"})
-    return {"jurisdiction_id": j.id, "jurisdiction_name": j.name, "jurisdiction_code": j.code, "total": len(rules), "programs": [{"id": r.id, "name": r.ruleName, "code": r.ruleCode, "incentive_type": r.incentiveType, "percentage": r.percentage, "min_spend": r.minSpend, "max_credit": r.maxCredit, "eligible_expenses": r.eligibleExpenses, "excluded_expenses": r.excludedExpenses, "requirements": r.requirements, "effective_date": r.effectiveDate, "active": r.active} for r in rules]}
+    return {
+        "jurisdiction_id": j.id,
+        "jurisdiction_name": j.name,
+        "jurisdiction_code": j.code,
+        "currency": getattr(j, "currency", "USD") or "USD",
+        "treaty_partners": getattr(j, "treatyPartners", []) or [],
+        "total": len(rules),
+        "programs": [{
+            "id": r.id,
+            "name": r.ruleName,
+            "code": r.ruleCode,
+            "incentive_type": r.incentiveType,
+            "credit_type": getattr(r, "creditType", "refundable") or "refundable",
+            "percentage": r.percentage,
+            "min_spend": r.minSpend,
+            "max_credit": r.maxCredit,
+            "eligible_expenses": r.eligibleExpenses,
+            "excluded_expenses": r.excludedExpenses,
+            "requirements": r.requirements,
+            "effective_date": r.effectiveDate,
+            "active": r.active,
+        } for r in rules],
+    }
 
 @router.get("/programs/{pid}/rules")
 async def get_program_rules(pid: str):

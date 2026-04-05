@@ -17,6 +17,8 @@ model Jurisdiction {
   type           String
   description    String?
   website        String?
+  currency       String          @default("USD")
+  treatyPartners String[]
   active         Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -39,6 +41,7 @@ model IncentiveRule {
   maxCredit        Float?
   eligibleExpenses String[]
   excludedExpenses String[]
+  creditType       String       @default("refundable")
   effectiveDate    DateTime
   expirationDate   DateTime?
   requirements     String?

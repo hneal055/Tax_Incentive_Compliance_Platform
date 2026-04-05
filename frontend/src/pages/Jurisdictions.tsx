@@ -261,6 +261,29 @@ export default function Jurisdictions() {
     return `$${v}`;
   }
 
+  function getCreditTypes(jId: string): string[] {
+    return [...new Set(
+      rules.filter(r => r.jurisdictionId === jId && r.active && r.creditType)
+           .map(r => r.creditType)
+    )];
+  }
+
+  const CREDIT_TYPE_STYLE: Record<string, string> = {
+    refundable:     'bg-emerald-50 text-emerald-700 border-emerald-200',
+    transferable:   'bg-blue-50 text-blue-700 border-blue-200',
+    non_refundable: 'bg-amber-50 text-amber-700 border-amber-200',
+    rebate:         'bg-violet-50 text-violet-700 border-violet-200',
+    grant:          'bg-sky-50 text-sky-700 border-sky-200',
+  };
+
+  const CREDIT_TYPE_LABEL: Record<string, string> = {
+    refundable:     'Refundable',
+    transferable:   'Transferable',
+    non_refundable: 'Non-Refundable',
+    rebate:         'Cash Rebate',
+    grant:          'Grant',
+  };
+
   // ── Dynamic filter options ───────────────────────────────────────────────────
 
   const ALL_TYPES = useMemo(() => {
@@ -474,11 +497,13 @@ export default function Jurisdictions() {
         {!isLoading && filtered.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 overflow-y-auto pb-2">
             {filtered.map(j => {
-              const isSelected = selectedId === j.id;
-              const isSaved    = savedIds.has(j.id);
-              const isAdded    = addedIds.has(j.id);
-              const rate       = getBestRate(j.id);
-              const minSpend   = getMinSpend(j.id);
+              const isSelected  = selectedId === j.id;
+              const isSaved     = savedIds.has(j.id);
+              const isAdded     = addedIds.has(j.id);
+              const rate        = getBestRate(j.id);
+              const minSpend    = getMinSpend(j.id);
+              const creditTypes = getCreditTypes(j.id);
+              const treaties    = j.treatyPartners ?? [];
               return (
                 <div
                   key={j.id}
@@ -507,11 +532,38 @@ export default function Jurisdictions() {
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 text-xs w-16 shrink-0">Country</span>
                       <span className="text-slate-700 text-xs font-semibold truncate">{j.country}</span>
+                      {j.currency && j.currency !== 'USD' && (
+                        <span className="ml-auto px-1.5 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded">
+                          {j.currency}
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 text-xs w-16 shrink-0">Min Spend</span>
                       <span className="text-slate-700 text-xs font-semibold">{minSpend}</span>
                     </div>
+                    {creditTypes.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {creditTypes.map(ct => (
+                          <span key={ct} className={`px-1.5 py-0.5 text-[10px] font-semibold rounded border ${CREDIT_TYPE_STYLE[ct] ?? 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                            {CREDIT_TYPE_LABEL[ct] ?? ct}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {treaties.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-slate-400 text-[10px] font-semibold uppercase tracking-wide">Treaties:</span>
+                        {treaties.slice(0, 5).map(t => (
+                          <span key={t} className="px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded border border-indigo-100">
+                            {t}
+                          </span>
+                        ))}
+                        {treaties.length > 5 && (
+                          <span className="text-slate-400 text-[10px]">+{treaties.length - 5} more</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Divider */}

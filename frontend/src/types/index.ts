@@ -25,6 +25,8 @@ export interface Jurisdiction {
   type: string;
   description?: string;
   website?: string;
+  currency: string;
+  treatyPartners: string[];
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +38,7 @@ export interface IncentiveRule {
   ruleName: string;
   ruleCode: string;
   incentiveType: string;
+  creditType: string;
   percentage?: number;
   fixedAmount?: number;
   minSpend?: number;
@@ -44,7 +47,7 @@ export interface IncentiveRule {
   excludedExpenses: string[];
   effectiveDate: string;
   expirationDate?: string;
-  requirements: Record<string, unknown>;
+  requirements: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
