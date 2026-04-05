@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Wallet, TrendingUp, Users, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Production } from '../types';
 import api from '../api';
 
@@ -12,17 +12,41 @@ function fmtMoney(n: number): string {
 
 export default function Dashboard() {
   const [productions, setProductions] = useState<Production[]>([]);
+  const [actualSpend, setActualSpend] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    api.productions.list().then(data => setProductions(Array.isArray(data) ? data : [])).catch(() => {});
+    api.productions.list()
+      .then(data => {
+        const prods = Array.isArray(data) ? data : [];
+        setProductions(prods);
+        // Fetch actual spend for each production in parallel
+        Promise.all(
+          prods.map(p =>
+            api.expenses.list(p.id)
+              .then(expenses => {
+                const total = Array.isArray(expenses)
+                  ? expenses.reduce((s, e) => s + (e.amount ?? 0), 0)
+                  : 0;
+                return { id: p.id, total };
+              })
+              .catch(() => ({ id: p.id, total: 0 }))
+          )
+        ).then(results => {
+          const map: Record<string, number> = {};
+          results.forEach(r => { map[r.id] = r.total; });
+          setActualSpend(map);
+        });
+      })
+      .catch(() => {});
   }, []);
 
   const safeProductions = Array.isArray(productions) ? productions : [];
 
-  const totalBudget = safeProductions.reduce((s, p) => s + (p.budgetTotal ?? 0), 0);
-  const estCredits  = totalBudget * 0.25;
-  const activeCount = safeProductions.filter(p => ['production', 'pre_production'].includes(p.status)).length;
-  const alertCount  = safeProductions.filter(p => p.status === 'planning').length;
+  const totalBudget  = safeProductions.reduce((s, p) => s + (p.budgetTotal ?? 0), 0);
+  const totalActual  = Object.values(actualSpend).reduce((s, v) => s + v, 0);
+  const estCredits   = totalBudget * 0.25;
+  const activeCount  = safeProductions.filter(p => ['production', 'pre_production'].includes(p.status)).length;
+  const alertCount   = safeProductions.filter(p => p.status === 'planning').length;
 
   const metrics = [
     { title: 'Budget Volume',    value: fmtMoney(totalBudget), subtitle: 'Total planned',       icon: Wallet,      iconClass: 'bg-blue-500'    },
@@ -37,7 +61,7 @@ export default function Dashboard() {
     .map(p => ({
       name:   (p.title ?? '').length > 16 ? (p.title ?? '').slice(0, 14) + '...' : (p.title ?? ''),
       budget: parseFloat(((p.budgetTotal ?? 0) / 1_000_000).toFixed(2)),
-      actual: 0,
+      actual: parseFloat(((actualSpend[p.id] ?? 0) / 1_000_000).toFixed(2)),
     }));
 
 
@@ -69,7 +93,12 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-        <h2 className="text-lg font-bold text-slate-900 mb-7">Budget vs. Actual Spend</h2>
+        <div className="flex items-baseline justify-between mb-7">
+          <h2 className="text-lg font-bold text-slate-900">Budget vs. Actual Spend</h2>
+          {totalActual > 0 && (
+            <p className="text-sm text-slate-500">Total actual: <span className="font-semibold text-slate-700">{fmtMoney(totalActual)}</span></p>
+          )}
+        </div>
         {chartData.length === 0 ? (
           <div className="h-[380px] flex items-center justify-center text-slate-400 text-sm">
             No productions yet - add one to see chart data.
@@ -81,9 +110,10 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(v) => `$${v}M`} />
-                <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} formatter={(value: number | string | undefined) => [`$${Number(value ?? 0)}M`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 13 }} />
-                <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={52} name="Budget" />
-                <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={52} name="Actual" />
+                <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} formatter={(value: number | string | undefined) => [`$${Number(value ?? 0).toFixed(2)}M`, '']} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: 13 }} />
+                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 16 }} />
+                <Bar dataKey="budget" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={40} name="Budget" />
+                <Bar dataKey="actual" fill="#818cf8" radius={[4, 4, 0, 0]} barSize={40} name="Actual Spend" />
               </BarChart>
             </ResponsiveContainer>
           </div>
