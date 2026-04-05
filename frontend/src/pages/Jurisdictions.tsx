@@ -300,7 +300,7 @@ export default function Jurisdictions() {
 
   const filtered = useMemo(() => jurisdictions.filter(j => {
     const matchType    = typeFilter    === 'All Types'     || capitalize(j.type) === typeFilter;
-    const matchCountry = countryFilter === 'All Countries' || j.country           === countryFilter;
+    const matchCountry = countryFilter === 'All Countries' || j.country === countryFilter;
     const matchSearch  = !search.trim() ||
       j.name.toLowerCase().includes(search.toLowerCase()) ||
       j.country.toLowerCase().includes(search.toLowerCase()) ||
