@@ -10,7 +10,6 @@ WORKDIR /app
 # VITE_API_URL: empty = relative URLs via nginx proxy (local Docker)
 #               set to backend URL for Railway/cloud deployments
 ARG VITE_API_URL=""
-ARG NGINX_CONF=nginx.conf
 
 # Copy package files
 COPY package*.json ./
@@ -29,17 +28,14 @@ RUN VITE_API_URL=${VITE_API_URL} VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true 
 # Stage 2: Runtime - Nginx
 FROM nginx:alpine
 
-# Re-declare ARG so it's available in this stage
-ARG NGINX_CONF=nginx.conf
-
 # Install wget for health checks (lighter than curl)
 RUN apk add --no-cache wget
 
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy the appropriate nginx config (local: nginx.conf, Railway: nginx.railway.conf)
-COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
+# Always use the Railway-compatible config (PORT-aware, no Docker proxy)
+COPY nginx.railway.conf /etc/nginx/conf.d/default.conf
 
 # Entrypoint substitutes $PORT at startup (Railway injects PORT; local defaults to 3000)
 COPY entrypoint.sh /entrypoint.sh
