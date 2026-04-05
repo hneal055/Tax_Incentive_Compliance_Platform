@@ -62,7 +62,7 @@ interface EvalResult {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const BACKEND_URL = 'http://localhost:8002/api/v1';
+const BACKEND_URL = `${import.meta.env.VITE_API_URL ?? ''}/api/v1`;
 
 function fmt$(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
@@ -97,7 +97,7 @@ function toTitleCase(str: string): string {
 }
 
 function parseMMBCsv(text: string): { budget: number; locations: string; genre: string } {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const locationParts: string[] = [];
   let budget = 0;
   let genre = 'Drama';
@@ -118,14 +118,17 @@ function parseMMBCsv(text: string): { budget: number; locations: string; genre: 
       else if (/screenplay|script/i.test(desc)) genre = 'Drama';
     }
 
-    // Extract locations from accounts 4100–4199
-    if (acct >= 4100 && acct <= 4199) {
-      const catMatch = desc.match(/LOCATIONS?\s*[-–—]\s*(.+)/i);
-      if (catMatch) {
-        locationParts.push(toTitleCase(catMatch[1].trim()));
-      } else {
-        const feeMatch = desc.match(/Location\s+Fees?\s*[-–—]\s*(.+)/i);
-        if (feeMatch) locationParts.push(feeMatch[1].trim());
+    // Extract locations from accounts 4100–4199 (line items only, not section headers)
+    if (acct >= 4101 && acct <= 4199 && qty) {
+      // Look for any separator (hyphen, en-dash, em-dash, colon) and take what follows
+      const sepMatch = desc.match(/(?:location\s+fees?\s*|locations?\s*)[-\u2013\u2014:]\s*(.+)/i)
+                    || desc.match(/[-\u2013\u2014]\s*([A-Za-z].+)/);
+      if (sepMatch) {
+        const loc = sepMatch[1].trim();
+        // Skip purely generic terms
+        if (!/^(permits?|allow|scout|survey|manager)$/i.test(loc)) {
+          locationParts.push(toTitleCase(loc));
+        }
       }
     }
 
@@ -453,13 +456,14 @@ export default function MMBConnector() {
               <input
                 ref={fileRef}
                 type="file"
+                title="Upload MMB file"
                 accept=".mmbx,.mdb,.csv,.xlsx,.xls"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
                   setFile(f);
                   if (!f) return;
-                  const projectName = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+                  const projectName = toTitleCase(f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '));
                   if (f.name.toLowerCase().endsWith('.csv')) {
                     const reader = new FileReader();
                     reader.onload = (ev) => {
@@ -509,6 +513,8 @@ export default function MMBConnector() {
                 <select
                   value={form.genre}
                   onChange={e => set('genre', e.target.value)}
+                  title="Genre"
+                  aria-label="Genre"
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
                 >
                   {GENRES.map(g => <option key={g}>{g}</option>)}

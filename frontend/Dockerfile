@@ -7,6 +7,11 @@ FROM node:20-alpine as builder
 
 WORKDIR /app
 
+# VITE_API_URL: empty = relative URLs via nginx proxy (local Docker)
+#               set to backend URL for Railway/cloud deployments
+ARG VITE_API_URL=""
+ARG NGINX_CONF=nginx.conf
+
 # Copy package files
 COPY package*.json ./
 COPY yarn.lock* ./
@@ -18,12 +23,14 @@ RUN npm ci --prefer-offline --no-audit 2>/dev/null || npm install
 COPY . .
 
 # Build Vite app (skip TypeScript checking, vite will bundle)
-# Empty VITE_API_URL → relative URLs → routed through nginx (no CORS)
-RUN VITE_API_URL="" VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true npx vite build
+RUN VITE_API_URL=${VITE_API_URL} VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true npx vite build
 
 # ============================================
 # Stage 2: Runtime - Nginx
 FROM nginx:alpine
+
+# Re-declare ARG so it's available in this stage
+ARG NGINX_CONF=nginx.conf
 
 # Install wget for health checks (lighter than curl)
 RUN apk add --no-cache wget
@@ -31,8 +38,12 @@ RUN apk add --no-cache wget
 # Copy built assets from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Use nginx config that proxies /api/ to backend — works on direct port 3000 AND via main nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy the appropriate nginx config (local: nginx.conf, Railway: nginx.railway.conf)
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
+
+# Entrypoint substitutes $PORT at startup (Railway injects PORT; local defaults to 3000)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Create health check endpoint (empty file for nginx to serve)
 RUN echo "OK" > /usr/share/nginx/html/health
@@ -42,7 +53,7 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget -q -O - http://localhost:3000/health > /dev/null || exit 1
+    CMD wget -q -O - http://localhost:${PORT:-3000}/health > /dev/null || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start via entrypoint (handles PORT substitution)
+CMD ["/entrypoint.sh"]

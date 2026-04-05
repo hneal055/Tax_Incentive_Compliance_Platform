@@ -3,6 +3,7 @@ Largo / MMB Connector integration endpoint.
 Accepts a project submission and returns incentive analysis.
 """
 import logging
+from datetime import datetime, timezone
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, List
@@ -108,17 +109,18 @@ async def evaluate_largo_project(project: LargoProject):
 
         # Pre-application checklist from rule requirements
         checklist = [
-            {"item": "File production registration with state film office", "required": True},
-            {"item": f"Meet minimum qualifying spend of ${min_spend:,.0f}", "required": bool(min_spend)},
-            {"item": "Maintain detailed expense records by category", "required": True},
-            {"item": "Obtain certificate of good standing", "required": True},
+            "File production registration with state film office",
+            "Maintain detailed expense records by category",
+            "Obtain certificate of good standing",
         ]
+        if min_spend:
+            checklist.insert(1, f"Meet minimum qualifying spend of ${min_spend:,.0f}")
         if j.code == "GA" and project.include_logo:
-            checklist.append({"item": "Include Georgia promotional logo in end credits", "required": True})
-        reqs = top_rule.requirements or {}
-        if isinstance(reqs, dict) and reqs.get("promotionalRequirements"):
-            if {"item": "Include Georgia promotional logo in end credits", "required": True} not in checklist:
-                checklist.append({"item": "Include Georgia promotional logo in end credits", "required": False})
+            checklist.append("Include Georgia promotional logo in end credits")
+        else:
+            reqs = top_rule.requirements or {}
+            if isinstance(reqs, dict) and reqs.get("promotionalRequirements"):
+                checklist.append("Include Georgia promotional logo in end credits")
 
         if eligible:
             total_credits += estimated_credit
@@ -148,5 +150,6 @@ async def evaluate_largo_project(project: LargoProject):
         "audience_score": project.audience_score,
         "total_estimated_credits": round(total_credits, 2),
         "recommendations": recommendations,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "powered_by": "PilotForge Rules Engine v1 — Scene Reader Studio Technologies LLC",
     }
