@@ -9,6 +9,8 @@ WORKDIR /app
 
 # VITE_API_URL: empty = relative URLs via nginx proxy (local Docker)
 #               set to backend URL for Railway/cloud deployments
+# VITE_API_URL: set at build time via --build-arg or Railway Variables (must be a build var, not runtime)
+# Defaults to empty string = relative URLs (local Docker, handled by top-level nginx proxy)
 ARG VITE_API_URL=""
 
 # Copy package files
@@ -21,8 +23,9 @@ RUN npm ci --prefer-offline --no-audit 2>/dev/null || npm install
 # Copy source code
 COPY . .
 
-# Build Vite app (skip TypeScript checking, vite will bundle)
-RUN VITE_API_URL=${VITE_API_URL} VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true npx vite build
+# Build Vite app — VITE_API_URL baked in at build time
+RUN VITE_API_URL="${VITE_API_URL}" VITE_USE_REAL_API=true VITE_USE_REAL_AUTH=true npx vite build && \
+    echo "Built with VITE_API_URL=${VITE_API_URL}"
 
 # ============================================
 # Stage 2: Runtime - Nginx
