@@ -11,7 +11,7 @@ WORKDIR /app
 #               set to backend URL for Railway/cloud deployments
 # VITE_API_URL: set at build time via --build-arg or Railway Variables (must be a build var, not runtime)
 # Defaults to empty string = relative URLs (local Docker, handled by top-level nginx proxy)
-ARG VITE_API_URL=""
+ARG VITE_API_URL="https://taxincentivecomplianceplatform-production-f11d.up.railway.app"
 
 # Copy package files
 COPY package*.json ./
