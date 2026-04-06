@@ -9,13 +9,13 @@ interface Program {
   name: string;
   code: string;
   incentive_type: string;
-  credit_type: string;
+  credit_type?: string;
   percentage: number;
   min_spend: number | null;
   max_credit: number | null;
   eligible_expenses: string[] | null;
   excluded_expenses: string[] | null;
-  requirements: string | null;
+  requirements: string | string[] | null;
   effective_date: string | null;
   active: boolean;
 }
