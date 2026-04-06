@@ -55,13 +55,28 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Database disconnection failed: {e}")
 
-app = FastAPI(title="PilotForge API", description="Tax Incentive Intelligence for Film & TV Productions", version="v1", lifespan=lifespan, docs_url="/docs", redoc_url="/redoc")
+app = FastAPI(
+    title="PilotForge API",
+    description="Tax Incentive Intelligence for Film & TV Productions",
+    version="v1",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
+# ── API routes first — must be registered before static file mounts ───────────
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
 app.include_router(largo_router)  # mounts at /api/v1/integrations (its own prefix)
 
+# ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health_check():
     try:
@@ -70,6 +85,7 @@ async def health_check():
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "unhealthy", "database": "disconnected", "error": str(e)})
 
+# ── Static files — registered AFTER API routes ────────────────────────────────
 backend_static = Path(__file__).parent.parent / "backend" / "static"
 if backend_static.exists():
     app.mount("/static", StaticFiles(directory=str(backend_static)), name="static")
@@ -83,10 +99,6 @@ if frontend_dist.exists():
     logger.info(f"✅ Frontend mounted from {frontend_dist}")
 else:
     logger.warning("⚠️  Frontend dist not found")
-
-@app.exception_handler(404)
-async def not_found_handler(request, exc):
-    return JSONResponse(status_code=404, content={"detail": "Resource not found", "path": str(request.url.path)})
 
 if __name__ == "__main__":
     import uvicorn
