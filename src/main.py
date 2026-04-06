@@ -72,11 +72,9 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# ── API routes first — must be registered before static file mounts ───────────
 app.include_router(router, prefix=f"/api/{settings.API_VERSION}")
-app.include_router(largo_router)  # mounts at /api/v1/integrations (its own prefix)
+app.include_router(largo_router)
 
-# ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health_check():
     try:
@@ -85,7 +83,6 @@ async def health_check():
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "unhealthy", "database": "disconnected", "error": str(e)})
 
-# ── Static files — registered AFTER API routes ────────────────────────────────
 backend_static = Path(__file__).parent.parent / "backend" / "static"
 if backend_static.exists():
     app.mount("/static", StaticFiles(directory=str(backend_static)), name="static")
