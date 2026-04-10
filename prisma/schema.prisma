@@ -22,10 +22,89 @@ model Jurisdiction {
   active         Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  incentiveRules IncentiveRule[]
-  productions    Production[]
 
+  // Sub-jurisdiction hierarchy
+  parentId         String?
+  parent           Jurisdiction?  @relation("SubJurisdictions", fields: [parentId], references: [id])
+  subJurisdictions Jurisdiction[] @relation("SubJurisdictions")
+
+  // Feed monitoring
+  feedUrl         String?
+  feedLastChecked DateTime?
+  feedLastHash    String?
+
+  incentiveRules     IncentiveRule[]
+  productions        Production[]
+  localRules         LocalRule[]
+  pendingRules       PendingRule[]
+  childPolicies      InheritancePolicy[] @relation("ChildPolicies")
+  parentPolicies     InheritancePolicy[] @relation("ParentPolicies")
+
+  @@index([parentId])
   @@map("jurisdictions")
+}
+
+model LocalRule {
+  id             String       @id @default(uuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  name           String
+  code           String       @unique
+  category       String
+  ruleType       String
+  amount         Float?
+  percentage     Float?
+  description    String
+  requirements   String?
+  effectiveDate  DateTime
+  expirationDate DateTime?
+  sourceUrl      String?
+  extractedBy    String       @default("manual")
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@map("local_rules")
+}
+
+model InheritancePolicy {
+  id                  String       @id @default(uuid())
+  childJurisdictionId String
+  parentJurisdictionId String
+  child               Jurisdiction @relation("ChildPolicies", fields: [childJurisdictionId], references: [id], onDelete: Cascade)
+  parent              Jurisdiction @relation("ParentPolicies", fields: [parentJurisdictionId], references: [id], onDelete: Cascade)
+  policyType          String
+  ruleCategory        String?
+  priority            Int          @default(0)
+  notes               String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([childJurisdictionId, parentJurisdictionId, ruleCategory])
+  @@index([childJurisdictionId])
+  @@index([parentJurisdictionId])
+  @@map("inheritance_policies")
+}
+
+model PendingRule {
+  id             String       @id @default(uuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+  sourceUrl      String
+  rawContent     String
+  extractedData  Json
+  confidence     Float?
+  status         String       @default("pending")
+  reviewNotes    String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([status])
+  @@map("pending_rules")
 }
 
 model IncentiveRule {
