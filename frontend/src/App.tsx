@@ -7,6 +7,7 @@ import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
 import Georgia from './pages/Georgia';
 import MMBConnector from './pages/MMBConnector';
+import PendingRules from './pages/PendingRules';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -29,6 +30,7 @@ function App() {
     advisor:      <AIAdvisor />,
     georgia:      <Georgia />,
     mmb:          <MMBConnector />,
+    pendingRules: <PendingRules />,
     admin:        <Admin />,
     settings:     <Settings />,
   };

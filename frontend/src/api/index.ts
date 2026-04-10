@@ -12,6 +12,7 @@ import type {
   ComplianceStats,
   NotificationPreference,
   UserProfile,
+  PendingRule,
 } from '../types';
 
 import { mockApi } from '../mocks/api';
@@ -297,7 +298,7 @@ export const api = {
               name: string;
               code: string;
               incentive_type: string;
-              credit_type: string | null;
+              credit_type: string | null | undefined;
               percentage: number;
               min_spend: number | null;
               max_credit: number | null;
@@ -379,6 +380,26 @@ export const api = {
           false,
         ),
     },
+  },
+};
+
+export const pendingRulesApi = {
+  list: async (status?: string): Promise<{ total: number; pendingCount: number; rules: PendingRule[] }> => {
+    const params = status ? { status } : {};
+    const r = await apiClient.get('/pending-rules', { params });
+    return r.data;
+  },
+  get: async (id: string): Promise<PendingRule> => {
+    const r = await apiClient.get(`/pending-rules/${id}`);
+    return r.data;
+  },
+  approve: async (id: string, reviewNotes?: string): Promise<PendingRule & { promotedRules: number }> => {
+    const r = await apiClient.patch(`/pending-rules/${id}/approve`, { reviewNotes });
+    return r.data;
+  },
+  reject: async (id: string, reviewNotes?: string): Promise<PendingRule> => {
+    const r = await apiClient.patch(`/pending-rules/${id}/reject`, { reviewNotes });
+    return r.data;
   },
 };
 

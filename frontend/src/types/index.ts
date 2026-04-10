@@ -150,3 +150,37 @@ export interface MonitoringEvent {
   publishedAt?: string;
   createdAt: string;
 }
+
+export interface ExtractedRule {
+  name: string;
+  category: string;
+  rule_type: string;
+  amount: number | null;
+  percentage: number | null;
+  description: string;
+  requirements: string | null;
+  effective_date: string | null;
+  expiration_date: string | null;
+}
+
+export interface ExtractedData {
+  rules: ExtractedRule[];
+  confidence: number;
+  summary: string;
+  no_rules_found: boolean;
+}
+
+export interface PendingRule {
+  id: string;
+  jurisdictionId: string;
+  jurisdiction?: { id: string; name: string; code: string };
+  sourceUrl: string;
+  extractedData: ExtractedData;
+  confidence: number | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewNotes: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

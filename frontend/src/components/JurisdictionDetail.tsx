@@ -9,7 +9,7 @@ interface Program {
   name: string;
   code: string;
   incentive_type: string;
-  credit_type?: string;
+  credit_type?: string | null;
   percentage: number;
   min_spend: number | null;
   max_credit: number | null;
