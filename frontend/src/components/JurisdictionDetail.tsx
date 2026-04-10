@@ -243,8 +243,8 @@ export default function JurisdictionDetail({ code, name, onBack }: Props) {
     api.georgia.getPrograms(code)
       .then(res => {
         setPrograms(res.programs);
-        setCurrency((res as Record<string, unknown>)['currency'] as string ?? 'USD');
-        setTreatyPartners((res as Record<string, unknown>)['treaty_partners'] as string[] ?? []);
+        setCurrency(res.currency ?? 'USD');
+        setTreatyPartners(res.treaty_partners ?? []);
       })
       .catch(() => setError(`Failed to load incentive data for ${name}.`))
       .finally(() => setIsLoading(false));

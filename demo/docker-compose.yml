@@ -1,0 +1,109 @@
+name: pilotforge-demo
+
+services:
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: pilotforge-demo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tax_incentive_db
+    volumes:
+      - demo_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pilotforge-demo
+
+  # ── Backend API ─────────────────────────────────────────────────────────────
+  backend:
+    image: hneal1038/pilotforge-backend:latest
+    container_name: pilotforge-demo-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tax_incentive_db
+      APP_ENV: demo
+      LOG_LEVEL: INFO
+      PYTHONUNBUFFERED: "1"
+      API_VERSION: 0.1.0
+      JWT_SECRET: pilotforge-demo-secret-2026
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_HOURS: 8
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('localhost',8000)); s.close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - pilotforge-demo
+
+  # ── Seed (runs once, then exits) ────────────────────────────────────────────
+  seed:
+    image: hneal1038/pilotforge-backend:latest
+    container_name: pilotforge-demo-seed
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/tax_incentive_db
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python -m prisma migrate deploy &&
+        python scripts/seed_jurisdictions.py &&
+        python scripts/seed_incentive_rules.py &&
+        python scripts/seed_more_jurisdictions.py &&
+        python scripts/seed_more_rules.py &&
+        echo '✅ Demo data seeded successfully.'
+      "
+    networks:
+      - pilotforge-demo
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    image: hneal1038/pilotforge-frontend:demo
+    container_name: pilotforge-demo-ui
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pilotforge-demo
+
+  # ── Nginx reverse proxy ─────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: pilotforge-demo-proxy
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - pilotforge-demo
+
+volumes:
+  demo_db:
+
+networks:
+  pilotforge-demo:
+    driver: bridge

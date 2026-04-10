@@ -259,21 +259,39 @@ incentive_rules_data = [
         },
         "active": True
     },
-    # UK
+    # UK — AVEC replaced old Film Tax Relief on 1 Jan 2024 (rate raised to 34%)
     {
         "jurisdictionCode": "UK",
-        "ruleName": "UK Film Tax Relief",
+        "ruleName": "UK Audio-Visual Expenditure Credit (AVEC) — Film & HETV",
         "ruleCode": "UK-FILM-BASE",
         "incentiveType": "tax_credit",
-        "percentage": 25.0,
-        "minSpend": 1000000,
+        "percentage": 34.0,
+        "minSpend": None,
         "eligibleExpenses": ["uk_core_expenditure"],
         "excludedExpenses": ["marketing", "distribution"],
         "effectiveDate": datetime(2024, 1, 1),
         "requirements": {
             "ukSpend": 10,
             "culturalTest": True,
-            "ukProduction": True
+            "ukProduction": True,
+            "hETV_minBudgetPerEpisode": 1000000
+        },
+        "active": True
+    },
+    {
+        "jurisdictionCode": "UK",
+        "ruleName": "UK Audio-Visual Expenditure Credit (AVEC) — Animation & Children's TV",
+        "ruleCode": "UK-AVEC-ANIMATION",
+        "incentiveType": "tax_credit",
+        "percentage": 39.0,
+        "minSpend": None,
+        "eligibleExpenses": ["uk_core_expenditure"],
+        "excludedExpenses": ["marketing", "distribution"],
+        "effectiveDate": datetime(2024, 1, 1),
+        "requirements": {
+            "ukSpend": 10,
+            "culturalTest": True,
+            "animationOrChildrensTV": True
         },
         "active": True
     },

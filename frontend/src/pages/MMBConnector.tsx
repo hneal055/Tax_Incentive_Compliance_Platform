@@ -98,7 +98,7 @@ function parseMMBCsv(text: string): { budget: number; locations: string; genre: 
       if (new RegExp(`\\b${city}\\b`, 'i').test(allText)) foundLocations.add(toTitleCase(city));
     }
 
-    const locationPattern = desc.match(/(?:location[s]?\s*[:--]\s*|filming\s+(?:in|at)\s*|shoot(?:ing)?\s+(?:in|at)\s*)([A-Za-z][A-Za-z\s,]{2,})/i);
+    const locationPattern = desc.match(/(?:location[s]?\s*[:\u2013-]\s*|filming\s+(?:in|at)\s*|shoot(?:ing)?\s+(?:in|at)\s*)([A-Za-z][A-Za-z\s,]{2,})/i);
     if (locationPattern) {
       locationPattern[1].trim().split(',').forEach(part => {
         const loc = toTitleCase(part.trim()); if (isValidLocation(loc)) foundLocations.add(loc);

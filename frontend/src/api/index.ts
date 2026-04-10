@@ -289,24 +289,27 @@ export const api = {
             jurisdiction_id: string;
             jurisdiction_name: string;
             jurisdiction_code: string;
+            currency: string;
+            treaty_partners: string[];
             total: number;
             programs: Array<{
               id: string;
               name: string;
               code: string;
               incentive_type: string;
+              credit_type: string | null;
               percentage: number;
               min_spend: number | null;
               max_credit: number | null;
               eligible_expenses: string[] | null;
               excluded_expenses: string[] | null;
-              requirements: string[] | null;
+              requirements: string | string[] | null;
               effective_date: string | null;
               active: boolean;
             }>;
           };
         },
-        async () => ({ jurisdiction_id: '', jurisdiction_name: 'Georgia', jurisdiction_code: code, total: 0, programs: [] }),
+        async () => ({ jurisdiction_id: '', jurisdiction_name: 'Georgia', jurisdiction_code: code, currency: 'USD', treaty_partners: [], total: 0, programs: [] }),
         `georgia.getPrograms(${code})`,
       ),
   },

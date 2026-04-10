@@ -102,14 +102,17 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "Applications are handled by the Louisiana Office of Entertainment Industry Development."
     )),
     (["uk", "united kingdom", "avec", "bfi"], (
-        "**UK Film Tax Relief (AVEC)**\n\n"
-        "The UK offers **25% on qualifying UK production expenditure** (QUPE).\n\n"
+        "**UK Audio-Visual Expenditure Credit (AVEC)**\n\n"
+        "The UK replaced its old Film Tax Relief with AVEC in January 2024. The new rate is "
+        "**34% on qualifying UK core expenditure** (QUCE) — up from the previous 25%.\n\n"
         "**Requirements:**\n"
         "- Pass the BFI Cultural Test (minimum 18/35 points)\n"
         "- At least 10% of core expenditure must be UK spend\n"
         "- No minimum spend threshold\n\n"
-        "High-End TV (HETV) productions with budgets over £1M/episode also qualify. "
-        "The credit is payable through HMRC and can be claimed during production."
+        "**Rates by category:**\n"
+        "- Film & High-End TV (≥ £1M/episode): **34%**\n"
+        "- Animation & Children's TV: **39%**\n\n"
+        "The credit is payable through HMRC and can be claimed during or after production."
     )),
     (["canada", "british columbia", " bc ", "ontario", "quebec", " qc "], (
         "**Canadian Provincial Film Incentives**\n\n"
@@ -129,17 +132,19 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "The Location Offset can be stacked with state-level incentives."
     )),
     (["highest", "best", "compare", "which jurisd", "top state", "most competitive"], (
-        "**Top Film Incentive Jurisdictions — 2025**\n\n"
+        "**Top Film Incentive Jurisdictions — 2026**\n\n"
         "| Jurisdiction | Rate | Min Spend | Notes |\n"
         "|---|---|---|---|\n"
-        "| New Mexico | 25–40% | None | Fully refundable |\n"
-        "| Georgia | 20–30% | $500K | Logo bonus available |\n"
-        "| Louisiana | 25% + 15% | $300K | Transferable credits |\n"
-        "| New York | 25–35% | $1M | Upstate bonus |\n"
-        "| California | 25% | $1M | Competitive allocation |\n"
-        "| UK | 25% | None | AVEC — cultural test |\n"
+        "| New Mexico | 25–40% | None | Fully refundable; TV series bonus |\n"
+        "| New Zealand | 40% | NZD $15M | NZSPG grant |\n"
+        "| UK | 34% | None | AVEC — cultural test (raised from 25%) |\n"
+        "| Montana | 35% | $50K | Labor-based credit |\n"
         "| Ireland | 32% | None | Section 481 |\n"
-        "| New Zealand | 40% | NZD 500K | NZSPG |\n\n"
+        "| Illinois | 30–45% | $50K | No credit cap |\n"
+        "| Georgia | 20–30% | $500K | Logo bonus available |\n"
+        "| Louisiana | 25%+15% | $300K | Transferable credits |\n"
+        "| New York | 25–35% | $1M | Upstate bonus |\n"
+        "| California | 25% | $1M | $330M annual allocation |\n\n"
         "The best jurisdiction depends on your budget, shooting locations, and crew residency. "
         "PilotForge's calculator can run a side-by-side comparison for your specific production."
     )),
@@ -185,13 +190,16 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "| New Mexico | None |\n"
         "| Ireland | None |\n"
         "| UK | 10% UK spend (no $ floor) |\n"
+        "| Montana | $50K |\n"
+        "| Illinois | $50K |\n"
         "| Louisiana | $300K |\n"
         "| Georgia | $500K |\n"
         "| New York | $1M |\n"
         "| California | $1M |\n"
+        "| New Zealand | NZD $15M (NZSPG) / NZD $500K (PDV) |\n"
         "| Australia | AUD $15M (Location Offset) |\n\n"
         "Lower-budget productions should prioritize states with no minimums (NM, Ireland) "
-        "or low thresholds (Louisiana $300K, Georgia $500K)."
+        "or low thresholds (Montana $50K, Illinois $50K, Louisiana $300K, Georgia $500K)."
     )),
 ]
 

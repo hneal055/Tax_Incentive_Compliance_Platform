@@ -2,7 +2,7 @@
 Seed the remaining US states that have active film/TV incentive programs
 but are not yet in the database.
 
-Active programs as of 2025 — 16 additional states:
+Active programs as of 2026 — 16 additional states:
 AL, CT, KY, MD, MA, MN, NV, NC, OH, OK, PA, RI, SC, TN, UT, WV
 """
 import asyncio, sys, os, json
