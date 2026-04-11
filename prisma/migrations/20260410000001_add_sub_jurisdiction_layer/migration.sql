@@ -8,10 +8,19 @@ ALTER TABLE "jurisdictions"
   ADD COLUMN IF NOT EXISTS "feedLastChecked"  TIMESTAMP(3),
   ADD COLUMN IF NOT EXISTS "feedLastHash"     TEXT;
 
-ALTER TABLE "jurisdictions"
-  ADD CONSTRAINT "jurisdictions_parentId_fkey"
-  FOREIGN KEY ("parentId") REFERENCES "jurisdictions"("id")
-  ON UPDATE CASCADE ON DELETE SET NULL;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'jurisdictions_parentId_fkey'
+      AND table_name = 'jurisdictions'
+  ) THEN
+    ALTER TABLE "jurisdictions"
+      ADD CONSTRAINT "jurisdictions_parentId_fkey"
+      FOREIGN KEY ("parentId") REFERENCES "jurisdictions"("id")
+      ON UPDATE CASCADE ON DELETE SET NULL;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "jurisdictions_parentId_idx" ON "jurisdictions"("parentId");
 

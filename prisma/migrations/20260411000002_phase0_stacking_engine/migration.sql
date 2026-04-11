@@ -38,11 +38,11 @@ CREATE TABLE IF NOT EXISTS "sub_jurisdictions" (
         CHECK ("ratePercent" IS NOT NULL OR "fixedAmount" IS NOT NULL)
 );
 
-ALTER TABLE "sub_jurisdictions"
-    ADD CONSTRAINT "sub_jurisdictions_parentJurisdictionId_fkey"
-    FOREIGN KEY ("parentJurisdictionId")
-    REFERENCES "jurisdictions"("id")
-    ON UPDATE CASCADE ON DELETE RESTRICT;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'sub_jurisdictions_parentJurisdictionId_fkey') THEN
+    ALTER TABLE "sub_jurisdictions" ADD CONSTRAINT "sub_jurisdictions_parentJurisdictionId_fkey" FOREIGN KEY ("parentJurisdictionId") REFERENCES "jurisdictions"("id") ON UPDATE CASCADE ON DELETE RESTRICT;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "sub_jurisdictions_parentJurisdictionId_idx"
     ON "sub_jurisdictions" ("parentJurisdictionId");
@@ -66,11 +66,11 @@ CREATE TABLE IF NOT EXISTS "production_scenarios" (
     CONSTRAINT "production_scenarios_pkey" PRIMARY KEY ("id")
 );
 
-ALTER TABLE "production_scenarios"
-    ADD CONSTRAINT "production_scenarios_productionId_fkey"
-    FOREIGN KEY ("productionId")
-    REFERENCES "productions"("id")
-    ON UPDATE CASCADE ON DELETE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'production_scenarios_productionId_fkey') THEN
+    ALTER TABLE "production_scenarios" ADD CONSTRAINT "production_scenarios_productionId_fkey" FOREIGN KEY ("productionId") REFERENCES "productions"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "production_scenarios_productionId_idx"
     ON "production_scenarios" ("productionId");
@@ -91,11 +91,11 @@ CREATE TABLE IF NOT EXISTS "scenario_optimization_results" (
     CONSTRAINT "scenario_optimization_results_unique" UNIQUE ("scenarioId")
 );
 
-ALTER TABLE "scenario_optimization_results"
-    ADD CONSTRAINT "scenario_optimization_results_scenarioId_fkey"
-    FOREIGN KEY ("scenarioId")
-    REFERENCES "production_scenarios"("id")
-    ON UPDATE CASCADE ON DELETE CASCADE;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'scenario_optimization_results_scenarioId_fkey') THEN
+    ALTER TABLE "scenario_optimization_results" ADD CONSTRAINT "scenario_optimization_results_scenarioId_fkey" FOREIGN KEY ("scenarioId") REFERENCES "production_scenarios"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- ── updated_at trigger ────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION set_updated_at()
