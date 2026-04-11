@@ -1,200 +1,180 @@
-# Quick Reference - Container Review & Fixes
+# PilotForge — Quick Reference
 
-## TL;DR - What's Wrong & What Was Fixed
+## Access
 
-### ❌ Problem #1: Frontend Unhealthy
-- Container `vigilant_leakey` marked UNHEALTHY
-- Health check uses `curl` but curl is NOT installed
-- **Fix**: Created `frontend/Dockerfile` with wget-based health checks
-
-### ❌ Problem #2: Frontend Not Containerized  
-- Frontend only works with pre-built dist files
-- No Docker build for frontend in compose
-- **Fix**: Created `frontend/Dockerfile` with multi-stage build
-
-### ❌ Problem #3: docker-compose.yml References Non-Existent Dist
-- docker-compose.yml mounts `./frontend/dist` but doesn't build it
-- No automated build pipeline
-- **Fix**: Updated `docker-compose.yml` to build frontend service
+| Environment | URL | Login |
+|-------------|-----|-------|
+| Local | http://localhost:3000 | admin@pilotforge.com / pilotforge2024 |
+| Production | https://taxincentivecomplianceplatform-production.up.railway.app | admin@pilotforge.com / pilotforge2024 |
+| API Docs | http://localhost:8001/api/0.1.0/docs | (requires login token) |
 
 ---
 
-## 📁 Files Created/Modified
-
-| File | Status | Purpose |
-|------|--------|---------|
-| `frontend/Dockerfile` | ✅ NEW | Multi-stage build: Node builder → Nginx runtime |
-| `frontend/.dockerignore` | ✅ NEW | Optimization: exclude node_modules, dist, etc |
-| `frontend/.env.example` | ✅ NEW | Environment template: VITE_API_URL, etc |
-| `docker-compose.yml` | ✅ UPDATED | Added frontend service with build |
-| `nginx.conf` | ✅ UPDATED | Routes to frontend service instead of static files |
-| `CONTAINER_REVIEW.md` | ✅ NEW | Detailed analysis of all containers |
-| `FIXES_ACTION_PLAN.md` | ✅ NEW | Step-by-step fix implementations |
-| `REVIEW_SUMMARY.md` | ✅ NEW | Executive summary |
-
----
-
-## 🚀 Quick Start
-
-### To test the fixes:
+## Local Docker — Daily Commands
 
 ```bash
-# 1. Verify docker-compose is valid
-docker-compose config
+# Start everything
+docker compose up -d
 
-# 2. Build images (frontend will build automatically)
-docker-compose build
+# Stop everything
+docker compose down
 
-# 3. Start services
-docker-compose up -d
-
-# 4. Check health
-docker ps --format "table {{.Names}}\t{{.State}}"
-
-# 5. Test frontend (should now be HEALTHY)
-docker inspect pilotforge-ui | grep -A 10 '"Health"'
-
-# 6. Access services
-http://localhost:3000        # Frontend (via nginx)
-http://localhost:8000        # Backend API
-http://localhost:8000/docs   # Swagger docs
-http://localhost/            # Nginx proxy
-```
-
----
-
-## 📊 Container Status Overview
-
-### Health Status Before & After
-
-| Service | Port | Before | After | Change |
-|---------|------|--------|-------|--------|
-| Backend | 8000 | ✅ Healthy | ✅ Healthy | ✅ No change |
-| Database | 5432 | ✅ Healthy | ✅ Healthy | ✅ No change |
-| Redis | 6379 | ✅ Healthy | ✅ Healthy | ✅ No change |
-| **Frontend** | **3000** | **❌ Unhealthy** | **✅ Healthy** | **✅ FIXED** |
-| Nginx | 80 | ✅ Running | ✅ Running | ✅ Routes updated |
-
----
-
-## 🔧 Configuration Changes
-
-### docker-compose.yml Highlights
-
-**Before**:
-```yaml
-nginx:
-  image: nginx:alpine
-  ports:
-    - "80:80"
-    - "3000:80"
-  volumes:
-    - ./frontend/dist:/usr/share/nginx/html:ro  # Pre-built only
-```
-
-**After**:
-```yaml
-frontend:
-  build:
-    context: ./frontend
-    dockerfile: Dockerfile
-  container_name: pilotforge-ui
-  ports:
-    - "3000:3000"
-  healthcheck:
-    test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000/health"]
-
-nginx:
-  image: nginx:alpine
-  ports:
-    - "80:80"
-  volumes:
-    - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-```
-
----
-
-## 🏗️ Frontend Dockerfile Structure
-
-```dockerfile
-# Stage 1: Build
-FROM node:20-alpine
-RUN npm ci && npm run build
-
-# Stage 2: Runtime
-FROM nginx:alpine
-RUN apk add --no-cache wget  # For health checks
-COPY --from=builder /app/dist /usr/share/nginx/html
-HEALTHCHECK --interval=30s CMD wget -q -O - http://localhost:3000/health
-```
-
-**Result**: ~120MB image (vs 216MB pre-built)
-
----
-
-## 🔍 Testing Commands
-
-```bash
-# List running containers with health status
-docker ps --format "table {{.Names}}\t{{.State}}\t{{.Status}}"
-
-# View specific health history (Frontend)
-docker inspect pilotforge-ui --format='{{json .State.Health}}' | jq .
-
-# Check logs
+# View logs
+docker logs pilotforge-api --tail 50 -f
 docker logs pilotforge-ui --tail 20
-docker logs pilotforge-api --tail 20
-docker logs pilotforge-nginx --tail 20
 
-# Test API endpoints
-curl http://localhost:8000/health
-curl http://localhost:3000/
-
-# Test through nginx proxy
-curl http://localhost/
-curl http://localhost/health
-curl http://localhost/api/deliveries
-
-# View image sizes
-docker images | grep pilotforge
+# Container health
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 ```
 
 ---
 
-## 🎯 Key Points
+## Services
 
-1. **Frontend Now Containerized**: Builds automatically with `docker compose up`
-2. **Health Checks Fixed**: Uses wget instead of missing curl
-3. **Proper Architecture**: Frontend runs in own container, nginx proxies
-4. **Smaller Images**: Frontend image reduced ~50% with multi-stage build
-5. **CI/CD Ready**: Both frontend and backend build from source
-
----
-
-## 💡 Future Optimizations
-
-1. **Backend Image**: Currently 3.53GB → could reduce to ~800MB
-   - Audit requirements.txt
-   - Use distroless base
-   - Remove unnecessary packages
-
-2. **Production Deployment**: 
-   - Update docker-compose.prod.yml to build frontend
-   - Set up image registry (Docker Hub, ECR)
-   - Configure CI/CD pipeline
-
-3. **Legacy Cleanup**:
-   - Remove unused images (aura-*, script_parser-*)
-   - Save ~3GB disk space
+| Container | Role | Port |
+|-----------|------|------|
+| `pilotforge-api` | FastAPI backend | 8001 |
+| `pilotforge-ui` | React frontend (nginx) | 3000 |
+| `pilotforge-nginx` | Reverse proxy | 80 |
+| `tax-incentive-db` | PostgreSQL 16 | 5432 |
 
 ---
 
-## 📞 Support
+## Deploy Code Changes (without image rebuild)
 
-For questions about the fixes:
-- See `CONTAINER_REVIEW.md` for detailed analysis
-- See `FIXES_ACTION_PLAN.md` for step-by-step implementation
-- See `REVIEW_SUMMARY.md` for comprehensive summary
+```bash
+# Backend — copy file + restart
+docker cp src/api/my_file.py pilotforge-api:/app/src/api/my_file.py
+docker restart pilotforge-api
 
-All files are in the root directory of the project.
+# Frontend — build + copy dist
+cd frontend && npm run build
+docker cp dist/. pilotforge-ui:/usr/share/nginx/html/
+docker exec pilotforge-ui nginx -s reload
 
+# Backend schema change (Prisma) — full rebuild required
+docker compose build backend
+docker compose up -d backend
+```
+
+---
+
+## Database
+
+```bash
+# Connect to local DB
+docker exec -it tax-incentive-db psql -U postgres -d tax_incentive_db
+
+# Apply pending migrations
+docker exec pilotforge-api python -m prisma migrate deploy
+
+# Regenerate Prisma client (after schema.prisma change)
+docker exec pilotforge-api python -m prisma generate
+
+# Re-seed sub-jurisdictions
+docker exec pilotforge-api python scripts/seed_sub_jurisdictions.py
+docker exec pilotforge-api python scripts/seed_more_sub_jurisdictions.py
+```
+
+---
+
+## Feed Monitor
+
+```bash
+# Test a single jurisdiction (no DB write)
+python monitor.py --code NY-ERIE --dry-run
+
+# Run all jurisdictions
+python monitor.py
+
+# Mock Claude extraction (no API billing)
+MOCK_CLAUDE=true python monitor.py
+```
+
+Logs → `logs/monitor.log`
+Scheduled daily at 6 AM via Windows Task Scheduler (`scripts/schedule_monitor.ps1`)
+
+---
+
+## API — Key Endpoints
+
+```bash
+TOKEN="eyJ..."   # from POST /auth/login
+
+# Login
+curl -X POST http://localhost:8001/api/0.1.0/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@pilotforge.com","password":"pilotforge2024"}'
+
+# Health (no auth)
+curl http://localhost:8001/health
+
+# Jurisdictions
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8001/api/0.1.0/jurisdictions/
+
+# Scenario Calculator — compare 2 jurisdictions
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  http://localhost:8001/api/0.1.0/stacking-engine/compare \
+  -d '{
+    "scenarios": [
+      {"jurisdiction_code": "CA-LA", "qualified_spend": 5000000},
+      {"jurisdiction_code": "IL-COOK", "qualified_spend": 5000000}
+    ]
+  }'
+```
+
+---
+
+## Railway — Environment Variables
+
+| Variable | Notes |
+|----------|-------|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `JWT_SECRET` | 256-bit hex (generate: `python -c "import secrets; print(secrets.token_hex(32))"`) |
+| `SECRET_KEY` | 256-bit hex (same method) |
+| `APP_ENV` | `production` |
+| `ANTHROPIC_API_KEY` | Required for AI Advisor |
+
+---
+
+## Jurisdictions
+
+**23 state/country:** CA, GA, NY, LA, NM, IL, MI, NJ, VA, CO, HI, OR, MT, MS, BC, ON, QC, UK, AU, IE, FR, ES, NZ
+
+**11 sub-jurisdictions (county/city):**
+
+| Code | Name | Parent |
+|------|------|--------|
+| CA-LA | Los Angeles County | CA |
+| IL-COOK | Cook County | IL |
+| NY-NYC | New York City | NY |
+| NY-BROOKLYN | Brooklyn | NY |
+| NY-QUEENS | Queens | NY |
+| NY-MANHATTAN | Manhattan | NY |
+| NY-BRONX | Bronx | NY |
+| NY-STATEN-ISLAND | Staten Island | NY |
+| NY-ERIE | Erie County | NY |
+| NY-NASSAU | Nassau County | NY |
+| NY-WESTCHESTER | Westchester County | NY |
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| 404 on Railway after push | Wait ~5 min for Railway deploy; check deploy logs |
+| `FieldNotFoundError` on Prisma field | `docker exec pilotforge-api python -m prisma generate` |
+| Frontend shows stale code | Rebuild: `cd frontend && npm run build` then copy dist |
+| `prisma migrate deploy` fails with P3009 | Run `bash scripts/resolve_migration.sh` |
+| AI Advisor returns no response | Check `ANTHROPIC_API_KEY` is set; use `MOCK_CLAUDE=true` to test pipeline |
+| Port 3000 already in use | Dev stack is running; demo stack uses port 3001 |
+
+---
+
+## Full Documentation
+
+- **[README.md](README.md)** — Project overview
+- **[USER_MANUAL.md](USER_MANUAL.md)** — Feature guide, API reference, deployment walkthrough
