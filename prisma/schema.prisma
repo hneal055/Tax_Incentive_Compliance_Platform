@@ -39,7 +39,6 @@ model Jurisdiction {
   pendingRules       PendingRule[]
   childPolicies      InheritancePolicy[] @relation("ChildPolicies")
   parentPolicies     InheritancePolicy[] @relation("ParentPolicies")
-  subJurisdictionModels SubJurisdiction[] @relation("SubJurisdictionModel")
 
   @@index([parentId])
   @@map("jurisdictions")
