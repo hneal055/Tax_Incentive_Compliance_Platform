@@ -6,7 +6,6 @@ All operations are idempotent: existing records are skipped by unique key.
 """
 import json
 import logging
-import subprocess
 from datetime import datetime
 
 from src.utils.database import prisma
@@ -17,20 +16,8 @@ logger = logging.getLogger(__name__)
 # ── Migrations ────────────────────────────────────────────────────────────────
 
 def run_migrations() -> None:
-    """Run `prisma migrate deploy`. Safe to call on every startup."""
-    try:
-        result = subprocess.run(
-            ["prisma", "migrate", "deploy"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        if result.returncode == 0:
-            logger.info("✅ Prisma migrations applied")
-        else:
-            logger.warning(f"⚠️  Migration stderr: {result.stderr.strip()}")
-    except Exception as exc:
-        logger.error(f"❌ Migration failed: {exc}")
+    """Migrations are handled externally via scripts/resolve_migrations.py in the startCommand."""
+    logger.info("ℹ️  Migrations handled externally — skipping")
 
 
 # ── Jurisdiction data (22 total) ──────────────────────────────────────────────
