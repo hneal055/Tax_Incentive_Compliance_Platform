@@ -33,12 +33,13 @@ model Jurisdiction {
   feedLastChecked DateTime?
   feedLastHash    String?
 
-  incentiveRules     IncentiveRule[]
-  productions        Production[]
-  localRules         LocalRule[]
-  pendingRules       PendingRule[]
-  childPolicies      InheritancePolicy[] @relation("ChildPolicies")
-  parentPolicies     InheritancePolicy[] @relation("ParentPolicies")
+  incentiveRules         IncentiveRule[]
+  productions            Production[]
+  localRules             LocalRule[]
+  pendingRules           PendingRule[]
+  childPolicies          InheritancePolicy[] @relation("ChildPolicies")
+  parentPolicies         InheritancePolicy[] @relation("ParentPolicies")
+  subJurisdictionModels  SubJurisdiction[]   @relation("SubJurisdictionModel")
 
   @@index([parentId])
   @@map("jurisdictions")
