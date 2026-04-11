@@ -255,8 +255,8 @@ export default function MMBConnector() {
     a.href = url; a.download = `${result.project_name.replace(/\s+/g, '_')}_MMB_Report.txt`; a.click(); URL.revokeObjectURL(url);
   }
 
-  const eligible = result?.recommendations.filter(r => r.eligible) ?? [];
-  const ineligible = result?.recommendations.filter(r => !r.eligible) ?? [];
+  const eligible = result?.recommendations?.filter(r => r.eligible) ?? [];
+  const ineligible = result?.recommendations?.filter(r => !r.eligible) ?? [];
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
