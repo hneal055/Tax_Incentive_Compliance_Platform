@@ -1,50 +1,143 @@
 # PilotForge
 > Tax Incentive Intelligence for Film & TV
 
-A full-stack compliance platform for managing film and television production tax incentives across 23 jurisdictions in the USA, Canada, and internationally.
+A full-stack compliance platform for discovering, stacking, and managing film and television production tax incentives across US states, counties, and international jurisdictions.
 
 ---
 
-## Quick Start
+## Quick Start (Local)
 
-**Requires:** Docker Desktop running on Windows.
+**Requires:** Docker Desktop
 
-```powershell
-.\start.ps1
+```bash
+docker compose up -d
 ```
 
-Opens `http://localhost:3000` automatically. Login: `admin@pilotforge.com` / `pilotforge2024`
+Open `http://localhost:3000` — Login: `admin@pilotforge.com` / `pilotforge2024`
 
-For full setup instructions, troubleshooting, and developer notes → **[SETUP_GUIDE.md](SETUP_GUIDE.md)**
+---
+
+## Production
+
+**Live URL:** `https://taxincentivecomplianceplatform-production.up.railway.app`
+
+Hosted on Railway with PostgreSQL. Auto-deploys on push to `main`.
 
 ---
 
 ## Features
 
-- **Executive Dashboard** — budget volume, estimated credits, active projects, spend chart
-- **Productions** — create and manage film/TV productions linked to jurisdictions
-- **Incentive Calculator** — real-time credit calculation across all jurisdictions
-- **Jurisdictions** — 23 jurisdictions, 35 incentive rules (USA, Canada, UK, EU, AU, NZ)
-- **AI Advisor** — chat interface for jurisdiction comparisons, qualification guidance, stacking strategies
+| Feature | Description |
+|---------|-------------|
+| **Dashboard** | Budget volume, estimated credits, active productions, spend chart |
+| **Productions** | Create and manage film/TV productions linked to jurisdictions |
+| **Incentive Calculator** | Single-jurisdiction credit calculation |
+| **Jurisdictions** | 23 state/country jurisdictions, 35+ incentive rules |
+| **Scenario Calculator** | Compare 2–6 jurisdictions side-by-side, stacks state + local incentives, highlights best jurisdiction |
+| **AI Advisor** | Claude-powered chat for qualification guidance and stacking strategies |
+| **Georgia** | Dedicated Georgia incentive workspace |
+| **MMB Connector** | CSV upload tool for Motion Picture Association data |
+| **Local Rules** | Approved county/city incentive rules (extracted by feed monitor) |
+| **Rule Review** | Approve or reject AI-extracted rules before they go live |
+| **Admin** | User and system management |
+
+---
+
+## Sub-Jurisdictions
+
+11 county/city jurisdictions with **additive stacking** on top of parent state rules:
+
+- **CA-LA** — Los Angeles County
+- **IL-COOK** — Cook County (Chicago)
+- **NY-NYC / NY-BROOKLYN / NY-QUEENS / NY-MANHATTAN / NY-BRONX / NY-STATEN-ISLAND** — NYC boroughs
+- **NY-ERIE / NY-NASSAU / NY-WESTCHESTER** — New York counties
+
+---
 
 ## Tech Stack
 
-| Layer    | Technology                                      |
-| -------- | ----------------------------------------------- |
-| Frontend | React 19 · TypeScript · Tailwind CSS v4 · Vite  |
-| Backend  | FastAPI · Prisma ORM · Python 3.12              |
-| Database | PostgreSQL 16                                   |
-| Infra    | Docker · Nginx                                  |
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 19 · TypeScript · Vite 7 · Tailwind CSS v4 |
+| Backend | FastAPI · Prisma ORM 0.15.0 · Python 3.12 |
+| Database | PostgreSQL 16 |
+| AI | Anthropic Claude (claude-sonnet-4-6) |
+| Infra (local) | Docker · Nginx |
+| Infra (prod) | Railway · Nixpacks |
+
+---
+
+## Local Services
+
+| Service | Container | URL |
+|---------|-----------|-----|
+| Frontend | `pilotforge-ui` | http://localhost:3000 |
+| Backend API | `pilotforge-api` | http://localhost:8001/api/0.1.0/ |
+| Nginx proxy | `pilotforge-nginx` | http://localhost |
+| PostgreSQL | `tax-incentive-db` | localhost:5432 |
+
+---
+
+## API
+
+Base path: `/api/0.1.0/`
+Interactive docs: `/api/0.1.0/docs`
+
+Key endpoints:
+
+```
+POST /auth/login
+GET  /jurisdictions/
+GET  /incentive-rules/
+POST /stacking-engine/compare
+GET  /local-rules/
+GET  /pending-rules/
+GET  /health
+```
+
+All endpoints except `/auth/login` and `/health` require a JWT Bearer token.
+
+---
+
+## Railway Deployment
+
+Required environment variables:
+
+| Variable | Notes |
+|----------|-------|
+| `DATABASE_URL` | Link via `${{Postgres.DATABASE_URL}}` |
+| `JWT_SECRET` | 256-bit hex secret |
+| `SECRET_KEY` | 256-bit hex secret |
+| `APP_ENV` | `production` |
+| `ANTHROPIC_API_KEY` | Required for AI Advisor |
+
+Build and start are configured in `railway.toml`. On first deploy, seed sub-jurisdictions via Railway shell:
+
+```bash
+python scripts/seed_sub_jurisdictions.py
+python scripts/seed_more_sub_jurisdictions.py
+```
+
+---
 
 ## Docker Images
 
-| Image    | Tag                                        |
-| -------- | ------------------------------------------ |
-| Backend  | `hneal1038/pilotforge-backend:latest`      |
-| Frontend | `hneal1038/pilotforge-frontend:latest`     |
+| Image | Tag |
+|-------|-----|
+| Backend | `hneal1038/pilotforge-backend:latest` |
+| Frontend | `hneal1038/pilotforge-frontend:latest` |
+
+---
+
+## Documentation
+
+- **[USER_MANUAL.md](USER_MANUAL.md)** — Full feature guide, API reference, deployment walkthrough
+- **API Docs** — `/api/0.1.0/docs` (Swagger UI, live on running instance)
+
+---
 
 ## Repository
 
-- **Working branch:** `feature/test-ci`
-- **Stable branch:** `main`
+- **Branch:** `main`
 - **Docker Hub:** [hub.docker.com/u/hneal1038](https://hub.docker.com/u/hneal1038)
+- **GitHub:** [hneal055/Tax_Incentive_Compliance_Platform](https://github.com/hneal055/Tax_Incentive_Compliance_Platform)
