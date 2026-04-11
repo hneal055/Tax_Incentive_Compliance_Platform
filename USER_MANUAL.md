@@ -1,908 +1,693 @@
 # PilotForge
 > Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
-## User Manual v1.0
 
-**Platform Version:** 0.1.0  
-**API Version:** v1  
-**Last Updated:** January 9, 2026  
+## User Manual v2.0
+
+**Platform Version:** 0.2.0
+**API Version:** 0.1.0
+**Last Updated:** April 11, 2026
 **Documentation Standard:** OAS 3.1
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Getting Started](#getting-started)
-3. [Platform Capabilities](#platform-capabilities)
-4. [API Endpoints Reference](#api-endpoints-reference)
-5. [Use Cases & Examples](#use-cases--examples)
+3. [Platform Features](#platform-features)
+4. [API Reference](#api-reference)
+5. [Deployment Guide](#deployment-guide)
 6. [Data Reference](#data-reference)
 7. [Troubleshooting](#troubleshooting)
 8. [Technical Specifications](#technical-specifications)
 
 ---
 
-## 🎯 Overview
+## Overview
 
-### What is the PilotForge?
+### What is PilotForge?
 
-The PilotForge is a **jurisdictional rule engine** designed to help film and television production companies:
-
-- **Discover** available tax incentives across global jurisdictions
-- **Compare** incentive programs side-by-side
-- **Calculate** potential tax savings for productions
-- **Ensure compliance** with jurisdiction-specific requirements
-- **Optimize** production location decisions
+PilotForge is a **film and television production tax incentive compliance platform** that helps production companies discover, compare, calculate, and stack tax incentives across US states, counties, and international jurisdictions.
 
 ### Who Should Use This Platform?
 
-- **Production Companies** - Find the best locations for tax incentives
-- **Production Accountants** - Calculate and track incentive claims
-- **Line Producers** - Budget productions with accurate incentive estimates
-- **Location Scouts** - Identify financially advantageous filming locations
-- **Film Commissions** - Manage and publish incentive program information
-- **Studios** - Strategic planning for multi-project slates
+- **Production Companies** — Find the best locations for tax incentives
+- **Production Accountants** — Calculate and track incentive claims
+- **Line Producers** — Budget productions with accurate incentive estimates
+- **Location Scouts** — Identify financially advantageous filming locations
+- **Studios** — Strategic planning for multi-project slates
 
-### Key Benefits
+### Key Capabilities
 
-✅ **Comprehensive Data** - 32 jurisdictions, 33+ incentive programs  
-✅ **Real-Time Access** - RESTful API with instant responses  
-✅ **Accurate Calculations** - Rule-based engine ensures compliance  
-✅ **Easy Integration** - Standard REST API, works with any system  
-✅ **Up-to-Date Information** - Regular updates to incentive rules  
+- **35+ incentive programs** across 23 state/country jurisdictions
+- **11 sub-jurisdictions** (counties and cities) with stacked local incentives
+- **Scenario Calculator** — compare 2–6 jurisdictions side-by-side, finds best stack
+- **AI Advisor** — natural language queries powered by Claude
+- **Automated Feed Monitoring** — daily checks of government pages for rule changes
+- **Pending Rules Review** — AI-extracted rules from county/city sites awaiting approval
+- **MMB Connector** — CSV upload tool for Motion Picture Association data
+- **JWT Authentication** — secure login with role-based access
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### Accessing the Platform
+### Production URL
 
-**Base URL:** `http://localhost:8000`
+```
+https://taxincentivecomplianceplatform-production.up.railway.app
+```
 
-**Interactive Documentation:**
-- **Swagger UI:** http://localhost:8000/docs (Try it live!)
-- **ReDoc:** http://localhost:8000/redoc (Beautiful documentation)
-- **OpenAPI Spec:** http://localhost:8000/openapi.json
+### Local Development URL
+
+```
+http://localhost:3000
+```
+
+### Login Credentials
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@pilotforge.com` |
+| Password | `pilotforge2024` |
+
+> **Note:** Change the admin password in production via the Admin panel.
+
+### API Base URL
+
+```
+/api/0.1.0
+```
+
+**Interactive docs:** `{base_url}/docs` (Swagger UI)
 
 ### Authentication
 
-**Current Version:** No authentication required (development mode)  
-**Production:** Will require API keys (coming soon)
+All API endpoints (except `/auth/login`) require a JWT Bearer token.
 
-### Making Your First Request
-
-#### Example 1: Get All Jurisdictions
+**Login:**
 ```bash
-curl http://localhost:8000/api/v1/jurisdictions/
+POST /api/0.1.0/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@pilotforge.com",
+  "password": "pilotforge2024"
+}
 ```
 
-#### Example 2: Find Georgia's Incentive Rules
-```bash
-# First, get Georgia's ID
-curl http://localhost:8000/api/v1/jurisdictions/ | grep -A 5 "Georgia"
+**Response:**
+```json
+{
+  "access_token": "eyJ...",
+  "token_type": "bearer"
+}
+```
 
-# Then get its rules (replace {id} with actual ID)
-curl http://localhost:8000/api/v1/incentive-rules/?jurisdiction_id={id}
+**Use the token:**
+```bash
+curl -H "Authorization: Bearer eyJ..." https://{host}/api/0.1.0/jurisdictions/
 ```
 
 ---
 
-## 💡 Platform Capabilities
+## Platform Features
 
-### Current Features (Phase 2 Complete)
+### Dashboard
 
-#### ✅ Jurisdiction Management
-- View all available filming jurisdictions
-- Filter by country, type (state/province/country), active status
-- Access jurisdiction details (website, contact info, description)
-
-#### ✅ Incentive Rules Database
-- Access 33+ real tax incentive programs
-- Filter by jurisdiction, incentive type, status
-- View detailed requirements and qualifications
-- See eligible and excluded expenses
-
-#### ✅ Production Tracking
-- Create production records
-- Track budgets and timelines
-- Associate with target jurisdictions
-
-### Coming Soon (Phase 3+)
-
-#### 🔜 Tax Credit Calculator
-- Calculate exact savings for your production
-- Compare multiple jurisdictions automatically
-- Get recommendations: "Film in X, save $Y more"
-
-#### 🔜 Compliance Checker
-- Verify your production meets requirements
-- Get alerts for missing documentation
-- Track compliance status
-
-#### 🔜 Expense Tracking
-- Categorize production expenses
-- Auto-categorize as qualifying or non-qualifying
-- Generate expense reports
+The Dashboard provides a real-time overview of:
+- Total productions, budget, and qualifying spend
+- Active jurisdictions count
+- Incentive rules count
+- Budget vs. actual spend bar chart across all productions
 
 ---
 
-## 📡 API Endpoints Reference
+### Productions
+
+Manage film and TV production records.
+
+**Create a production** via the modal — fields:
+- Title, Production Type, Jurisdiction
+- Budget Total, Budget Qualifying
+- Start Date, End Date
+- Production Company, Status, Contact
+
+**Production status values:** `planning` | `pre_production` | `production` | `post_production` | `completed`
+
+---
+
+### Incentive Calculator
+
+Run a quick calculation for a single production against a jurisdiction:
+1. Select a production
+2. Select a jurisdiction
+3. Click **Calculate** to see incentive amount, effective rate, and expense breakdown
+
+---
+
+### Jurisdictions
+
+Browse all 23 state/country jurisdictions. Click any jurisdiction to view:
+- Incentive programs with rates, min spend, and max credit caps
+- Active local rules (county/city level)
+- Sub-jurisdictions (counties/cities within the state)
+
+---
+
+### AI Advisor
+
+Natural language interface to the platform's data powered by Claude (Anthropic).
+
+**Example queries:**
+- "Which state has the highest rebate for a $10M feature?"
+- "What are Georgia's minimum spend requirements?"
+- "Compare New York and Illinois incentives for a $5M TV series"
+
+> Requires `ANTHROPIC_API_KEY` environment variable to be set.
+
+---
+
+### Georgia
+
+Dedicated Georgia incentive workspace — pre-loaded with Georgia-specific rules, compliance checklist, and budget tools.
+
+---
+
+### MMB Connector
+
+Upload a CSV file from the Motion Picture Association / MMB system. The connector:
+1. Parses each row with field-level validation
+2. Auto-populates production fields
+3. Flags validation errors per row before import
+
+**CSV format:** Standard MMB export format. See column headers in the upload modal.
+
+---
+
+### Local Rules
+
+View approved county and city incentive rules. These are rules extracted from government websites by the feed monitor and approved through the Rule Review workflow.
+
+**Filters:** Category (tax_credit, rebate, fee_waiver, grant), search by name/jurisdiction.
+
+**Stats bar:** Total rules | AI-extracted | Manually entered
+
+---
+
+### Rule Review
+
+Approve or reject AI-extracted incentive rules before they go live.
+
+**Workflow:**
+1. `monitor.py` fetches government pages daily and queues Claude-extracted rules as `pending`
+2. Reviewer opens **Rule Review**, expands a pending rule to see extracted fields
+3. Click **Approve** (with optional notes) → rule is promoted to `local_rules` table
+4. Click **Reject** → rule is archived with notes
+
+**Confidence scores** are color-coded: green (≥0.8), amber (0.5–0.8), red (<0.5).
+
+---
+
+### Scenario Calculator
+
+Compare state + local incentive stacks across 2–6 jurisdictions simultaneously.
+
+**Inputs per scenario:**
+- Jurisdiction (state or county/city)
+- Qualified Spend ($)
+- Local Hire % (optional — triggers local hire warnings)
+- Shooting Days (optional)
+- Production Start date (optional — used for date-validity checks)
+
+**Output:**
+- Incentive stack breakdown (state layers + local layers)
+- Total incentive value and effective rate
+- Warnings (min spend not met, expired rules, local hire thresholds)
+- Best jurisdiction highlighted with "Best Stack" badge
+
+**How stacking works:**
+- County/city jurisdictions inherit parent state rules via **additive** inheritance policy
+- State `IncentiveRules` are stacked first, then `LocalRules`
+- Min spend gates, date ranges, and max credit caps are all enforced
+
+---
+
+### Admin
+
+Admin-only panel (visible to users with `role: admin`):
+- User management
+- System configuration
+- Data seeding controls
+
+---
+
+### Notifications
+
+Configure email alerts for jurisdiction rule changes. Set:
+- Which jurisdictions to watch
+- Email address for alerts
+- Toggle notifications on/off
+
+---
+
+## API Reference
 
 ### Base URL
 ```
-http://localhost:8000/api/v1
+/api/0.1.0
 ```
 
 ---
 
-### **Jurisdictions API**
+### Authentication
 
-#### GET /jurisdictions/
-**Purpose:** List all available filming jurisdictions
+#### POST /auth/login
+Login and receive JWT token.
 
-**Query Parameters:**
-- `country` (string, optional) - Filter by country (e.g., "USA", "Canada")
-- `type` (string, optional) - Filter by type ("state", "province", "country")
-- `active` (boolean, optional) - Filter by active status
+```json
+Request:  { "email": "string", "password": "string" }
+Response: { "access_token": "string", "token_type": "bearer" }
+```
 
-**Response:**
+---
+
+### Jurisdictions
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/jurisdictions/` | List all jurisdictions |
+| GET | `/jurisdictions/{id}` | Get jurisdiction details + incentive rules |
+| POST | `/jurisdictions/` | Create jurisdiction (admin) |
+| PUT | `/jurisdictions/{id}` | Update jurisdiction (admin) |
+| DELETE | `/jurisdictions/{id}` | Delete jurisdiction (admin) |
+
+**Query params for GET /jurisdictions/:**
+- `country` — filter by country code
+- `type` — `state` | `province` | `country` | `county` | `city`
+- `active` — `true` | `false`
+
+---
+
+### Incentive Rules
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/incentive-rules/` | List rules (filter by jurisdiction_id, type, active) |
+| GET | `/incentive-rules/{id}` | Get rule details |
+| POST | `/incentive-rules/` | Create rule (admin) |
+| PUT | `/incentive-rules/{id}` | Update rule (admin) |
+| DELETE | `/incentive-rules/{id}` | Delete rule (admin) |
+
+---
+
+### Productions
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/productions/` | List productions |
+| GET | `/productions/{id}` | Get production details |
+| POST | `/productions/` | Create production |
+| PUT | `/productions/{id}` | Update production |
+| DELETE | `/productions/{id}` | Delete production |
+
+---
+
+### Calculator
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/calculate/simple` | Simple incentive calculation |
+| POST | `/calculate/compare` | Compare multiple jurisdictions |
+
+---
+
+### Stacking Engine
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/stacking-engine/calculate` | Full stack for a single scenario |
+| POST | `/stacking-engine/compare` | Compare 2–6 scenarios side-by-side |
+| GET | `/stacking-engine/jurisdictions-with-local-rules` | List jurisdictions with active local rules |
+
+**POST /stacking-engine/compare — Request:**
 ```json
 {
-  "total": 32,
-  "jurisdictions": [
+  "scenarios": [
     {
-      "id": "uuid",
-      "name": "California",
-      "code": "CA",
-      "country": "USA",
-      "type": "state",
-      "active": true,
-      "description": "California Film & Television Tax Credit Program",
-      "website": "https://film.ca.gov",
-      "createdAt": "2026-01-08T...",
-      "updatedAt": "2026-01-08T..."
+      "jurisdiction_code": "CA-LA",
+      "qualified_spend": 5000000,
+      "local_hire_percent": 80,
+      "shooting_days": 45,
+      "production_start": "2026-06-01"
+    },
+    {
+      "jurisdiction_code": "IL-COOK",
+      "qualified_spend": 5000000
     }
   ]
 }
 ```
 
-**Example Use Cases:**
-- Find all US states: `GET /jurisdictions/?country=USA`
-- Find all provinces: `GET /jurisdictions/?type=province`
-- Find active jurisdictions: `GET /jurisdictions/?active=true`
-
----
-
-#### GET /jurisdictions/{id}
-**Purpose:** Get details for a specific jurisdiction
-
-**Path Parameters:**
-- `id` (string, required) - Jurisdiction UUID
-
-**Response:** Single jurisdiction object
-
-**Example:**
-```bash
-GET /jurisdictions/bfae464b-9551-4aad-b5e7-2abcf687134e
-```
-
----
-
-#### POST /jurisdictions/
-**Purpose:** Create a new jurisdiction (Admin only)
-
-**Request Body:**
-```json
-{
-  "name": "Washington",
-  "code": "WA",
-  "country": "USA",
-  "type": "state",
-  "description": "Washington State Film Incentive",
-  "website": "https://www.filmseattle.com",
-  "active": true
-}
-```
-
-**Response:** Created jurisdiction with ID (201 Created)
-
----
-
-#### PUT /jurisdictions/{id}
-**Purpose:** Update a jurisdiction (Admin only)
-
-**Path Parameters:**
-- `id` (string, required)
-
-**Request Body:** Any jurisdiction fields to update
-
----
-
-#### DELETE /jurisdictions/{id}
-**Purpose:** Delete a jurisdiction (Admin only)
-
-**Path Parameters:**
-- `id` (string, required)
-
-**Response:** 204 No Content
-
----
-
-### **Incentive Rules API**
-
-#### GET /incentive-rules/
-**Purpose:** List all tax incentive programs
-
-**Query Parameters:**
-- `jurisdiction_id` (string, optional) - Filter by jurisdiction
-- `incentive_type` (string, optional) - Filter by type ("tax_credit", "rebate", "grant", "exemption")
-- `active` (boolean, optional) - Filter by active status
-
 **Response:**
 ```json
 {
-  "total": 33,
-  "rules": [
+  "scenarios": [
     {
-      "id": "uuid",
-      "jurisdictionId": "uuid",
-      "ruleName": "California Film & TV Tax Credit 2.0",
-      "ruleCode": "CA-FILM-2.0",
-      "incentiveType": "tax_credit",
-      "percentage": 20.0,
-      "minSpend": 1000000,
-      "maxCredit": 10000000,
-      "eligibleExpenses": ["labor", "equipment", "locations", "post_production"],
-      "excludedExpenses": ["above_the_line", "marketing"],
-      "effectiveDate": "2024-01-01T00:00:00Z",
-      "requirements": {
-        "minShootDays": 10,
-        "californiaResidents": 75
-      },
-      "active": true,
-      "createdAt": "2026-01-08T...",
-      "updatedAt": "2026-01-08T..."
+      "jurisdiction_code": "CA-LA",
+      "jurisdiction_name": "Los Angeles County",
+      "qualified_spend": 5000000,
+      "layers": [
+        { "source": "state_incentive_rule", "name": "CA Film Credit", "incentive_value": 1500000, "rate": 30 },
+        { "source": "local_rule", "name": "LA County Bonus", "incentive_value": 250000, "rate": 5 }
+      ],
+      "total_incentive": 1750000,
+      "effective_rate": 0.35,
+      "warnings": []
     }
-  ]
-}
-```
-
-**Example Use Cases:**
-- Find all tax credits: `GET /incentive-rules/?incentive_type=tax_credit`
-- Find Georgia's programs: `GET /incentive-rules/?jurisdiction_id={ga-id}`
-- Find active programs: `GET /incentive-rules/?active=true`
-
----
-
-#### GET /incentive-rules/{id}
-**Purpose:** Get details for a specific incentive rule
-
-**Path Parameters:**
-- `id` (string, required) - Rule UUID
-
-**Response:** Single rule object with full details
-
----
-
-#### POST /incentive-rules/
-**Purpose:** Create a new incentive rule (Admin only)
-
-**Request Body:**
-```json
-{
-  "jurisdictionId": "uuid",
-  "ruleName": "Program Name",
-  "ruleCode": "CODE-001",
-  "incentiveType": "tax_credit",
-  "percentage": 25.0,
-  "minSpend": 500000,
-  "maxCredit": 5000000,
-  "eligibleExpenses": ["labor", "equipment"],
-  "excludedExpenses": ["marketing"],
-  "effectiveDate": "2024-01-01T00:00:00Z",
-  "requirements": {},
-  "active": true
-}
-```
-
-**Response:** Created rule with ID (201 Created)
-
----
-
-#### PUT /incentive-rules/{id}
-**Purpose:** Update an incentive rule (Admin only)
-
----
-
-#### DELETE /incentive-rules/{id}
-**Purpose:** Delete an incentive rule (Admin only)
-
----
-
-### **Productions API**
-
-#### GET /productions/
-**Purpose:** List all productions
-
-**Query Parameters:**
-- `production_type` (string, optional) - Filter by type
-- `active` (boolean, optional) - Filter by active status
-
-**Response:**
-```json
-{
-  "total": 5,
-  "productions": [
-    {
-      "id": "uuid",
-      "title": "Untitled Action Film",
-      "productionType": "feature",
-      "jurisdictionId": "uuid",
-      "budgetTotal": 5000000,
-      "budgetQualifying": 4500000,
-      "startDate": "2026-06-01",
-      "endDate": "2026-08-15",
-      "productionCompany": "Acme Productions",
-      "status": "planning",
-      "createdAt": "2026-01-09T...",
-      "updatedAt": "2026-01-09T..."
-    }
-  ]
+  ],
+  "best_jurisdiction": "CA-LA",
+  "best_total_incentive": 1750000
 }
 ```
 
 ---
 
-#### GET /productions/{id}
-**Purpose:** Get production details
+### Local Rules
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/local-rules/` | List approved local rules |
+| GET | `/local-rules/jurisdiction/{code}` | Rules for a specific jurisdiction |
+| GET | `/local-rules/stats/summary` | Count by source and category |
+| POST | `/local-rules/` | Create rule manually |
+| PUT | `/local-rules/{id}` | Update rule |
+| DELETE | `/local-rules/{id}` | Soft-delete (sets active=false) |
 
 ---
 
-#### POST /productions/
-**Purpose:** Create a new production
+### Pending Rules
 
-**Request Body:**
-```json
-{
-  "title": "My Film Project",
-  "productionType": "feature",
-  "jurisdictionId": "uuid",
-  "budgetTotal": 5000000,
-  "startDate": "2026-06-01",
-  "productionCompany": "Your Company",
-  "status": "planning"
-}
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/pending-rules/` | List pending rules (filter by status) |
+| GET | `/pending-rules/{id}` | Get pending rule details |
+| PATCH | `/pending-rules/{id}/approve` | Approve → promotes to local_rules |
+| PATCH | `/pending-rules/{id}/reject` | Reject with notes |
+
+---
+
+### System
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check (unauthenticated) |
+| GET | `/` | API root with endpoint listing |
+
+---
+
+## Deployment Guide
+
+### Railway (Production)
+
+#### Required Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string (use `${{Postgres.DATABASE_URL}}` to auto-link) |
+| `JWT_SECRET` | 256-bit hex secret for JWT signing |
+| `SECRET_KEY` | 256-bit hex secret for session encryption |
+| `APP_ENV` | Set to `production` |
+| `ANTHROPIC_API_KEY` | Anthropic API key (required for AI Advisor) |
+
+#### Build & Start (railway.toml)
+
+```toml
+[build]
+builder = "NIXPACKS"
+buildCommand = "pip install -r requirements.txt && python -m prisma generate"
+
+[build.environment]
+PYTHON_VERSION = "3.12"
+
+[deploy]
+startCommand = "prisma migrate deploy && uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/health"
 ```
 
----
+#### Post-Deploy: Seed Sub-Jurisdictions
 
-#### PUT /productions/{id}
-**Purpose:** Update production details
-
----
-
-#### DELETE /productions/{id}
-**Purpose:** Delete a production
-
----
-
-### **System Endpoints**
-
-#### GET /health
-**Purpose:** Check system health
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "database": "healthy",
-  "api_version": "v1"
-}
-```
-
----
-
-## 🎬 Use Cases & Examples
-
-### Use Case 1: Find Best Location for $5M Feature Film
-
-**Goal:** Determine which jurisdiction offers the best tax incentive for a $5M feature film.
-
-**Steps:**
-
-1. **Get all active jurisdictions:**
+After first successful deploy, run via Railway shell:
 ```bash
-GET /jurisdictions/?active=true
+python scripts/seed_sub_jurisdictions.py
+python scripts/seed_more_sub_jurisdictions.py
 ```
 
-2. **For each jurisdiction, get incentive rules:**
+This seeds 11 county/city sub-jurisdictions with additive inheritance policies.
+
+---
+
+### Local Development (Docker)
+
+#### Services
+
+| Service | Container | Port |
+|---------|-----------|------|
+| FastAPI backend | `pilotforge-api` | 8001 |
+| React frontend | `pilotforge-ui` | 3000 |
+| nginx proxy | `pilotforge-nginx` | 80 |
+| PostgreSQL | `tax-incentive-db` | 5432 |
+
+#### Start
 ```bash
-GET /incentive-rules/?jurisdiction_id={id}
+docker compose up -d
 ```
 
-3. **Compare rates:**
-   - Georgia: 30% (with promo)
-   - New York: 30%
-   - Louisiana: 25% + 10% payroll = 35%
-   - California: 20-25%
-   - New Zealand: 40% (highest!)
+#### Access
+- Frontend: http://localhost:3000
+- API (direct): http://localhost:8001/api/0.1.0/
+- API (nginx): http://localhost/api/0.1.0/
 
-4. **Check requirements:**
-   - Minimum spend thresholds
-   - Local hiring percentages
-   - Qualifying expenses
-
-**Result:** For $5M budget, New Zealand offers best rate (40% = $2M credit), but has $15M minimum spend. Louisiana offers 35% stackable ($1.75M) with lower minimum.
-
----
-
-### Use Case 2: Budget a TV Series in Multiple States
-
-**Goal:** Production wants to film in 3 states. Calculate total incentives.
-
-**Steps:**
-
-1. **Create production record:**
+#### Deploy code changes (without rebuilding image)
 ```bash
-POST /productions/
-{
-  "title": "Mystery Series Season 1",
-  "productionType": "tv_series",
-  "jurisdictionId": "ny-id",
-  "budgetTotal": 15000000,
-  "startDate": "2026-09-01",
-  "productionCompany": "StreamCo Productions",
-  "status": "planning"
-}
+# Backend
+docker cp src/api/your_file.py pilotforge-api:/app/src/api/your_file.py
+docker restart pilotforge-api
+
+# Frontend
+npm run build --prefix frontend
+docker cp frontend/dist/. pilotforge-ui:/usr/share/nginx/html/
+docker exec pilotforge-ui nginx -s reload
 ```
 
-2. **Get incentive rules for all target states:**
-   - New York: 30%
-   - New Jersey: 30% + 5% diversity = 35%
-   - Pennsylvania: 25-30%
-
-3. **Calculate per-state:**
-   - NY (5 episodes): $5M spend × 30% = $1.5M
-   - NJ (3 episodes): $3M spend × 35% = $1.05M
-   - PA (2 episodes): $2M spend × 27.5% = $550K
-   - **Total incentives: $3.1M**
-
----
-
-### Use Case 3: Check Compliance Requirements
-
-**Goal:** Verify production meets Georgia's requirements for 30% credit.
-
-**Steps:**
-
-1. **Get Georgia's rules:**
+#### Rebuild image (after schema.prisma changes)
 ```bash
-GET /incentive-rules/?jurisdiction_id={ga-id}
+docker compose build backend
+docker compose up -d backend
 ```
 
-2. **Check requirements:**
-```json
-{
-  "georgiaSpend": 500000,
-  "georgiaPromo": true,
-  "logoInCredits": true
-}
+---
+
+### Feed Monitor (Windows Task Scheduler)
+
+`monitor.py` checks government pages for rule changes and queues Claude-extracted rules for review.
+
+**Run manually:**
+```bash
+# Single jurisdiction
+python monitor.py --code NY-ERIE --dry-run
+
+# All jurisdictions
+python monitor.py
 ```
 
-3. **Compliance Checklist:**
-   - ✅ $500K minimum spend in Georgia
-   - ✅ Include Georgia logo in credits
-   - ✅ Promotional requirements met
-   - **Result: Qualifies for 30% rate**
+**Schedule:** Daily at 6 AM via Windows Task Scheduler (`scripts/schedule_monitor.ps1`).
+
+**Mock mode (no API billing):**
+```
+MOCK_CLAUDE=true
+```
+Set in `.env` to test the pipeline without Anthropic API calls.
 
 ---
 
-### Use Case 4: Compare International Options
+## Data Reference
 
-**Goal:** Major studio wants to compare US vs international incentives.
+### State Jurisdictions (23)
 
-**Comparison Table:**
+**United States:** CA, GA, NY, LA, NM, IL, MI, NJ, VA, CO, HI, OR, MT, MS
 
-| Jurisdiction | Rate | Min Spend | Max Credit | Notes |
-|-------------|------|-----------|------------|-------|
-| Georgia (US) | 30% | $500K | None | Best US rate |
-| California (US) | 20-25% | $1M | $10M | Competitive allocation |
-| Louisiana (US) | 35% | $300K | None | Stackable credits |
-| UK | 25% | £1M | None | Strong infrastructure |
-| Ireland | 32% | €250K | None | Cultural test required |
-| France | 30% | €1M | €30M | TRIP program |
-| New Zealand | 40% | NZ$15M | None | Highest rate! |
-| Canada BC | 35% | None | None | Strong for Canadian content |
+**Canada:** BC, ON, QC
 
-**Analysis:**
-- **Highest rate:** New Zealand (40%)
-- **Best for mid-budget:** Louisiana (35%, low minimum)
-- **Best for mega-budget:** New Zealand or UK
-- **Best for Canadian content:** British Columbia (35%)
+**International:** UK, AU, IE, FR, ES, NZ
 
----
+### Sub-Jurisdictions (11)
 
-## 📊 Data Reference
-
-### Supported Jurisdictions (32 Total)
-
-#### United States (20)
-- California (CA)
-- Georgia (GA)
-- New York (NY)
-- Texas (TX)
-- Louisiana (LA)
-- New Mexico (NM)
-- Massachusetts (MA)
-- Connecticut (CT)
-- Illinois (IL)
-- Pennsylvania (PA)
-- North Carolina (NC)
-- Florida (FL)
-- Michigan (MI)
-- New Jersey (NJ)
-- Virginia (VA)
-- Colorado (CO)
-- Hawaii (HI)
-- Oregon (OR)
-- Montana (MT)
-- Mississippi (MS)
-
-#### Canada (4)
-- British Columbia (BC)
-- Ontario (ON)
-- Quebec (QC)
-- Alberta (AB)
-
-#### Australia (3)
-- New South Wales (NSW)
-- Victoria (VIC)
-- Queensland (QLD)
-
-#### Europe (3)
-- United Kingdom (UK)
-- Ireland (IE)
-- France (FR)
-- Spain (ES)
-
-#### Oceania (1)
-- New Zealand (NZ)
-
----
+| Code | Name | Parent |
+|------|------|--------|
+| CA-LA | Los Angeles County | CA |
+| IL-COOK | Cook County (Chicago) | IL |
+| NY-NYC | New York City | NY |
+| NY-BROOKLYN | Brooklyn | NY |
+| NY-QUEENS | Queens | NY |
+| NY-MANHATTAN | Manhattan | NY |
+| NY-BRONX | Bronx | NY |
+| NY-STATEN-ISLAND | Staten Island | NY |
+| NY-ERIE | Erie County | NY |
+| NY-NASSAU | Nassau County | NY |
+| NY-WESTCHESTER | Westchester County | NY |
 
 ### Incentive Types
 
-**tax_credit** - Tax credit against production company taxes  
-**rebate** - Cash rebate paid directly to production  
-**grant** - Government grant (does not require tax liability)  
-**exemption** - Sales tax or other tax exemptions  
-
----
-
-### Expense Categories
-
-**Eligible Expenses (commonly):**
-- labor (crew wages)
-- equipment (rentals, purchases)
-- locations (location fees)
-- post_production (editing, vfx, sound)
-- lodging (cast/crew accommodation)
-- transportation (production-related)
-
-**Excluded Expenses (commonly):**
-- above_the_line (producers, directors, lead actors over cap)
-- marketing (advertising, promotion)
-- distribution (delivery, duplication)
-- financing (interest, fees)
-- development (pre-greenlight costs)
-
----
+| Type | Description |
+|------|-------------|
+| `tax_credit` | Credit against production company taxes |
+| `rebate` | Cash rebate paid directly to production |
+| `grant` | Government grant (no tax liability required) |
+| `fee_waiver` | Permit or location fee waiver |
+| `in_kind` | Non-cash support (crew, equipment, facilities) |
 
 ### Production Types
 
-- **feature** - Feature film (theatrical release)
-- **tv_series** - Television series
-- **tv_movie** - Television movie
-- **commercial** - Commercial/advertising
-- **documentary** - Documentary film
-- **web_series** - Web/streaming series
-- **pilot** - Television pilot
-
----
+`feature` | `tv_series` | `tv_movie` | `commercial` | `documentary` | `web_series` | `pilot`
 
 ### Production Status
 
-- **planning** - In development/planning phase
-- **pre_production** - Pre-production (casting, location scouting)
-- **production** - Principal photography in progress
-- **post_production** - Editing, vfx, finishing
-- **completed** - Production wrapped and delivered
-- **on_hold** - Temporarily paused
-- **cancelled** - Project cancelled
+`planning` | `pre_production` | `production` | `post_production` | `completed`
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
-### Common Issues
+### "Failed to load resource: 404" on production (Railway)
 
-#### Issue: "Cannot connect to API"
-
-**Symptoms:** Browser shows "Cannot reach this page"
+**Cause:** Railway deployment hasn't completed yet, or migrations haven't run.
 
 **Solutions:**
-1. Check server is running: Look for "Application startup complete"
-2. Verify URL: http://localhost:8000
-3. Check Docker: `docker ps` should show `tax-incentive-db`
-4. Restart server: `python -m uvicorn src.main:app --reload`
+1. Check Railway dashboard → Deployments → wait for green status
+2. Check deploy logs for prisma generate/migrate errors
+3. Verify `DATABASE_URL` is linked to the Postgres service
 
 ---
 
-#### Issue: "Database connection failed"
+### "Database connection failed" locally
 
-**Symptoms:** "Client is not connected to the query engine"
-
-**Solutions:**
-1. Check PostgreSQL: `docker ps` (should show tax-incentive-db)
-2. Start database: `docker-compose up -d`
-3. Test connection: `docker exec tax-incentive-db pg_isready -U postgres`
-4. Check .env file has: `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tax_incentive_db?schema=public`
+```bash
+docker ps                          # verify tax-incentive-db is running
+docker compose up -d postgres      # restart postgres if needed
+docker exec tax-incentive-db pg_isready -U postgres
+```
 
 ---
 
-#### Issue: "404 Not Found" on endpoint
+### "401 Unauthorized" on API calls
 
-**Symptoms:** Endpoint returns 404 error
-
-**Solutions:**
-1. Check endpoint path (case-sensitive)
-2. Verify API version prefix: `/api/v1/`
-3. Check available endpoints: `GET /api/v1/`
-4. Refresh Swagger docs: http://localhost:8000/docs
+Token has expired (8-hour TTL). Log out and log back in — the frontend handles this automatically via the 401 interceptor.
 
 ---
 
-#### Issue: "422 Validation Error"
+### Empty jurisdictions list after Railway deploy
 
-**Symptoms:** Request rejected with validation errors
-
-**Solutions:**
-1. Check required fields are included
-2. Verify data types (strings, numbers, dates)
-3. Check date format: "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM:SSZ"
-4. Review error details in response body
-5. Use Swagger UI to see field requirements
+Sub-jurisdictions aren't auto-seeded. Run:
+```bash
+python scripts/seed_sub_jurisdictions.py
+python scripts/seed_more_sub_jurisdictions.py
+```
 
 ---
 
-#### Issue: No data returned (empty arrays)
+### Chart "width(-1) height(-1)" console warning
 
-**Symptoms:** `{"total": 0, "jurisdictions": []}`
-
-**Solutions:**
-1. Run seed scripts:
-   - `python scripts/seed_jurisdictions.py`
-   - `python scripts/seed_incentive_rules.py`
-2. Check database: `docker exec tax-incentive-db psql -U postgres -d tax_incentive_db -c "SELECT COUNT(*) FROM jurisdictions;"`
-3. Verify migrations: `python -m prisma migrate status`
+Cosmetic Recharts initialization warning. Does not affect functionality. Fixed in v0.2.0.
 
 ---
 
-### Error Code Reference
+### Prisma FieldNotFoundError after schema change
 
-| Code | Meaning | Common Causes |
-|------|---------|---------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 204 | No Content | Delete successful |
-| 400 | Bad Request | Invalid request data |
-| 404 | Not Found | Resource doesn't exist |
-| 422 | Validation Error | Request data doesn't meet requirements |
-| 500 | Internal Server Error | Server-side error (check logs) |
-
----
-
-## ⚙️ Technical Specifications
-
-### System Requirements
-
-**Development Environment:**
-- Python 3.12+
-- Docker Desktop
-- PostgreSQL 16 (via Docker)
-- 4GB RAM minimum
-- 10GB disk space
-
-**Production Environment:**
-- Python 3.12+
-- PostgreSQL 16+
-- 8GB RAM recommended
-- Load balancer (for high traffic)
-- SSL certificate
+The container's Prisma client is stale.
+```bash
+docker exec pilotforge-api python -m prisma generate
+docker restart pilotforge-api
+```
+If that fails (broken generated files), rebuild:
+```bash
+docker compose build backend && docker compose up -d backend
+```
 
 ---
+
+## Technical Specifications
 
 ### Technology Stack
 
+**Frontend:**
+- React 19 + TypeScript
+- Vite 7
+- Tailwind CSS v4
+- Recharts (data visualization)
+- Lucide React (icons)
+- Zustand (auth state)
+- Axios (API client)
+
 **Backend:**
-- **Framework:** FastAPI 0.109.0
-- **Database:** PostgreSQL 16
-- **ORM:** Prisma Client Python 0.15.0
-- **Server:** Uvicorn (ASGI)
-- **Language:** Python 3.12
+- FastAPI (Python 3.12)
+- Prisma Client Python 0.15.0
+- PostgreSQL 16
+- Uvicorn (ASGI server)
+- APScheduler (background jobs)
+- JWT (python-jose + bcrypt)
 
-**API:**
-- **Standard:** OpenAPI 3.1 / OAS 3.1
-- **Documentation:** Swagger UI, ReDoc
-- **Format:** JSON
-- **Authentication:** API Keys (coming soon)
+**Infrastructure:**
+- Docker + Docker Compose (local)
+- Railway (production hosting)
+- nginx (reverse proxy)
+- GitHub (version control + CI/CD trigger)
 
-**Database:**
-- **Engine:** PostgreSQL 16-alpine
-- **Container:** Docker
-- **Migrations:** Prisma Migrate
-- **Backup:** Automated daily (production)
+**AI Integration:**
+- Anthropic Claude (claude-sonnet-4-6) — AI Advisor + rule extraction
 
----
+### Database Schema — Key Models
 
-### Performance
+| Table | Purpose |
+|-------|---------|
+| `jurisdictions` | State, country, county, city jurisdictions |
+| `incentive_rules` | State-level tax incentive programs |
+| `local_rules` | Approved county/city rules |
+| `pending_rules` | AI-extracted rules awaiting review |
+| `inheritance_policies` | Parent→child stacking rules (additive/exclusive) |
+| `productions` | Production records |
+| `expenses` | Production expense line items |
+| `users` | Platform users (JWT auth) |
+| `sub_jurisdictions` | Phase 0: detailed county incentive records |
+| `production_scenarios` | What-if scenario inputs |
+| `scenario_optimization_results` | Cached stacking engine output |
 
-**Response Times:**
-- Simple GET: <50ms
-- Filtered queries: <100ms
-- Complex calculations: <500ms
+### API Security
 
-**Capacity:**
-- Jurisdictions: 1000+
-- Incentive Rules: 10,000+
-- Productions: Unlimited
-- Concurrent users: 100+ (can scale)
-
----
-
-### Security
-
-**Current (Development):**
-- No authentication required
-- CORS enabled for localhost
-- SQL injection protection (Prisma ORM)
-
-**Production (Coming):**
-- API key authentication
-- Rate limiting (60 requests/minute)
-- HTTPS only
-- Input validation
-- Audit logging
+- JWT HS256 tokens, 8-hour TTL
+- bcrypt password hashing
+- 401 interceptor clears stale tokens
+- CORS configured per environment
 
 ---
 
-### API Versioning
-
-**Current:** v1  
-**Stability:** Beta  
-**Breaking Changes:** Will be communicated 30 days in advance  
-**Deprecation Policy:** Endpoints supported for 6 months after deprecation  
-
----
-
-### Rate Limits
-
-**Development:** No limits  
-**Production (Free Tier):** 60 requests/minute  
-**Production (Pro Tier):** 600 requests/minute  
-**Production (Enterprise):** Custom limits  
-
----
-
-### Data Retention
-
-**Productions:** Indefinite  
-**Calculations:** 2 years  
-**Audit Logs:** 1 year  
-**Deleted Records:** 30-day recovery period  
-
----
-
-## 📞 Support
-
-### Getting Help
-
-**Documentation:**
-- User Manual: This document
-- API Reference: http://localhost:8000/docs
-- Technical Specs: WORKING_STATE.md
-
-**GitHub:**
-- Repository: https://github.com/hneal055/PilotForge
-> Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
-- Issues: Report bugs and request features
-- Discussions: Ask questions, share ideas
-
-**Contact:**
-- Developer: Howard Neal
-- Project: PilotForge
-> Tax Incentive Intelligence for Film & TV
-> Tax Incentive Intelligence for Film & TV
-- Version: 0.1.0 (Beta)
-
----
-
-### Contributing
-
-Interested in contributing data or features?
-1. Fork the repository
-2. Create feature branch
-3. Submit pull request
-4. Include tests and documentation
-
----
-
-### Roadmap
-
-**Phase 3 (Q1 2026):**
-- Calculator Engine
-- Rule Validator
-- Comparison Tool
-
-**Phase 4 (Q2 2026):**
-- Expenses API
-- Calculations API
-- Report Generation
-
-**Phase 5 (Q3 2026):**
-- Testing Suite
-- Performance Optimization
-- Security Audit
-
-**Phase 6 (Q4 2026):**
-- Web Interface
-- User Authentication
-- Admin Dashboard
-
-**Phase 7 (2027):**
-- Production Deployment
-- Mobile App
-- Advanced Analytics
-
----
-
-## 📄 Legal
+## Legal
 
 ### Disclaimer
 
-This platform provides information about film tax incentive programs. While we strive for accuracy:
+This platform provides information about film tax incentive programs for planning purposes. While we strive for accuracy:
 
-- **Not Legal Advice:** Consult with tax professionals and attorneys
-- **Not Financial Advice:** Verify all calculations with accountants
-- **Subject to Change:** Incentive programs change; verify current status
-- **No Guarantee:** We don't guarantee eligibility or approval
+- **Not Legal Advice** — Consult with tax professionals and attorneys before making production location decisions
+- **Not Financial Advice** — Verify all calculations with qualified accountants
+- **Subject to Change** — Incentive programs change frequently; verify current program status with film commissions
+- **No Guarantee** — We do not guarantee eligibility or approval for any incentive program
 
 ### Data Sources
 
-Incentive rule data sourced from:
-- Official film commission websites
-- Government tax authority publications
-- Industry publications
-- Direct communication with film offices
-
-### License
-
-**Code:** MIT License (open source)  
-**Data:** Creative Commons BY-SA 4.0  
-**Documentation:** Creative Commons BY 4.0  
-
----
-
-### Updates
-
-**Last Updated:** January 9, 2026  
-**Version:** 1.0  
-**Next Review:** March 2026  
+Incentive rule data sourced from official film commission websites, government tax authority publications, and county/city government pages monitored by the automated feed system.
 
 ---
 
 **End of User Manual**
 
-For the latest version of this manual, visit: https://github.com/hneal055/PilotForge/blob/main/USER_MANUAL.md
+Repository: https://github.com/hneal055/Tax_Incentive_Compliance_Platform

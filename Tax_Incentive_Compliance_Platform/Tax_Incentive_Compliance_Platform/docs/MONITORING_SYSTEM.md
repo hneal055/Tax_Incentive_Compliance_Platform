@@ -150,7 +150,7 @@ curl -X POST http://localhost:8000/api/v1/monitoring/sources \
     "jurisdictionId": "california-001",
     "sourceType": "rss",
     "url": "https://film.ca.gov/feed",
-    "checkInterval": 3600,
+    "checkInterval": 2400,
     "active": true
   }'
 ```
