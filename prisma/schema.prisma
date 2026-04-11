@@ -39,7 +39,7 @@ model Jurisdiction {
   pendingRules       PendingRule[]
   childPolicies      InheritancePolicy[] @relation("ChildPolicies")
   parentPolicies     InheritancePolicy[] @relation("ParentPolicies")
-  subJurisdictions   SubJurisdiction[]   @relation("SubJurisdictions")
+  subJurisdictionModels SubJurisdiction[] @relation("SubJurisdictionModel")
 
   @@index([parentId])
   @@map("jurisdictions")
@@ -268,24 +268,23 @@ model SubJurisdiction {
   id                            String    @id @default(uuid())
 
   name                          String
-  /// 'county' | 'city' | 'region' | 'special_district'
+  // county | city | region | special_district
   type                          String
   parentJurisdictionId          String
-  parentJurisdiction            Jurisdiction @relation("SubJurisdictions", fields: [parentJurisdictionId], references: [id], onDelete: Restrict)
+  parentJurisdiction            Jurisdiction @relation("SubJurisdictionModel", fields: [parentJurisdictionId], references: [id], onDelete: Restrict)
 
-  /// 'credit' | 'rebate' | 'fee_waiver' | 'in_kind'
+  // credit | rebate | fee_waiver | in_kind
   incentiveType                 String
-  ratePercent                   Decimal?  @db.Decimal(5, 2)
-  fixedAmount                   Decimal?  @db.Decimal(12, 2)
-  capPerProduction              Decimal?  @db.Decimal(12, 2)
-  annualCap                     Decimal?  @db.Decimal(12, 2)
-  minSpendRequired              Decimal?  @db.Decimal(12, 2)
+  ratePercent                   Float?
+  fixedAmount                   Float?
+  capPerProduction              Float?
+  annualCap                     Float?
+  minSpendRequired              Float?
 
-  /// Stacking rules JSON: cannot_stack_with[], requires[], stacking_order,
-  /// mutually_exclusive_groups[], notes
+  // Stacking rules JSON: cannot_stack_with[], requires[], stacking_order, notes
   stackingRules                 Json      @default("{}")
   eligibleExpenditureCategories Json?
-  localHirePercentageRequired   Decimal?  @db.Decimal(5, 2)
+  localHirePercentageRequired   Float?
 
   effectiveDate                 DateTime  @db.Date
   expirationDate                DateTime? @db.Date
@@ -310,15 +309,15 @@ model ProductionScenario {
   production          Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
 
   name                String
-  totalBudget         Decimal?  @db.Decimal(12, 2)
-  qualifiedSpend      Decimal?  @db.Decimal(12, 2)
+  totalBudget         Float?
+  qualifiedSpend      Float?
   /// e.g. {"labor": 5000000, "rentals": 2000000}
   spendByCategory     Json?
   shootingDays        Int?
   /// e.g. [{"jurisdiction_id": "uuid", "days": 20}, {"sub_jurisdiction_id": "uuid", "days": 10}]
   daysByJurisdiction  Json?
   postLocation        String?
-  localHirePercent    Decimal?  @db.Decimal(5, 2)
+  localHirePercent    Float?
   hireByJurisdiction  Json?
 
   createdAt           DateTime  @default(now())
@@ -339,8 +338,8 @@ model ScenarioOptimizationResult {
 
   /// e.g. [{"jurisdiction_id": "...", "name": "NY Base", "incentive_value": 4500000}]
   recommendedStack    Json               @default("[]")
-  totalIncentiveValue Decimal?           @db.Decimal(12, 2)
-  effectiveRate       Decimal?           @db.Decimal(5, 2)
+  totalIncentiveValue Float?
+  effectiveRate       Float?
   /// e.g. "refundable within 90 days of audit"
   cashFlowEstimate    String?
   /// e.g. ["Annual cap 82% exhausted — apply early"]

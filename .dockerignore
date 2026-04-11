@@ -66,6 +66,13 @@ yarn-error.log
 *.bak
 .tmp/
 
+# Large artifacts / demo packages (keep builds fast)
+*.zip
+*.xlsx
+*.docx
+demo/
+logs/
+
 # Docker
 Dockerfile.dev
 .dockerignore
