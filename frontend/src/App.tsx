@@ -8,6 +8,7 @@ import AIAdvisor from './components/AIAdvisor';
 import Georgia from './pages/Georgia';
 import MMBConnector from './pages/MMBConnector';
 import PendingRules from './pages/PendingRules';
+import LocalRules from './pages/LocalRules';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -31,6 +32,7 @@ function App() {
     georgia:      <Georgia />,
     mmb:          <MMBConnector />,
     pendingRules: <PendingRules />,
+    localRules:   <LocalRules />,
     admin:        <Admin />,
     settings:     <Settings />,
   };

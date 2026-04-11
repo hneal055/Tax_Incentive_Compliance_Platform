@@ -13,6 +13,7 @@ import type {
   NotificationPreference,
   UserProfile,
   PendingRule,
+  LocalRule,
 } from '../types';
 
 import { mockApi } from '../mocks/api';
@@ -380,6 +381,28 @@ export const api = {
           false,
         ),
     },
+  },
+};
+
+export const localRulesApi = {
+  list: async (params?: { jurisdictionId?: string; jurisdictionCode?: string; category?: string; activeOnly?: boolean }): Promise<{ total: number; rules: LocalRule[] }> => {
+    const r = await apiClient.get('/local-rules', { params: { active_only: params?.activeOnly ?? true, ...params } });
+    return r.data;
+  },
+  byJurisdiction: async (code: string): Promise<{ jurisdiction: { id: string; name: string; code: string; type: string; parentId: string | null }; total: number; rules: LocalRule[] }> => {
+    const r = await apiClient.get(`/local-rules/by-jurisdiction/${code}`);
+    return r.data;
+  },
+  get: async (id: string): Promise<LocalRule> => {
+    const r = await apiClient.get(`/local-rules/${id}`);
+    return r.data;
+  },
+  deactivate: async (id: string): Promise<void> => {
+    await apiClient.delete(`/local-rules/${id}`);
+  },
+  stats: async (): Promise<{ total: number; active: number; bySource: { extractedBy: string; count: number }[]; byCategory: { category: string; count: number }[] }> => {
+    const r = await apiClient.get('/local-rules/stats/summary');
+    return r.data;
   },
 };
 

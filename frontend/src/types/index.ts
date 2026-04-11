@@ -151,6 +151,27 @@ export interface MonitoringEvent {
   createdAt: string;
 }
 
+export interface LocalRule {
+  id: string;
+  jurisdictionId: string;
+  jurisdiction?: { id: string; name: string; code: string; type: string };
+  name: string;
+  code: string;
+  category: string;
+  ruleType: string;
+  amount: number | null;
+  percentage: number | null;
+  description: string;
+  requirements: string | null;
+  effectiveDate: string;
+  expirationDate: string | null;
+  sourceUrl: string | null;
+  extractedBy: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ExtractedRule {
   name: string;
   category: string;
