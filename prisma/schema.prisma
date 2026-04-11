@@ -39,6 +39,7 @@ model Jurisdiction {
   pendingRules       PendingRule[]
   childPolicies      InheritancePolicy[] @relation("ChildPolicies")
   parentPolicies     InheritancePolicy[] @relation("ParentPolicies")
+  subJurisdictions   SubJurisdiction[]   @relation("SubJurisdictions")
 
   @@index([parentId])
   @@map("jurisdictions")
@@ -150,6 +151,7 @@ model Production {
   updatedAt         DateTime         @updatedAt
   expenses          Expense[]
   complianceItems   ComplianceItem[]
+  scenarios         ProductionScenario[]
 
   @@index([jurisdictionId])
   @@index([status])
@@ -256,4 +258,96 @@ model MonitoringEvent {
   @@index([isRead])
   @@index([createdAt])
   @@map("monitoring_events")
+}
+
+// ─── Phase 0: Sub-Jurisdiction Layer ──────────────────────────────────────────
+
+/// County, city, region, or special-district incentive that stacks on top of
+/// the base state credit. Links to the parent Jurisdiction via parentJurisdictionId.
+model SubJurisdiction {
+  id                            String    @id @default(uuid())
+
+  name                          String
+  /// 'county' | 'city' | 'region' | 'special_district'
+  type                          String
+  parentJurisdictionId          String
+  parentJurisdiction            Jurisdiction @relation("SubJurisdictions", fields: [parentJurisdictionId], references: [id], onDelete: Restrict)
+
+  /// 'credit' | 'rebate' | 'fee_waiver' | 'in_kind'
+  incentiveType                 String
+  ratePercent                   Decimal?  @db.Decimal(5, 2)
+  fixedAmount                   Decimal?  @db.Decimal(12, 2)
+  capPerProduction              Decimal?  @db.Decimal(12, 2)
+  annualCap                     Decimal?  @db.Decimal(12, 2)
+  minSpendRequired              Decimal?  @db.Decimal(12, 2)
+
+  /// Stacking rules JSON: cannot_stack_with[], requires[], stacking_order,
+  /// mutually_exclusive_groups[], notes
+  stackingRules                 Json      @default("{}")
+  eligibleExpenditureCategories Json?
+  localHirePercentageRequired   Decimal?  @db.Decimal(5, 2)
+
+  effectiveDate                 DateTime  @db.Date
+  expirationDate                DateTime? @db.Date
+
+  isActive                      Boolean   @default(true)
+  sourceUrl                     String?
+  lastVerified                  DateTime?
+  notes                         String?
+
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+
+  @@index([parentJurisdictionId])
+  @@map("sub_jurisdictions")
+}
+
+/// Stores "what-if" input parameters for a single production.
+/// Multiple scenarios per production allow baseline vs. optimized comparison.
+model ProductionScenario {
+  id                  String    @id @default(uuid())
+  productionId        String
+  production          Production @relation(fields: [productionId], references: [id], onDelete: Cascade)
+
+  name                String
+  totalBudget         Decimal?  @db.Decimal(12, 2)
+  qualifiedSpend      Decimal?  @db.Decimal(12, 2)
+  /// e.g. {"labor": 5000000, "rentals": 2000000}
+  spendByCategory     Json?
+  shootingDays        Int?
+  /// e.g. [{"jurisdiction_id": "uuid", "days": 20}, {"sub_jurisdiction_id": "uuid", "days": 10}]
+  daysByJurisdiction  Json?
+  postLocation        String?
+  localHirePercent    Decimal?  @db.Decimal(5, 2)
+  hireByJurisdiction  Json?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  optimizationResult  ScenarioOptimizationResult?
+
+  @@index([productionId])
+  @@map("production_scenarios")
+}
+
+/// Cached stacking-engine output for a given scenario.
+/// Set expiresAt to force recomputation when underlying data changes.
+model ScenarioOptimizationResult {
+  id                  String             @id @default(uuid())
+  scenarioId          String             @unique
+  scenario            ProductionScenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  /// e.g. [{"jurisdiction_id": "...", "name": "NY Base", "incentive_value": 4500000}]
+  recommendedStack    Json               @default("[]")
+  totalIncentiveValue Decimal?           @db.Decimal(12, 2)
+  effectiveRate       Decimal?           @db.Decimal(5, 2)
+  /// e.g. "refundable within 90 days of audit"
+  cashFlowEstimate    String?
+  /// e.g. ["Annual cap 82% exhausted — apply early"]
+  warnings            Json?
+
+  createdAt           DateTime           @default(now())
+  expiresAt           DateTime?
+
+  @@map("scenario_optimization_results")
 }
