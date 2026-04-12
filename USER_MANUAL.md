@@ -693,6 +693,36 @@ The Maximizer resolves jurisdiction layers from a lat/lng coordinate and calcula
 | Spatial | Manual selection | Automatic bounding-box lookup |
 | Mutual exclusions | N/A | Automatically resolves conflicting rules (keeps higher value) |
 
+### Via the UI
+
+The **Maximizer** tab (⚡ icon, sidebar) provides a point-and-click interface to the stacking engine.
+
+**Input controls:**
+
+| Control | Description |
+| ------- | ----------- |
+| **Input Mode** | Toggle between *Codes* (comma/space-separated jurisdiction codes) and *Lat / Lng* (decimal coordinates) |
+| **Jurisdiction Codes** | e.g. `NY, NY-NYC` — stack parent + sub-jurisdiction rules together |
+| **Project Type** | Feature Film, TV Series, Commercial, Documentary, or All / Unknown — filters out TV-only rules for film projects |
+| **Qualified Spend** | Dollar amount (USD) — converts percentage rules to real dollar values; live display shows formatted amount |
+
+**Quick Presets** (one-click fill):
+
+| Preset | Codes | Result (film, $5M) |
+| ------ | ----- | ------------------- |
+| NYC — $5M Film | `NY, NY-NYC` | $2.00M at 40% |
+| Chicago — $5M Film | `IL, IL-COOK` | $2.25M at 45% |
+| Los Angeles — $5M Film | `CA, CA-LA` | $1.50M at 30% |
+| Erie County — $5M Film | `NY, NY-ERIE` | $1.50M at 30% |
+
+**Results panel:**
+
+- **Hero card** — total incentive value, effective rate, jurisdiction count, spend
+- **Applied Rules** — table of every rule applied, with rule type badge, dollar value, and underlying % rate
+- **Breakdown by Category** — horizontal bar chart showing credit / rebate / permit-fee totals
+- **Opt-in Upside** (amber) — rules that require an election and were excluded from the base total; shown as additive upside
+- **Notes / Warnings** (slate) — mutual exclusions resolved, permit fees netted, and other advisory messages
+
 ### Via the API
 
 **POST /api/0.1.0/maximize**
