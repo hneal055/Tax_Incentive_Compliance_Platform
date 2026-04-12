@@ -25,7 +25,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 from prisma import Json, Prisma
 
-load_dotenv()
+load_dotenv(override=True)
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -89,8 +89,28 @@ Content to analyze:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+def _html_to_text(html: str) -> str:
+    """Return whitespace-normalised visible text from an HTML string.
+
+    Uses regex pre-stripping so malformed HTML (e.g. unclosed <head> tags)
+    doesn't suppress body text.
+    """
+    # Remove entire <head>…</head> blocks (non-greedy, case-insensitive)
+    html = re.sub(r"<head\b[^>]*>.*?</head>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    # Remove script / style / noscript blocks
+    html = re.sub(
+        r"<(script|style|noscript)\b[^>]*>.*?</\1>",
+        "",
+        html,
+        flags=re.DOTALL | re.IGNORECASE,
+    )
+    # Strip remaining tags
+    text = re.sub(r"<[^>]+>", " ", html)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 async def fetch_url(url: str, timeout: int = 30) -> str | None:
-    """Fetch URL and return text content, or None on failure."""
+    """Fetch URL and return cleaned visible text content, or None on failure."""
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as http:
             r = await http.get(
@@ -98,7 +118,10 @@ async def fetch_url(url: str, timeout: int = 30) -> str | None:
                 headers={"User-Agent": "PilotForge-Monitor/1.0 (tax incentive compliance)"},
             )
             r.raise_for_status()
-            return r.text
+            content_type = r.headers.get("content-type", "")
+            if "html" in content_type or url.endswith((".htm", ".html", ".shtml")):
+                return _html_to_text(r.text)
+            return r.text  # PDF / plain-text feeds pass through as-is
     except httpx.HTTPStatusError as e:
         log.warning(f"HTTP {e.response.status_code} fetching {url}")
     except Exception as e:

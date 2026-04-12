@@ -37,6 +37,7 @@ model Jurisdiction {
   productions            Production[]
   localRules             LocalRule[]
   pendingRules           PendingRule[]
+  requirements           JurisdictionRequirement[]
   childPolicies          InheritancePolicy[] @relation("ChildPolicies")
   parentPolicies         InheritancePolicy[] @relation("ParentPolicies")
   subJurisdictionModels  SubJurisdiction[]   @relation("SubJurisdictionModel")
@@ -106,6 +107,43 @@ model PendingRule {
   @@index([jurisdictionId])
   @@index([status])
   @@map("pending_rules")
+}
+
+/// Non-quantified requirements extracted from government pages.
+/// Stores process/structural rules (permits, portals, designations,
+/// insurance mandates) that have no dollar/percentage value and
+/// therefore cannot live in local_rules or incentive_rules.
+model JurisdictionRequirement {
+  id             String       @id @default(uuid())
+  jurisdictionId String
+  jurisdiction   Jurisdiction @relation(fields: [jurisdictionId], references: [id], onDelete: Cascade)
+
+  /// Short display name, e.g. "Film Permit Required"
+  name           String
+
+  /// permit | insurance | registration | designation | infrastructure | portal | contact | other
+  category       String
+
+  /// mandatory | recommended | informational
+  requirementType String      @default("mandatory")
+
+  description    String
+
+  /// Who this applies to, e.g. ["feature_film","commercial","tv_series"]
+  applicableTo   String[]     @default([])
+
+  contactInfo    String?      /// phone / email for the relevant office
+  portalUrl      String?      /// direct link to online permit form or portal
+  sourceUrl      String?      /// page this was extracted from
+  extractedBy    String       @default("monitor")   /// monitor | manual
+
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([jurisdictionId])
+  @@index([category])
+  @@map("jurisdiction_requirements")
 }
 
 model IncentiveRule {

@@ -22,6 +22,8 @@ from src.api.production_expenses import router as production_expenses_router
 from src.api.pending_rules import router as pending_rules_router
 from src.api.local_rules import router as local_rules_router
 from src.api.stacking_engine import router as stacking_engine_router
+from src.api.maximizer import router as maximizer_router
+from src.api.requirements import router as requirements_router
 from src.utils.auth_utils import get_current_user
 
 API_PREFIX = "/api/0.1.0"
@@ -51,6 +53,8 @@ router.include_router(georgia_router, dependencies=_auth_dep)
 router.include_router(pending_rules_router, dependencies=_auth_dep)
 router.include_router(local_rules_router, dependencies=_auth_dep)
 router.include_router(stacking_engine_router, dependencies=_auth_dep)
+router.include_router(maximizer_router, dependencies=_auth_dep)
+router.include_router(requirements_router, dependencies=_auth_dep)
 
 
 @router.get("/", tags=["Meta"])
