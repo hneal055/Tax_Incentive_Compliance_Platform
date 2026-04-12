@@ -709,19 +709,20 @@ The **Maximizer** tab (⚡ icon, sidebar) provides a point-and-click interface t
 | **Jurisdiction Codes** | e.g. `NY, NY-NYC` — stack parent + sub-jurisdiction rules together |
 | **Project Type** | Feature Film, TV Series, Commercial, Documentary, or All / Unknown — filters out TV-only rules for film projects |
 | **Qualified Spend** | Dollar amount (USD) — converts percentage rules to real dollar values; live display shows formatted amount |
+| **Split spend by location** | Appears when ≥ 2 codes are entered. Toggle to enter per-jurisdiction spend — sub-jurisdiction bonuses (e.g. IL-CHICAGO-BONUS) use their location's spend; other rules use the total. |
 
 **Quick Presets** (one-click fill):
 
 | Preset | Codes | Result (film, $5M) |
 | ------ | ----- | ------------------- |
 | NYC — $5M Film | `NY, NY-NYC` | $2.00M at 40% |
-| Chicago — $5M Film | `IL, IL-COOK` | $2.25M at 45% |
+| Chicago — $5M Film | `IL, IL-COOK` | $2.50M at 50% |
 | Los Angeles — $5M Film | `CA, CA-LA` | $1.50M at 30% |
 | Erie County — $5M Film | `NY, NY-ERIE` | $1.50M at 30% |
 
 **Results panel:**
 
-- **Hero card** — total incentive value, effective rate, jurisdiction count, spend
+- **Hero card** — total incentive value, effective rate, jurisdiction count, spend (shows *split* badge when location splits are active)
 - **Applied Rules** — table of every rule applied, with rule type badge, dollar value, and underlying % rate
 - **Breakdown by Category** — horizontal bar chart showing credit / rebate / permit-fee totals
 - **Opt-in Upside** (amber) — rules that require an election and were excluded from the base total; shown as additive upside
@@ -730,6 +731,22 @@ The **Maximizer** tab (⚡ icon, sidebar) provides a point-and-click interface t
 ### Via the API
 
 **POST /api/0.1.0/maximize**
+
+```json
+{
+  "jurisdiction_codes": ["IL", "IL-COOK"],
+  "qualified_spend": 5000000,
+  "project_type": "film",
+  "spend_by_location": {
+    "IL": 5000000,
+    "IL-COOK": 2000000
+  }
+}
+```
+
+`spend_by_location` is optional. Omit it and every rule uses `qualified_spend`. Include it to scope sub-jurisdiction bonuses to their actual local spend. Keys are jurisdiction codes; values are USD. Jurisdictions not present fall back to `qualified_spend`.
+
+Lat/lng mode:
 
 ```json
 {
@@ -791,6 +808,10 @@ python maximizer.py --codes NY NY-ERIE NY-NYC --spend 5000000
 
 # Filter by project type
 python maximizer.py 34.0522 -118.2437 --spend 10000000 --type film
+
+# Split spend by location (Chicago: $5M total, $2M in Chicago)
+python maximizer.py --codes IL IL-COOK --spend 5000000 --type film \
+    --location-spend IL:5000000 IL-COOK:2000000
 ```
 
 ### Project-Type Filtering
@@ -828,7 +849,7 @@ Validated results from the engine as of April 2026:
 | Los Angeles | `CA` + `CA-LA` | $1,500,000 | 30% | — |
 | Georgia | `GA` | $1,000,000 | 20% | +$500K (logo in credits) |
 
-> Chicago's 50% rate: IL base (35%) + Chicago location bonus (15%). The Chicago bonus applies to spend within city limits — split-location shoots will see a proportionally lower bonus once `spend_by_location` input is implemented.
+> Chicago's 50% rate: IL base (35%) + Chicago location bonus (15%). IL-CHICAGO-BONUS is scoped to IL-COOK spend — use the *Split spend by location* toggle to enter only the Chicago-local portion. Example: `spend_by_location={"IL": 5000000, "IL-COOK": 2000000}` → $2.05M at 41% instead of $2.5M at 50%.
 >
 > Georgia's 10% logo uplift (`GA-FILM-LOGO`) is opt-in: productions that include the Georgia promotional logo in their end credits qualify for the additional credit. It appears as opt-in upside in the Maximizer results, not in the base total.
 
