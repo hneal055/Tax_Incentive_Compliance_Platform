@@ -31,10 +31,10 @@ if not row:
 GA_ID = row[0]
 print(f"[ok] GA jurisdiction id = {GA_ID}")
 
-# ── 2. Restructure GA-FILM-PROMO → GA-FILM-LOGO (10% opt-in) ─────────────────
-# GA-FILM-PROMO (30%) is the combined base+logo credit — misleading for stacking.
-# Replace it with GA-FILM-LOGO (10%, optIn=true) so the Maximizer can show:
-#   GA-FILM-BASE  20%  (base total)
+# ── 2. Ensure GA-FILM-LOGO (10% opt-in) and remove legacy GA-FILM-PROMO ──────
+# GA-FILM-PROMO (30%) was the combined base+logo credit — misleading for
+# stacking. We use two separate rules instead:
+#   GA-FILM-BASE  20%  (base total, no opt-in)
 #   GA-FILM-LOGO  10%  (opt-in upside — requires Georgia logo in credits)
 
 new_req = json.dumps({
@@ -44,20 +44,21 @@ new_req = json.dumps({
     "description": "Must include Georgia promotional logo in end credits"
 })
 
-cur.execute("""
-    UPDATE incentive_rules
-    SET "ruleCode"     = 'GA-FILM-LOGO',
-        "ruleName"     = 'Georgia Film Tax Credit — Logo Uplift',
-        percentage     = 10.0,
-        requirements   = %s,
-        "updatedAt"    = %s
-    WHERE "ruleCode" = 'GA-FILM-PROMO'
-      AND "jurisdictionId" = %s
-""", (new_req, NOW, GA_ID))
+# Remove the legacy combined-rate rule if still present
+cur.execute("DELETE FROM incentive_rules WHERE \"ruleCode\" = 'GA-FILM-PROMO'")
 if cur.rowcount:
-    print("[ok] GA-FILM-PROMO → GA-FILM-LOGO (10%, optIn=true)")
+    print("[ok] Deleted legacy GA-FILM-PROMO (combined 30%) rule")
+
+# Upsert GA-FILM-LOGO
+cur.execute("SELECT id FROM incentive_rules WHERE \"ruleCode\" = 'GA-FILM-LOGO'")
+if cur.fetchone():
+    cur.execute("""
+        UPDATE incentive_rules
+        SET percentage = 10.0, requirements = %s, "updatedAt" = %s
+        WHERE "ruleCode" = 'GA-FILM-LOGO' AND "jurisdictionId" = %s
+    """, (new_req, NOW, GA_ID))
+    print("[ok] GA-FILM-LOGO updated (10%, optIn=true)")
 else:
-    # Already renamed or doesn't exist — insert fresh
     cur.execute("""
         INSERT INTO incentive_rules (
             id, "jurisdictionId", "ruleName", "ruleCode", "incentiveType",

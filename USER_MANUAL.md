@@ -635,13 +635,17 @@ Each jurisdiction can have a `feedUrl` pointing to a government web page, RSS fe
 **Currently monitored jurisdictions:**
 
 | Code | Jurisdiction | Feed URL |
-|---|---|---|
+| ---- | ------------ | -------- |
 | NY-ERIE | Erie County, NY | `filmbuffaloniagara.com/permits-guidelines/` |
 | NY-NASSAU | Nassau County, NY | `nassaucountyny.gov/film` |
 | NY-WESTCHESTER | Westchester County, NY | `visitwestchesterny.com/film/permits/` |
 | NY-NYC | New York City | `nyc.gov/site/mome/industries/tv-film.page` |
 | CA-LA | Los Angeles County | `filmla.com/permits/` |
 | IL-COOK | Cook County / Chicago | `chicago.gov/…/chicago_film_office_tax.html` |
+| GA-SAVANNAH | Savannah, GA | `filmsavannah.org/permits/` |
+| GA-FULTON | Fulton County, GA | `fultoncountyga.gov/fultonfilms` |
+| GA-DEKALB | DeKalb County, GA | `dekalbcountyga.gov/planning-and-sustainability/other-permitting-services-1` |
+| GA-ATLANTA | Atlanta, GA | *(WAF-protected — manual monitoring; URL: `atlantaga.gov/…/office-of-film-entertainment-nightlife`)* |
 
 ### Automated Schedule
 
@@ -818,12 +822,15 @@ This prevents the engine from overstating incentives while still informing produ
 Validated results from the engine as of April 2026:
 
 | Market | Jurisdiction Codes | Base Incentive | Rate | Opt-In Upside |
-| --- | --- | --- | --- | --- |
-| NYC | `NY` + `NY-NYC` | $1,500,000 | 30% | — |
-| Chicago | `IL` + `IL-COOK` | $2,500,000 | 50% | +$500K (Green + Relocation) |
-| Los Angeles | `CA` + `CA-LA` | $1,000,000 | 20% | — |
+| ------ | ------------------ | -------------- | ---- | ------------- |
+| NYC | `NY` + `NY-NYC` | $2,000,000 | 40% | — |
+| Chicago | `IL` + `IL-COOK` | $2,500,000 | 50% | +$500K (Green + Relocation bonuses) |
+| Los Angeles | `CA` + `CA-LA` | $1,500,000 | 30% | — |
+| Georgia | `GA` | $1,000,000 | 20% | +$500K (logo in credits) |
 
-> Chicago's 50% rate reflects the IL base (35%) + Chicago location bonus (15%). The Chicago bonus applies to spend within city limits — productions spending the full budget in Chicago see the full stack; split-location shoots will see a proportionally lower Chicago bonus once `spend_by_location` is implemented.
+> Chicago's 50% rate: IL base (35%) + Chicago location bonus (15%). The Chicago bonus applies to spend within city limits — split-location shoots will see a proportionally lower bonus once `spend_by_location` input is implemented.
+>
+> Georgia's 10% logo uplift (`GA-FILM-LOGO`) is opt-in: productions that include the Georgia promotional logo in their end credits qualify for the additional credit. It appears as opt-in upside in the Maximizer results, not in the base total.
 
 ### Spatial Resolution
 
