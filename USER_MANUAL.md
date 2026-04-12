@@ -702,7 +702,7 @@ The Maximizer resolves jurisdiction layers from a lat/lng coordinate and calcula
   "lat": 42.8864,
   "lng": -78.8784,
   "qualified_spend": 5000000,
-  "project_type": "all"
+  "project_type": "film"
 }
 ```
 
@@ -713,19 +713,28 @@ The Maximizer resolves jurisdiction layers from a lat/lng coordinate and calcula
   "resolved_state": "NY",
   "jurisdictions_evaluated": 10,
   "qualified_spend": 5000000,
-  "total_incentive_usd": 1999250.00,
-  "effective_rate": 0.40,
+  "total_incentive_usd": 1500000.00,
+  "effective_rate": 0.30,
   "breakdown": {
-    "credit": 2000000.0,
+    "credit": 1500000.0,
     "rebate": 0.0,
     "tax_abatement": 0.0,
-    "permit_fee": -750.0,
-    "green_bonus": 0.0,
+    "permit_fee": 0.0,
     "other": 0.0
   },
-  "applied_rules": [...],
-  "overridden_rules": [...],
-  "warnings": ["Net permit fees of $750.00 reduce total value"],
+  "applied_rules": [
+    {
+      "rule_key": "NY-FILM-BASE",
+      "rule_type": "tax_credit",
+      "raw_value": 30.0,
+      "value_unit": "percent",
+      "computed_value": 1500000.0
+    }
+  ],
+  "overridden_rules": [],
+  "warnings": [
+    "NY-FILM-BASE and NY-POST-PROD are mutually exclusive — kept NY-FILM-BASE ($1,500,000)"
+  ],
   "recommendations": ["Incentive stack is clean — no conflicts detected"]
 }
 ```
@@ -750,6 +759,42 @@ python maximizer.py --codes NY NY-ERIE NY-NYC --spend 5000000
 python maximizer.py 34.0522 -118.2437 --spend 10000000 --type film
 ```
 
+### Project-Type Filtering
+
+Pass `project_type` to exclude rules that are inapplicable to your production category:
+
+| Value | Rules excluded |
+|---|---|
+| `film` | Rules with `"tvSeries": true` in their requirements (e.g. `CA-TV-RELOCATE`) |
+| `all` (default) | No filtering — all active rules included |
+
+Additional project-type logic can be added to the `fetch_rules` SQL filter in `maximizer.py`.
+
+### Opt-In Bonuses
+
+Some rules require a production-specific election before they apply — a formal Green Sustainability Plan filing, a Relocation Series designation, etc. These rules have `"optIn": true` in their `requirements` JSON.
+
+The Maximizer **excludes opt-in rules from the base total** and surfaces them as warnings instead:
+
+```text
+[!] IL-FILM-GREEN-BONUS (5% = $250,000) requires opt-in election — not included in base total
+[!] IL-FILM-RELOCATION-BONUS (5% = $250,000) requires opt-in election — not included in base total
+```
+
+This prevents the engine from overstating incentives while still informing productions of potential upside if they take the qualifying action.
+
+### Three-Market Benchmark ($5M Film)
+
+Validated results from the engine as of April 2026:
+
+| Market | Jurisdiction Codes | Base Incentive | Rate | Opt-In Upside |
+| --- | --- | --- | --- | --- |
+| NYC | `NY` + `NY-NYC` | $1,500,000 | 30% | — |
+| Chicago | `IL` + `IL-COOK` | $2,500,000 | 50% | +$500K (Green + Relocation) |
+| Los Angeles | `CA` + `CA-LA` | $1,000,000 | 20% | — |
+
+> Chicago's 50% rate reflects the IL base (35%) + Chicago location bonus (15%). The Chicago bonus applies to spend within city limits — productions spending the full budget in Chicago see the full stack; split-location shoots will see a proportionally lower Chicago bonus once `spend_by_location` is implemented.
+
 ### Spatial Resolution
 
 Without PostGIS, the Maximizer uses bounding-box matching to identify the US state. It then loads the state + all direct child sub-jurisdictions (counties and cities with `parentId` = state id).
@@ -763,7 +808,6 @@ Without PostGIS, the Maximizer uses bounding-box matching to identify the US sta
 | `credit` | Tax credits (`tax_credit` rule type) |
 | `tax_abatement` | Property tax abatements, tax breaks |
 | `rebate` | Cash rebates on qualifying spend |
-| `green_bonus` | Green/sustainable production bonuses |
 | `permit_fee` | Filming permit fees (shown as negative — reduces total) |
 | `other` | Anything not mapped to the above |
 
@@ -1131,7 +1175,11 @@ GET /api/0.1.0/jurisdictions/NY-ERIE/requirements?project_type=film&include_pare
 **IncentiveRule** — Primary state-level tax incentive rules
 - `ruleCode` (unique), `ruleName`, `incentiveType`, `percentage`, `fixedAmount`
 - `minSpend`, `maxCredit`, `eligibleExpenses[]`, `excludedExpenses[]`, `creditType`
-- `effectiveDate`, `expirationDate`, `requirements`
+- `effectiveDate`, `expirationDate`
+- `requirements` (JSON) — machine-readable eligibility flags read by the Maximizer:
+  - `"tvSeries": true` — rule is excluded when `project_type=film`
+  - `"optIn": true` — rule requires production election; excluded from base total, surfaced as warning
+  - `"relocatingProject": true` — rule only applies to productions relocating to the jurisdiction
 
 **LocalRule** — County/city/sub-jurisdiction rules
 - `code` (unique), `name`, `category`, `ruleType`, `amount`, `percentage`

@@ -220,9 +220,21 @@ class PilotForgeMaximizer:
         self,
         jurisdiction_ids: List[str],
         qualified_spend: Optional[float],
+        project_type: str = "all",
     ) -> List[ApplicableRule]:
         if not jurisdiction_ids:
             return []
+
+        # Exclude rules whose requirements JSON explicitly marks them as
+        # inapplicable to the requested project type.
+        # Currently enforced: tvSeries=true rules are skipped for film projects.
+        tv_only_filter = ""
+        if project_type.lower() == "film":
+            tv_only_filter = (
+                "AND (ir.requirements IS NULL "
+                "     OR (ir.requirements::jsonb->>'tvSeries') IS NULL "
+                "     OR (ir.requirements::jsonb->>'tvSeries') <> 'true')"
+            )
 
         conn = self._connect()
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -240,7 +252,8 @@ class PilotForgeMaximizer:
                     CASE WHEN ir.percentage IS NOT NULL THEN 'percent'
                          ELSE 'USD' END                              AS value_unit,
                     NULL                                             AS source_citation,
-                    ir."effectiveDate"                               AS effective_date
+                    ir."effectiveDate"                               AS effective_date,
+                    ir.requirements                                  AS requirements_json
                 FROM incentive_rules ir
                 JOIN jurisdictions j ON ir."jurisdictionId" = j.id
                 WHERE ir."jurisdictionId" IN ({placeholders})
@@ -248,6 +261,7 @@ class PilotForgeMaximizer:
                     AND ir."effectiveDate" <= NOW()
                     AND ir.active = true
                     AND (ir.percentage IS NOT NULL OR ir."fixedAmount" IS NOT NULL)
+                    {tv_only_filter}
                 ORDER BY j.type, ir."ruleCode"
                 """,
                 jurisdiction_ids,
@@ -257,13 +271,34 @@ class PilotForgeMaximizer:
             cur.close()
             conn.close()
 
+        import json as _json
         rules = []
+        opt_in_warnings: list[str] = []
         for r in rows:
             raw = float(r["raw_value"] or 0.0)
             if r["value_unit"] == "percent" and qualified_spend is not None:
                 computed = (raw / 100.0) * qualified_spend
             else:
                 computed = raw   # USD amount or raw % when no spend provided
+
+            # Skip opt-in bonuses — they require production-specific elections
+            # (e.g. Green Sustainability Plan, Relocation Series designation).
+            # Surface them as informational warnings instead.
+            req = r.get("requirements_json")
+            if req:
+                try:
+                    req_data = _json.loads(req) if isinstance(req, str) else req
+                    if req_data.get("optIn"):
+                        dollar_str = (
+                            f"${computed:,.0f}" if qualified_spend else f"{raw:.0f}%"
+                        )
+                        opt_in_warnings.append(
+                            f"{r['rule_key']} ({raw:.0f}% = {dollar_str}) requires "
+                            f"opt-in election — not included in base total"
+                        )
+                        continue
+                except (ValueError, TypeError):
+                    pass
 
             rules.append(
                 ApplicableRule(
@@ -283,7 +318,7 @@ class PilotForgeMaximizer:
                     effective_date=r["effective_date"] or datetime.now(),
                 )
             )
-        return rules
+        return rules, opt_in_warnings
 
     # ── Inheritance logic ──────────────────────────────────────────────────────
 
@@ -397,7 +432,7 @@ class PilotForgeMaximizer:
         jurisdiction_ids = [j["id"] for j in jurisdictions]
 
         # --- Fetch and apply rules ---
-        all_rules = self.fetch_rules(jurisdiction_ids, qualified_spend)
+        all_rules, opt_in_warnings = self.fetch_rules(jurisdiction_ids, qualified_spend, project_type)
 
         if not all_rules:
             return MaximizedResult(
@@ -436,7 +471,7 @@ class PilotForgeMaximizer:
 
         effective_rate = (total / qualified_spend) if qualified_spend else None
 
-        warnings = exclusion_warnings
+        warnings = exclusion_warnings + opt_in_warnings
         if breakdown.get("permit_fee", 0) < 0:
             warnings.append(
                 f"Net permit fees of ${-breakdown['permit_fee']:,.2f} reduce total value"
