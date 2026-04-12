@@ -221,9 +221,20 @@ class PilotForgeMaximizer:
         jurisdiction_ids: List[str],
         qualified_spend: Optional[float],
         project_type: str = "all",
-    ) -> List[ApplicableRule]:
+        spend_by_location: Optional[Dict[str, float]] = None,
+    ) -> Tuple[List[ApplicableRule], List[str]]:
+        """
+        Fetch applicable incentive rules for the given jurisdiction IDs.
+
+        spend_by_location maps jurisdiction CODE → qualifying spend for that
+        location (e.g. {"IL-COOK": 2_000_000}).  Rules whose jurisdiction has
+        an explicit entry use that spend instead of qualified_spend, so bonuses
+        tied to within-city spend (like IL-CHICAGO-BONUS) compute correctly for
+        split-location shoots.  Jurisdictions not in spend_by_location fall back
+        to qualified_spend.
+        """
         if not jurisdiction_ids:
-            return []
+            return [], []
 
         # Exclude rules whose requirements JSON explicitly marks them as
         # inapplicable to the requested project type.
@@ -246,6 +257,7 @@ class PilotForgeMaximizer:
                     ir."jurisdictionId"                              AS jurisdiction_id,
                     j.name                                           AS jurisdiction_name,
                     j.type                                           AS jurisdiction_type,
+                    j.code                                           AS jurisdiction_code,
                     ir."ruleCode"                                    AS rule_key,
                     ir."incentiveType"                               AS rule_type,
                     COALESCE(ir.percentage, ir."fixedAmount")        AS raw_value,
@@ -276,8 +288,18 @@ class PilotForgeMaximizer:
         opt_in_warnings: list[str] = []
         for r in rows:
             raw = float(r["raw_value"] or 0.0)
-            if r["value_unit"] == "percent" and qualified_spend is not None:
-                computed = (raw / 100.0) * qualified_spend
+
+            # Determine the spend basis for this rule's jurisdiction.
+            # If the caller provided per-location splits, use that jurisdiction's
+            # specific spend; otherwise fall back to the overall qualified_spend.
+            j_code = r.get("jurisdiction_code", "")
+            if spend_by_location and j_code in spend_by_location:
+                effective_spend = spend_by_location[j_code]
+            else:
+                effective_spend = qualified_spend
+
+            if r["value_unit"] == "percent" and effective_spend is not None:
+                computed = (raw / 100.0) * effective_spend
             else:
                 computed = raw   # USD amount or raw % when no spend provided
 
@@ -290,7 +312,7 @@ class PilotForgeMaximizer:
                     req_data = _json.loads(req) if isinstance(req, str) else req
                     if req_data.get("optIn"):
                         dollar_str = (
-                            f"${computed:,.0f}" if qualified_spend else f"{raw:.0f}%"
+                            f"${computed:,.0f}" if effective_spend else f"{raw:.0f}%"
                         )
                         opt_in_warnings.append(
                             f"{r['rule_key']} ({raw:.0f}% = {dollar_str}) requires "
@@ -396,12 +418,22 @@ class PilotForgeMaximizer:
         jurisdiction_codes: Optional[List[str]] = None,
         project_type: str = "all",
         qualified_spend: Optional[float] = None,
+        spend_by_location: Optional[Dict[str, float]] = None,
     ) -> MaximizedResult:
         """
         Maximize incentives for a location or explicit jurisdiction list.
 
         Provide either (lat, lng) for automatic state resolution, or
         jurisdiction_codes for explicit lookup — or both.
+
+        spend_by_location (optional) maps jurisdiction CODE → qualifying spend
+        for that location.  Useful for split-location shoots where a sub-
+        jurisdiction bonus (e.g. IL-CHICAGO-BONUS) should only apply to the
+        fraction of spend that occurred within that city/county.
+
+        Example:
+            spend_by_location={"IL": 5_000_000, "IL-COOK": 2_000_000}
+            → IL-FILM-BASE uses $5M, IL-CHICAGO-BONUS uses $2M
         """
         resolved_state: Optional[str] = None
 
@@ -432,7 +464,9 @@ class PilotForgeMaximizer:
         jurisdiction_ids = [j["id"] for j in jurisdictions]
 
         # --- Fetch and apply rules ---
-        all_rules, opt_in_warnings = self.fetch_rules(jurisdiction_ids, qualified_spend, project_type)
+        all_rules, opt_in_warnings = self.fetch_rules(
+            jurisdiction_ids, qualified_spend, project_type, spend_by_location
+        )
 
         if not all_rules:
             return MaximizedResult(
@@ -517,7 +551,20 @@ def main():
     parser.add_argument("--codes", nargs="+", help="Explicit jurisdiction codes")
     parser.add_argument("--spend", type=float, help="Qualified spend in USD")
     parser.add_argument("--type", default="all", dest="project_type")
+    parser.add_argument(
+        "--location-spend", nargs="+", metavar="CODE:AMOUNT",
+        help="Per-location spend splits, e.g. --location-spend IL:5000000 IL-COOK:2000000"
+    )
     args = parser.parse_args()
+
+    spend_by_location: Optional[Dict[str, float]] = None
+    if args.location_spend:
+        spend_by_location = {}
+        for item in args.location_spend:
+            code, _, amount_str = item.partition(":")
+            if not code or not amount_str:
+                parser.error(f"Invalid --location-spend value '{item}' — use CODE:AMOUNT")
+            spend_by_location[code.upper()] = float(amount_str)
 
     maximizer = PilotForgeMaximizer()
     result = maximizer.maximize(
@@ -526,6 +573,7 @@ def main():
         jurisdiction_codes=args.codes,
         project_type=args.project_type,
         qualified_spend=args.spend,
+        spend_by_location=spend_by_location,
     )
 
     print("\n" + "=" * 60)

@@ -283,6 +283,7 @@ export const api = {
       jurisdiction_codes?: string[];
       project_type?: string;
       qualified_spend?: number;
+      spend_by_location?: Record<string, number>;
     }) =>
       withFallback(
         async () => {

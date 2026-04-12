@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Zap,
   MapPin,
@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Loader2,
   Info,
+  SplitSquareHorizontal,
 } from 'lucide-react';
 import api from '../api';
 import type { MaximizeResult } from '../types';
@@ -57,7 +58,43 @@ export default function Maximizer() {
   const [result,        setResult]        = useState<MaximizeResult | null>(null);
   const [error,         setError]         = useState<string | null>(null);
 
+  // split-spend state
+  const [splitEnabled,    setSplitEnabled]    = useState(false);
+  const [splitSpend,      setSplitSpend]      = useState<Record<string, string>>({});
+
   const spendNum = parseFloat(spendRaw.replace(/[^0-9.]/g, '')) || undefined;
+
+  // Derive the ordered list of codes from codesRaw for the split-spend UI
+  const parsedCodes = useMemo(() =>
+    codesRaw.split(/[\s,]+/).map(s => s.trim().toUpperCase()).filter(Boolean),
+    [codesRaw]
+  );
+
+  function handleSplitSpendChange(code: string, value: string) {
+    setSplitSpend(prev => ({ ...prev, [code]: value }));
+  }
+
+  // When codes change, prune split entries that are no longer in the list
+  function handleCodesChange(raw: string) {
+    setCodesRaw(raw);
+    const next = raw.split(/[\s,]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+    setSplitSpend(prev => {
+      const pruned: Record<string, string> = {};
+      for (const code of next) if (code in prev) pruned[code] = prev[code];
+      return pruned;
+    });
+  }
+
+  // Build spend_by_location for the API call
+  const spendByLocation: Record<string, number> | undefined = useMemo(() => {
+    if (!splitEnabled) return undefined;
+    const out: Record<string, number> = {};
+    for (const [code, raw] of Object.entries(splitSpend)) {
+      const n = parseFloat(raw.replace(/[^0-9.]/g, ''));
+      if (!isNaN(n) && n > 0) out[code] = n;
+    }
+    return Object.keys(out).length > 0 ? out : undefined;
+  }, [splitEnabled, splitSpend]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +106,7 @@ export default function Maximizer() {
       const params: Parameters<typeof api.maximizer.maximize>[0] = {
         project_type: projectType,
         qualified_spend: spendNum,
+        spend_by_location: spendByLocation,
       };
 
       if (mode === 'latLng') {
@@ -82,16 +120,12 @@ export default function Maximizer() {
         params.lat = latN;
         params.lng = lngN;
       } else {
-        const codes = codesRaw
-          .split(/[\s,]+/)
-          .map(s => s.trim().toUpperCase())
-          .filter(Boolean);
-        if (codes.length === 0) {
+        if (parsedCodes.length === 0) {
           setError('Enter at least one jurisdiction code.');
           setLoading(false);
           return;
         }
-        params.jurisdiction_codes = codes;
+        params.jurisdiction_codes = parsedCodes;
       }
 
       const data = await api.maximizer.maximize(params);
@@ -169,7 +203,7 @@ export default function Maximizer() {
                 <input
                   type="text"
                   value={codesRaw}
-                  onChange={e => setCodesRaw(e.target.value)}
+                  onChange={e => handleCodesChange(e.target.value)}
                   placeholder="e.g. NY, NY-NYC"
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -240,6 +274,58 @@ export default function Maximizer() {
               )}
             </div>
 
+            {/* Split spend by location */}
+            {mode === 'codes' && parsedCodes.length > 1 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setSplitEnabled(v => !v)}
+                  className={`flex items-center gap-2 text-xs font-medium transition-colors ${
+                    splitEnabled ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <SplitSquareHorizontal className="w-3.5 h-3.5" />
+                  Split spend by location
+                  <span className={`ml-auto w-7 h-4 rounded-full transition-colors relative ${splitEnabled ? 'bg-blue-500' : 'bg-slate-300'}`}>
+                    <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${splitEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+                  </span>
+                </button>
+
+                {splitEnabled && (
+                  <div className="mt-3 space-y-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                    <p className="text-xs text-slate-500 mb-2">
+                      Enter qualifying spend within each jurisdiction. Sub-jurisdiction
+                      bonuses (e.g. city/county) use their specific spend; state rules
+                      use the total above.
+                    </p>
+                    {parsedCodes.map(code => (
+                      <div key={code} className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-semibold text-slate-600 w-20 shrink-0">{code}</span>
+                        <div className="relative flex-1">
+                          <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                          <input
+                            type="text"
+                            value={splitSpend[code] ?? ''}
+                            onChange={e => handleSplitSpendChange(code, e.target.value)}
+                            placeholder={spendRaw}
+                            className="w-full border border-slate-300 rounded pl-6 pr-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                          />
+                        </div>
+                        {splitSpend[code] && (
+                          <span className="text-xs text-slate-400 shrink-0 w-14 text-right">
+                            {fmtUSD(parseFloat(splitSpend[code].replace(/[^0-9.]/g, '')) || 0)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    <p className="text-xs text-slate-400 mt-1">
+                      Leave blank to use total qualified spend for that jurisdiction.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
@@ -271,9 +357,11 @@ export default function Maximizer() {
                   type="button"
                   onClick={() => {
                     setMode('codes');
-                    setCodesRaw(preset.codes);
+                    handleCodesChange(preset.codes);
                     setSpendRaw(preset.spend);
                     setProjectType(preset.type);
+                    setSplitEnabled(false);
+                    setSplitSpend({});
                   }}
                   className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors group"
                 >
@@ -331,7 +419,12 @@ export default function Maximizer() {
                     )}
                     <p>Jurisdictions: <span className="text-white font-semibold">{result.jurisdictions_evaluated}</span></p>
                     {result.qualified_spend && (
-                      <p>Spend: <span className="text-white font-semibold">{fmtUSD(result.qualified_spend)}</span></p>
+                      <p>
+                        Spend: <span className="text-white font-semibold">{fmtUSD(result.qualified_spend)}</span>
+                        {spendByLocation && (
+                          <span className="ml-1 text-[10px] bg-blue-500/50 px-1.5 py-0.5 rounded font-medium">split</span>
+                        )}
+                      </p>
                     )}
                   </div>
                 </div>
