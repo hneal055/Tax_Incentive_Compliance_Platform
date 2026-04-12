@@ -15,6 +15,7 @@ import type {
   PendingRule,
   LocalRule,
   MaximizeResult,
+  ChecklistResponse,
 } from '../types';
 
 import { mockApi } from '../mocks/api';
@@ -423,6 +424,27 @@ export const api = {
           false,
         ),
     },
+  },
+
+  requirements: {
+    getChecklist: (code: string, projectType?: string) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.get(`/jurisdictions/${code}/requirements`, {
+            params: { project_type: projectType, include_parent: true },
+          });
+          return r.data as ChecklistResponse;
+        },
+        async () => ({
+          jurisdictionCode: code,
+          jurisdictionName: code,
+          projectType: projectType ?? null,
+          total: 0,
+          byCategory: {},
+          requirements: [],
+        } as ChecklistResponse),
+        `requirements.getChecklist(${code})`,
+      ),
   },
 };
 

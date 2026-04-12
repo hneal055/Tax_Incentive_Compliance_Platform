@@ -160,6 +160,35 @@ export interface MaximizeResult {
   recommendations: string[];
 }
 
+export interface ChecklistItem {
+  id: string;
+  jurisdictionId: string;
+  name: string;
+  category: string;
+  requirementType: string;
+  description: string;
+  applicableTo: string[];
+  contactInfo: string | null;
+  portalUrl: string | null;
+  sourceUrl: string | null;
+  extractedBy: string;
+  active: boolean;
+  fromParent: boolean;
+  parentJurisdictionCode?: string;
+  parentJurisdictionName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChecklistResponse {
+  jurisdictionCode: string;
+  jurisdictionName: string;
+  projectType: string | null;
+  total: number;
+  byCategory: Record<string, number>;
+  requirements: ChecklistItem[];
+}
+
 export interface MonitoringEvent {
   id: string;
   sourceId: string;
