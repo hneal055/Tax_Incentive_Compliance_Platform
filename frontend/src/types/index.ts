@@ -138,6 +138,28 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+export interface MaximizeRuleDetail {
+  jurisdiction_name: string;
+  rule_key: string;
+  rule_type: string;
+  raw_value: number;
+  value_unit: 'percent' | 'USD';
+  computed_value: number;
+}
+
+export interface MaximizeResult {
+  resolved_state: string | null;
+  jurisdictions_evaluated: number;
+  qualified_spend: number | null;
+  total_incentive_usd: number;
+  effective_rate: number | null;
+  breakdown: Record<string, number>;
+  applied_rules: MaximizeRuleDetail[];
+  overridden_rules: MaximizeRuleDetail[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface MonitoringEvent {
   id: string;
   sourceId: string;

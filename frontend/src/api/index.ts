@@ -14,6 +14,7 @@ import type {
   UserProfile,
   PendingRule,
   LocalRule,
+  MaximizeResult,
 } from '../types';
 
 import { mockApi } from '../mocks/api';
@@ -272,6 +273,46 @@ export const api = {
         async () => {},
         `admin.deleteUser(${userId})`,
         false,
+      ),
+  },
+
+  maximizer: {
+    maximize: (params: {
+      lat?: number;
+      lng?: number;
+      jurisdiction_codes?: string[];
+      project_type?: string;
+      qualified_spend?: number;
+    }) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.post('/maximize', params);
+          return r.data as MaximizeResult;
+        },
+        async () => ({
+          resolved_state: null,
+          jurisdictions_evaluated: 0,
+          qualified_spend: params.qualified_spend ?? null,
+          total_incentive_usd: 0,
+          effective_rate: null,
+          breakdown: {},
+          applied_rules: [],
+          overridden_rules: [],
+          warnings: ['API unavailable — showing empty result'],
+          recommendations: [],
+        } as MaximizeResult),
+        'maximizer.maximize',
+        false,
+      ),
+
+    lookup: (lat: number, lng: number) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.get('/maximize/lookup', { params: { lat, lng } });
+          return r.data as { resolved_state: string | null; jurisdictions: { id: string; name: string; code: string; type: string }[] };
+        },
+        async () => ({ resolved_state: null, jurisdictions: [] }),
+        'maximizer.lookup',
       ),
   },
 

@@ -10,6 +10,7 @@ import MMBConnector from './pages/MMBConnector';
 import PendingRules from './pages/PendingRules';
 import LocalRules from './pages/LocalRules';
 import ScenarioCalculator from './pages/ScenarioCalculator';
+import Maximizer from './pages/Maximizer';
 import Admin from './pages/Admin';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -35,6 +36,7 @@ function App() {
     pendingRules:    <PendingRules />,
     localRules:      <LocalRules />,
     scenarioCalc:    <ScenarioCalculator />,
+    maximizer:       <Maximizer />,
     admin:        <Admin />,
     settings:     <Settings />,
   };
