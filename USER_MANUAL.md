@@ -640,12 +640,27 @@ Each jurisdiction can have a `feedUrl` pointing to a government web page, RSS fe
 | NY-NASSAU | Nassau County, NY | `nassaucountyny.gov/film` |
 | NY-WESTCHESTER | Westchester County, NY | `visitwestchesterny.com/film/permits/` |
 | NY-NYC | New York City | `nyc.gov/site/mome/industries/tv-film.page` |
-| CA-LA | Los Angeles County | `filmla.com/permits/` |
+| CA-LA | Los Angeles County | `filmla.com/for-filmmakers/permits/` |
+| CA-SANFRANCISCO | San Francisco, CA | `sf.gov/topic-permitting` |
+| CA-SANDIEGO | San Diego, CA | `sandiego.gov/specialevents-filming/filming` |
+| CA-SACRAMENTO | Sacramento, CA | `filmsac.com/feed/` *(RSS — change detection only)* |
+| CA-OAKLAND | Oakland, CA | *(WAF-protected — manual monitoring; URL: `oaklandca.gov/Business/Oakland-Economic-Development/Film-Office`)* |
 | IL-COOK | Cook County / Chicago | `chicago.gov/…/chicago_film_office_tax.html` |
 | GA-SAVANNAH | Savannah, GA | `filmsavannah.org/permits/` |
 | GA-FULTON | Fulton County, GA | `fultoncountyga.gov/fultonfilms` |
 | GA-DEKALB | DeKalb County, GA | `dekalbcountyga.gov/planning-and-sustainability/other-permitting-services-1` |
 | GA-ATLANTA | Atlanta, GA | *(WAF-protected — manual monitoring; URL: `atlantaga.gov/…/office-of-film-entertainment-nightlife`)* |
+| LA-NEW-ORLEANS | New Orleans, LA | `nolafilm.com/feed` |
+| LA-BATONROUGE | Baton Rouge, LA | `batonrougefilm.com/permits/` |
+| LA-SHREVEPORT | Shreveport, LA | *(no verified URL — manual monitoring)* |
+| LA-JEFFERSON | Jefferson Parish, LA | *(no verified URL — manual monitoring)* |
+| NM-ALBUQUERQUE | Albuquerque, NM | `cabq.gov/film` |
+| NM-SANTAFE | Santa Fe, NM | `santafe.org/film` |
+| TX-HOUSTON | Houston, TX | `houstonfilmcommission.com` |
+| TX-SANANTONIO | San Antonio, TX | `filmsanantonio.com/permits/` |
+| TX-AUSTIN | Austin, TX | *(no verified URL — manual monitoring)* |
+| TX-DALLAS | Dallas, TX | *(feedUrl cleared — filmdallas.com redirects to a production company)* |
+| TX-FORTWORTH | Fort Worth, TX | *(WAF-protected — manual monitoring; URL: `fortworthtexas.gov/departments/communications/media-relations`)* |
 
 ### Automated Schedule
 
@@ -717,7 +732,13 @@ The **Maximizer** tab (⚡ icon, sidebar) provides a point-and-click interface t
 | ------ | ----- | ------------------- |
 | NYC — $5M Film | `NY, NY-NYC` | $2.00M at 40% |
 | Chicago — $5M Film | `IL, IL-COOK` | $2.50M at 50% |
-| Los Angeles — $5M Film | `CA, CA-LA` | $1.50M at 30% |
+| Los Angeles — $5M Film | `CA, CA-LA` | $1.00M at 20% |
+| San Diego — $5M Film | `CA, CA-SANDIEGO` | $1.0025M at 20.05% |
+| Georgia — $5M Film | `GA` | $1.00M at 20% + opt-in logo uplift |
+| New Mexico — $5M Film | `NM` | $1.25M at 25% + opt-in uplifts |
+| Louisiana — $5M Film | `LA` | $1.25M at 25% + opt-in labor/music |
+| Texas — $5M Film | `TX` | $750K at 15% + opt-in uplifts |
+| San Antonio — $5M Film | `TX, TX-SANANTONIO` | $750K base + $700K SA local opt-in |
 | Erie County — $5M Film | `NY, NY-ERIE` | $1.50M at 30% |
 
 **Results panel:**
@@ -838,20 +859,31 @@ The Maximizer **excludes opt-in rules from the base total** and surfaces them as
 
 This prevents the engine from overstating incentives while still informing productions of potential upside if they take the qualifying action.
 
-### Three-Market Benchmark ($5M Film)
+### Multi-Market Benchmark ($5M Film)
 
 Validated results from the engine as of April 2026:
 
-| Market | Jurisdiction Codes | Base Incentive | Rate | Opt-In Upside |
-| ------ | ------------------ | -------------- | ---- | ------------- |
-| NYC | `NY` + `NY-NYC` | $2,000,000 | 40% | — |
-| Chicago | `IL` + `IL-COOK` | $2,500,000 | 50% | +$500K (Green + Relocation bonuses) |
-| Los Angeles | `CA` + `CA-LA` | $1,500,000 | 30% | — |
-| Georgia | `GA` | $1,000,000 | 20% | +$500K (logo in credits) |
+| Market | Jurisdiction Codes | Base Incentive | Rate | Opt-In Upside | Type |
+| ------ | ------------------ | -------------- | ---- | ------------- | ---- |
+| Chicago | `IL` + `IL-COOK` | $2,500,000 | 50% | +$500K (Green + Relocation) | Tax credit |
+| New Mexico (rural) | `NM` | $1,250,000 | 25% | +$750K (TV uplift + QPF + rural) | Refundable credit |
+| New Orleans | `LA` + `LA-NEW-ORLEANS` | $1,250,000 | 25% | +$750K (logo + labor) | Transferable credit |
+| NYC | `NY` + `NY-NYC` | $2,000,000 | 40% | — | Tax credit |
+| Georgia | `GA` | $1,000,000 | 20% | +$500K (logo in credits) | Tax credit |
+| Los Angeles | `CA` + `CA-LA` | $1,000,000 | 20% | — | Tax credit |
+| San Diego | `CA` + `CA-SANDIEGO` | $1,002,500 | 20.05% | — | Credit + fee waiver |
+| Texas (base) | `TX` | $750,000 | 15% | +$375K (music + veteran + post) | Cash grant |
+| Texas — San Antonio | `TX` + `TX-SANANTONIO` | $750,000 | 15% | +$1,075K (SA local + all uplifts) | Cash grant |
 
-> Chicago's 50% rate: IL base (35%) + Chicago location bonus (15%). IL-CHICAGO-BONUS is scoped to IL-COOK spend — use the *Split spend by location* toggle to enter only the Chicago-local portion. Example: `spend_by_location={"IL": 5000000, "IL-COOK": 2000000}` → $2.05M at 41% instead of $2.5M at 50%.
+> **Chicago's 50% rate:** IL base (35%) + Chicago location bonus (15%). IL-CHICAGO-BONUS is scoped to IL-COOK spend — use the *Split spend by location* toggle. Example: `spend_by_location={"IL": 5000000, "IL-COOK": 2000000}` → $2.05M at 41%.
 >
-> Georgia's 10% logo uplift (`GA-FILM-LOGO`) is opt-in: productions that include the Georgia promotional logo in their end credits qualify for the additional credit. It appears as opt-in upside in the Maximizer results, not in the base total.
+> **New Mexico uplifts:** `NM-FILM-TV-UPLIFT` (+5%), `NM-QPF-UPLIFT` (+5%), `NM-RURAL-UPLIFT` (+10%) are all opt-in. QPF and Rural are unlikely to stack simultaneously. Max theoretical: 45%.
+>
+> **Georgia logo uplift:** `GA-FILM-LOGO` (+10%) is opt-in — requires Georgia promotional logo in end credits.
+>
+> **Texas is a cash grant** (TMIIIP) — paid after production, no tax liability required. Three stackable opt-in uplifts: music composer (+2.5%), veteran crew (+2.5%), post-production in Texas (+2.5%). San Antonio adds a verified 14% local incentive for a market-leading 36.5% combined rate.
+>
+> **Louisiana credits are transferable** — productions with no Louisiana tax liability can sell the credit. Max stack: 25% base + 10% labor bonus + 5% music/VFX.
 
 ### Spatial Resolution
 
