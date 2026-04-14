@@ -346,6 +346,10 @@ export default function Jurisdictions() {
         code={selectedJur.code}
         name={selectedJur.name}
         onBack={() => setSelectedId(null)}
+        onNavigate={(code) => {
+          const target = jurisdictions.find(j => j.code === code);
+          if (target) setSelectedId(target.id);
+        }}
       />
     );
   }

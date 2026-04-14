@@ -39,6 +39,7 @@ interface Props {
   code: string;
   name: string;
   onBack?: () => void;
+  onNavigate?: (code: string) => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -226,19 +227,26 @@ function Estimator({ programs }: { programs: Program[] }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function JurisdictionDetail({ code, name, onBack }: Props) {
+export default function JurisdictionDetail({ code, name, onBack, onNavigate }: Props) {
   const [programs,       setPrograms]       = useState<Program[]>([]);
   const [website,        setWebsite]        = useState<string | null>(null);
   const [currency,       setCurrency]       = useState<string>('USD');
   const [treatyPartners, setTreatyPartners] = useState<string[]>([]);
   const [isLoading,      setIsLoading]      = useState(true);
   const [error,          setError]          = useState<string | null>(null);
+  const [parentName,     setParentName]     = useState<string | null>(null);
+  const [parentRate,     setParentRate]     = useState<number>(0);
+
+  // Derive parent code for sub-jurisdictions (e.g. LA-BATONROUGE → LA)
+  const parentCode = code.includes('-') ? code.split('-')[0] : null;
 
   useEffect(() => {
     setIsLoading(true);
     setPrograms([]);
     setWebsite(null);
     setError(null);
+    setParentName(null);
+    setParentRate(0);
 
     api.georgia.getPrograms(code)
       .then(res => {
@@ -252,7 +260,20 @@ export default function JurisdictionDetail({ code, name, onBack }: Props) {
     api.georgia.getJurisdiction(code)
       .then(j => setWebsite(j.website ?? null))
       .catch(() => {});
-  }, [code, name]);
+
+    if (parentCode) {
+      api.georgia.getJurisdiction(parentCode)
+        .then(j => setParentName(j.name ?? parentCode))
+        .catch(() => {});
+      api.georgia.getPrograms(parentCode)
+        .then(res => {
+          const best = res.programs.filter((p: Program) => p.active)
+            .reduce((max: number, p: Program) => Math.max(max, p.percentage), 0);
+          setParentRate(best);
+        })
+        .catch(() => {});
+    }
+  }, [code, name, parentCode]);
 
   const activePrograms = programs.filter(p => p.active);
   const bestRate       = activePrograms.reduce((max, p) => Math.max(max, p.percentage), 0);
@@ -395,8 +416,41 @@ export default function JurisdictionDetail({ code, name, onBack }: Props) {
         </div>
 
         {programs.length === 0 ? (
-          <div className="flex items-center justify-center h-48 bg-white rounded-xl border border-slate-100">
-            <p className="text-slate-500 text-sm">No incentive programs found for {name}.</p>
+          <div className="space-y-3">
+            {parentCode && parentName ? (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-4">
+                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-blue-900 mb-1">
+                    No city-specific incentive program
+                  </p>
+                  <p className="text-sm text-blue-700 leading-relaxed">
+                    {name} does not operate its own film incentive program.{' '}
+                    <strong>{parentName} state incentives{parentRate > 0 ? ` (up to ${parentRate}%)` : ''}</strong> apply
+                    to productions shooting here — the city location does not affect eligibility.
+                  </p>
+                  {onNavigate ? (
+                    <button
+                      type="button"
+                      onClick={() => onNavigate(parentCode)}
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      View {parentName} incentive programs →
+                    </button>
+                  ) : (
+                    <p className="mt-2 text-xs text-blue-500">
+                      Go back and select <strong>{parentName}</strong> to view state credit rates and requirements.
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48 bg-white rounded-xl border border-slate-100">
+                <p className="text-slate-500 text-sm">No incentive programs found for {name}.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-3 pb-4">

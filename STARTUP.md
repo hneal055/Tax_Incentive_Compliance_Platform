@@ -74,10 +74,12 @@ docker compose down -v
 ## Individual Service Commands
 
 ```powershell
-# Restart a single service
+# Restart backend or nginx (picks up config/env changes)
 docker compose restart backend
-docker compose restart frontend
 docker compose restart nginx
+
+# NOTE: restarting frontend alone does NOT apply source code changes.
+# For frontend source changes, see "After Code Changes → Frontend" below.
 
 # View live logs
 docker compose logs -f backend
@@ -105,11 +107,15 @@ docker exec pilotforge-api python scripts/my_script.py
 ```
 
 ### Frontend (`frontend/src/` changes)
-The Vite dev server hot-reloads automatically. If changes don't appear, restart the service:
+The frontend runs from a **pre-built image** — source changes require a full rebuild:
 
 ```powershell
-docker compose restart frontend nginx
+docker compose build frontend
+docker compose up -d --no-deps frontend
+docker compose restart nginx
 ```
+
+Then hard-refresh the browser (`Ctrl+Shift+R`) to clear the cached bundle.
 
 ### `docker-compose.yml` changes
 Changes to environment variables, volumes, or ports require a full recreate:
@@ -117,6 +123,45 @@ Changes to environment variables, volumes, or ports require a full recreate:
 ```powershell
 docker compose up -d --no-deps backend
 ```
+
+---
+
+## AI Advisor
+
+The AI Advisor is powered by **Claude Sonnet** (Anthropic) via the `/advisor/chat` streaming endpoint.
+
+### AI Advisor Requirements
+
+- `ANTHROPIC_API_KEY` must be present in `.env` — Docker Compose passes it to the backend container automatically.
+- Verify the key is live inside the container:
+
+```powershell
+docker exec pilotforge-api python -c "import os; print('Key present:', bool(os.getenv('ANTHROPIC_API_KEY')))"
+```
+
+### AI Advisor Features
+
+- **Real Claude API** — open-ended questions (e.g. "how many counties in NY have incentives?") are answered by the live model, not keyword-matched scripted responses.
+- **Production Questions panel** — select a production in the left sidebar and a blue *Production Questions* section appears with up to 4 questions tailored to that production's title, budget, and status.
+- **Suggested Questions** — 10 static prompts covering GA, CA, NY, LA, TX, NM, SA, and UK incentives.
+- **Scripted fallback** — if the API key is unavailable, keyword-matched responses cover the most common jurisdictions (GA, CA, NY, NM, LA, TX, SA, UK, Ireland, Canada, Australia).
+
+### AI Advisor Troubleshooting
+
+- **"30+ jurisdictions" or generic response** → API key not reaching the container. Check `.env` and `docker-compose.yml` environment block.
+- **Scripted response instead of live AI** → Run the key-check command above. If `False`, recreate the backend: `docker compose up -d --no-deps backend`.
+
+---
+
+## FAQ
+
+A full user-facing FAQ is available at [`FAQ.md`](FAQ.md) in the project root. It covers:
+
+- Platform overview and intended audience
+- Incentive type glossary — credit, rebate, grant, transferable, refundable, stacking
+- Jurisdiction-specific Q&A: Georgia, California, New York, Louisiana, New Mexico, Texas, San Antonio, UK
+- Feature walkthroughs: Dashboard, Calculator, Maximizer, Jurisdictions, Rule Review, AI Advisor
+- Data currency, source verification, and compliance disclaimers
 
 ---
 
@@ -228,11 +273,15 @@ Common causes:
 
 ### Frontend changes not showing
 
+The frontend runs from a **pre-built image** — `restart` alone is not enough. A full rebuild is required:
+
 ```powershell
-docker compose restart frontend nginx
+docker compose build frontend
+docker compose up -d --no-deps frontend
+docker compose restart nginx
 ```
 
-Then hard-refresh the browser (`Ctrl+Shift+R`).
+Then hard-refresh the browser (`Ctrl+Shift+R`) to clear the cached JS bundle.
 
 ### API calls fail from `localhost:3000`
 
