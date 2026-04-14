@@ -84,22 +84,52 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "- Non-competitive — credits issued as earned\n\n"
         "**Max credit:** $7M per project. Applications accepted year-round."
     )),
-    (["new mexico"], (
+    (["new mexico", " nm "], (
         "**New Mexico Film Production Tax Credit**\n\n"
-        "New Mexico is one of the most competitive incentive programs in the US:\n\n"
-        "**Base credit:** 25% on all direct production expenditures\n"
-        "**Rural bonus:** +5% for productions outside Bernalillo County\n"
-        "**TV bonus:** +10% for series spending over $30M in NM\n\n"
-        "**No minimum spend** — accessible to indie and large-budget productions alike. "
-        "Credits are refundable, meaning the state will cut you a check even with no tax liability."
+        "New Mexico offers a **25–35% refundable credit** — one of the most competitive programs in the US:\n\n"
+        "**Base credit:** 25% on all qualified production expenditures (QPF)\n"
+        "**Rural uplift:** +5% for productions shooting 60+ miles outside Santa Fe or Albuquerque city limits\n"
+        "**TV series uplift:** +5% for scripted series of 6+ consecutive episodes with significant NM spend\n\n"
+        "**No minimum spend threshold** — accessible to indie and large-budget productions alike. "
+        "Credits are fully **refundable** (the state pays the difference as cash even with no NM tax liability).\n\n"
+        "Administered by the New Mexico Film Office (nmfilm.com)."
     )),
     (["louisiana", " la "], (
         "**Louisiana Entertainment Tax Credit**\n\n"
-        "Louisiana offers a **25% base rebate** plus a **15% resident payroll** uplift.\n\n"
+        "Louisiana offers a **25% base rebate** on total qualified production expenditures.\n\n"
+        "**Stackable bonuses:**\n"
+        "- **+15% resident payroll** uplift on wages paid to Louisiana residents\n"
+        "- **+5% music content bonus** for productions with 50%+ Louisiana-sourced music\n"
+        "- **VFX bonus:** additional incentive for qualifying visual effects work\n\n"
         "**Requirements:** Minimum $300k qualified spend.\n\n"
-        "Credits are **transferable** and can be sold at 85–90 cents on the dollar for "
-        "immediate cash — ideal for productions that can't use the credit directly.\n\n"
-        "Applications are handled by the Louisiana Office of Entertainment Industry Development."
+        "Credits are **fully transferable** and can be sold at 85–90 cents on the dollar for "
+        "immediate cash — ideal for productions without significant Louisiana tax liability.\n\n"
+        "Applications handled by the Louisiana Office of Entertainment Industry Development."
+    )),
+    (["texas", " tx "], (
+        "**Texas Moving Image Industry Incentive Program**\n\n"
+        "Texas offers a **grant program** (not a tax credit) on qualified in-state spend:\n\n"
+        "**Grant rates:**\n"
+        "- **15% base** on qualified Texas production expenditures\n"
+        "- **+2.5%** for productions in underrepresented regions\n"
+        "- **+2.5% workforce bonus** for 70%+ Texas-resident crew\n"
+        "- **+2.5% TV bonus** for scripted series, 30+ minutes per episode\n\n"
+        "**Minimum spend:** $250k for films; $100k for TV episodes.\n\n"
+        "**Local stacking:** San Antonio offers an additional **14% local incentive**, bringing the "
+        "combined maximum to **36.5%** on fully qualified spend. "
+        "Houston and Austin have local film commissions with permit support."
+    )),
+    (["san antonio", "tx-sa", "sanantonio"], (
+        "**San Antonio Local Production Incentive**\n\n"
+        "The City of San Antonio offers a **14% local production incentive** through Film San Antonio (filmsanantonio.com).\n\n"
+        "**Stacking with Texas state:**\n"
+        "- Texas base grant: up to 22.5%\n"
+        "- San Antonio local: 14%\n"
+        "- **Combined maximum: 36.5%** on fully qualified spend\n\n"
+        "*Note: filmsanantonio.com promotes \"up to 45% combined\" — the verified math is 14% + 22.5% = 36.5%. "
+        "Always use the conservative figure for budgeting.*\n\n"
+        "**Permit requirement:** Productions shooting on any of 250+ City of San Antonio-owned properties "
+        "must obtain a film permit through the San Antonio Film Commission."
     )),
     (["uk", "united kingdom", "avec", "bfi"], (
         "**UK Audio-Visual Expenditure Credit (AVEC)**\n\n"
@@ -205,14 +235,14 @@ _SCRIPTED: list[tuple[list[str], str]] = [
 
 _DEFAULT_RESPONSE = (
     "**PilotForge AI Advisor**\n\n"
-    "I'm your expert guide to film and television tax incentives across 30+ jurisdictions.\n\n"
+    "I'm your expert guide to film and television tax incentives across 35+ jurisdictions.\n\n"
     "I can help you with:\n\n"
     "- **Jurisdiction comparisons** — credit rates, caps, and eligibility across US states and international programs\n"
     "- **Qualifying expenses** — exactly what counts toward your incentive base in each state\n"
     "- **Application requirements** — documentation, timelines, and pre-certification steps\n"
     "- **Incentive stacking** — combining Section 181 with state credits for maximum yield\n"
     "- **Budget optimization** — structuring your spend to maximize the credit\n\n"
-    "Try asking about Georgia, New Mexico, California, New York, Louisiana, or the UK — "
+    "Try asking about Georgia, New Mexico, California, New York, Louisiana, Texas, or the UK — "
     "or ask me to compare jurisdictions for your specific budget."
 )
 
@@ -244,8 +274,15 @@ async def _stream_scripted(text: str) -> AsyncGenerator[str, None]:
 
 def _get_client():
     """Return an AsyncAnthropic client, or None to use scripted demo responses."""
-    # DEMO MODE: always use scripted responses (no API key required)
-    return None
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
+    try:
+        import anthropic
+        return anthropic.AsyncAnthropic(api_key=api_key)
+    except ImportError:
+        logger.warning("anthropic package not installed — falling back to scripted responses")
+        return None
 
 
 async def _build_system_prompt(production_id: Optional[str]) -> str:

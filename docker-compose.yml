@@ -39,11 +39,13 @@ services:
       JWT_SECRET: dev-only-change-in-production-pilotforge-2024
       JWT_ALGORITHM: HS256
       JWT_EXPIRE_HOURS: 8
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     ports:
       - "8001:8000"
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
+      - ./maximizer.py:/app/maximizer.py
     depends_on:
       postgres:
         condition: service_healthy

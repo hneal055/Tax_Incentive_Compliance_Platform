@@ -10,7 +10,43 @@ const SUGGESTED_PROMPTS = [
   'How do I stack federal and state incentives?',
   'What is the minimum spend for UK production incentives?',
   'What documentation is required for Louisiana credit applications?',
+  'Compare Texas vs. New Mexico for a $5M feature film.',
+  'What is the San Antonio local incentive and how does it stack with Texas state?',
+  'Explain the New Mexico rural uplift zone bonus.',
+  'What makes Louisiana credits transferable and how do I sell them?',
 ];
+
+function getContextualPrompts(prod: Production): string[] {
+  const budget = prod.budgetTotal ?? 0;
+  const budgetStr = budget >= 1_000_000 ? `$${(budget / 1_000_000).toFixed(1)}M` : budget > 0 ? `$${(budget / 1_000).toFixed(0)}K` : '';
+  const title = prod.title;
+  const prompts: string[] = [];
+
+  if (budgetStr) {
+    prompts.push(`What is the maximum incentive available for "${title}" with a ${budgetStr} budget?`);
+    prompts.push(`Which jurisdictions does "${title}" qualify for at ${budgetStr}?`);
+  } else {
+    prompts.push(`What incentive programs are available for "${title}"?`);
+  }
+
+  if (prod.status === 'planning') {
+    prompts.push(`What should I do now to prepare "${title}" for incentive applications?`);
+  } else if (prod.status === 'pre_production') {
+    prompts.push(`What pre-certification steps are required for "${title}" before shooting starts?`);
+  } else if (prod.status === 'production') {
+    prompts.push(`What documentation should I be capturing on set for "${title}"'s incentive claim?`);
+  } else if (prod.status === 'post_production') {
+    prompts.push(`What is the post-production incentive filing timeline for "${title}"?`);
+  }
+
+  if (budget >= 1_000_000) {
+    prompts.push(`Compare Georgia vs. New Mexico vs. Louisiana for "${title}" at ${budgetStr}.`);
+  } else if (budget > 0) {
+    prompts.push(`Which states have no minimum spend threshold that "${title}" would qualify for?`);
+  }
+
+  return prompts.slice(0, 4);
+}
 
 const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
 
@@ -44,15 +80,21 @@ function getFallbackResponse(question: string): string {
     return "**New York Film Tax Credit**\n\nNew York provides a **25-35% credit** on qualified below-the-line costs.\n\n**Base rate:** 25% statewide\n**Upstate bonus:** Additional 10% for productions outside NYC\n\n**Requirements:**\n- Minimum $1M qualified spend\n- 75% of shooting days in New York\n- Non-competitive — credits issued as earned\n\n**Max credit:** $7M per project.";
   if (q.includes('highest') || q.includes('best') || q.includes('compare') || q.includes('which'))
     return "**Top US Film Incentive Jurisdictions**\n\n**Georgia:** 20-30% · Min $500k · Best for horror/indie\n**New Mexico:** 25-40% · No minimum · Best for large features\n**Louisiana:** 25% rebate · Min $300k · Transferable credits\n**New York:** 25-35% · Min $1M · Best for TV series\n**California:** 25% · Min $1M · Competitive allocation";
+  if (q.includes('new mexico') || q.includes(' nm '))
+    return "**New Mexico Film Production Tax Credit**\n\nNew Mexico offers a **25–35% refundable credit** — one of the most competitive programs in the US.\n\n**Base credit:** 25% on all qualified production expenditures (QPF)\n**Rural uplift:** +5% for productions shooting 60+ miles outside Santa Fe or Albuquerque city limits\n**TV series uplift:** +5% for scripted series of 6+ consecutive episodes with significant NM spend\n\n**No minimum spend threshold** — accessible to indie and large-budget productions alike.\n\nCredits are **refundable** (paid as cash if they exceed your tax liability). Administered by the New Mexico Film Office.";
   if (q.includes('louisiana') || q.includes(' la '))
-    return "**Louisiana Entertainment Tax Credit**\n\nLouisiana offers a **25% base rebate** plus **15% resident payroll** uplift.\n\n**Requirements:** Minimum $300k qualified spend. Credits are transferable and can be sold at 85-90 cents on the dollar for immediate cash.";
+    return "**Louisiana Entertainment Tax Credit**\n\nLouisiana offers a **25% base rebate** on total qualified production expenditures.\n\n**Stackable bonuses:**\n- **+15% resident payroll** uplift on wages paid to Louisiana residents\n- **+5% music content bonus** for productions with 50%+ Louisiana-sourced music\n- **VFX bonus:** additional incentive available for qualifying visual effects work\n\n**Requirements:** Minimum $300k qualified spend.\n\n**Transferability:** Credits are fully transferable and can be sold at 85–90 cents on the dollar for immediate cash — attractive for productions without significant Louisiana tax liability.";
+  if (q.includes('texas') || q.includes(' tx '))
+    return "**Texas Moving Image Industry Incentive Program**\n\nTexas offers a **grant program** (not a tax credit) on qualified in-state spend.\n\n**Grant rates:**\n- **15% base** on qualified Texas production expenditures\n- **+2.5% bonus** for productions in underrepresented regions\n- **+2.5% workforce bonus** for 70%+ Texas-resident crew\n- **+2.5% TV bonus** for scripted series 30+ minutes per episode\n\n**Minimum spend:** $250k for films; $100k for TV episodes.\n\n**Local stacking:** San Antonio offers an additional **14% local incentive** (opt-in), bringing the combined maximum to 36.5% on fully qualified spend. Houston and Austin have local film commissions with permit support.";
+  if (q.includes('san antonio') || q.includes('tx-sa') || q.includes('sanantonio'))
+    return "**San Antonio Local Production Incentive**\n\nThe City of San Antonio offers a **14% local production incentive** through Film San Antonio (filmsanantonio.com).\n\n**Stacking with Texas state:**\n- Texas base grant: up to 22.5%\n- San Antonio local: 14%\n- **Combined maximum: 36.5%** on fully qualified spend\n\n*Note: filmsanantonio.com promotes \"up to 45% combined\" — the verified math is 14% + 22.5% = 36.5%. Always use the conservative figure for budgeting.*\n\n**Permit requirement:** Productions shooting on any of 250+ City of San Antonio-owned properties must obtain a film permit through the San Antonio Film Commission.";
   if (q.includes('uk') || q.includes('united kingdom'))
     return "**UK Film Tax Relief**\n\nThe UK offers **25% on qualifying UK production expenditure**.\n\n**Requirements:**\n- Pass the BFI Cultural Test (minimum 18/35 points)\n- At least 10% of core expenditure must be UK spend\n- No minimum spend threshold";
   if (q.includes('stack') || q.includes('federal') || q.includes('181'))
     return "**Stacking Federal + State Incentives**\n\n**Section 181 (Federal):** 100% first-year deduction for productions up to $15M. No application required.\n\n**State credits:** Apply on top of Section 181. The federal deduction reduces taxable income; the state credit directly offsets tax liability.";
   if (q.includes('document') || q.includes('application') || q.includes('require'))
     return "**Standard Application Requirements**\n\n**Pre-production:**\n- Production company registration in the state\n- Estimated budget breakdown\n- Shooting schedule with location days\n\n**Post-production:**\n- Final cost report (CPA-certified)\n- Payroll records with residency verification\n- Vendor invoices for all qualified spend";
-  return "**PilotForge AI Advisor**\n\nI can help you with:\n\n- **Jurisdiction comparisons** — rates across 32+ states and countries\n- **Qualifying expenses** — what counts toward your incentive base\n- **Application requirements** — documentation, timelines, pre-certification\n- **Incentive stacking** — combining federal Section 181 with state credits\n\nTry asking about Georgia, California, New York, Louisiana, or the UK.";
+  return "**PilotForge AI Advisor**\n\nI can help you with:\n\n- **Jurisdiction comparisons** — rates across 35+ states and countries\n- **Qualifying expenses** — what counts toward your incentive base\n- **Application requirements** — documentation, timelines, pre-certification\n- **Incentive stacking** — combining federal Section 181 with state credits\n\nTry asking about Georgia, California, New York, Louisiana, Texas, New Mexico, or the UK.";
 }
 
 function AIAdvisor() {
@@ -135,6 +177,21 @@ function AIAdvisor() {
             {productions.map(p => <option key={p.id} value={p.id}>{p.title}{p.budgetTotal ? ` — $${(p.budgetTotal / 1_000_000).toFixed(1)}M` : ''}</option>)}
           </select>
         </div>
+        {production !== 'none' && (() => {
+          const selectedProd = productions.find(p => p.id === production);
+          if (!selectedProd) return null;
+          const ctxPrompts = getContextualPrompts(selectedProd);
+          return (
+            <div className="bg-blue-50 rounded-2xl border border-blue-100 shadow-sm p-5">
+              <p className="text-[11px] font-bold text-blue-400 tracking-widest uppercase mb-3">Production Questions</p>
+              <div className="space-y-2">
+                {ctxPrompts.map(prompt => (
+                  <button key={prompt} type="button" onClick={() => sendMessage(prompt)} disabled={typing} className="w-full text-left text-xs text-blue-700 bg-white hover:bg-blue-600 hover:text-white border border-blue-100 hover:border-blue-600 rounded-lg px-3 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed leading-relaxed">{prompt}</button>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-3">Suggested Questions</p>
           <div className="space-y-2">

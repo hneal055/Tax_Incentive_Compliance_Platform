@@ -1,35 +1,61 @@
 param(
-  [int]$Port = 8000
+  [switch]$Status,
+  [switch]$Logs,
+  [string]$Service = ""
 )
 
 $ErrorActionPreference = "Stop"
+$Root = Split-Path $PSScriptRoot -Parent
+Set-Location $Root
 
-Write-Host "=== Tax Incentive API: Daily Startup ===" -ForegroundColor Cyan
-
-# 1) Ensure we're at repo root
-Set-Location (Split-Path $PSScriptRoot -Parent)
-
-# 2) Ensure venv exists + activate
-if (!(Test-Path ".\.venv\Scripts\Activate.ps1")) {
-  Write-Host "Creating .venv..." -ForegroundColor Yellow
-  python -m venv .venv
+# ── Status-only mode ──────────────────────────────────────────────────────────
+if ($Status) {
+  Write-Host "`n=== PilotForge Service Status ===" -ForegroundColor Cyan
+  docker ps --filter "name=pilotforge" --format "table {{.Names}}`t{{.Status}}`t{{.Ports}}"
+  exit 0
 }
 
-Write-Host "Activating .venv..." -ForegroundColor Green
-. .\.venv\Scripts\Activate.ps1
-
-# 3) Install/refresh deps (safe, quick if already satisfied)
-Write-Host "Installing requirements..." -ForegroundColor Green
-python -m pip install -U pip
-if (Test-Path ".\requirements.txt") {
-  python -m pip install -r .\requirements.txt
+# ── Log tail mode ─────────────────────────────────────────────────────────────
+if ($Logs) {
+  $target = if ($Service) { $Service } else { "backend" }
+  Write-Host "=== Tailing logs: $target ===" -ForegroundColor Cyan
+  docker compose logs -f $target
+  exit 0
 }
 
-# 4) Quick sanity checks
-Write-Host "Sanity checks..." -ForegroundColor Green
-python -c "import fastapi, uvicorn; print('FastAPI/uvicorn OK')"
-python -m pytest -q
+# ── Normal startup ────────────────────────────────────────────────────────────
+Write-Host "`n=== PilotForge Daily Startup ===" -ForegroundColor Cyan
+Write-Host "Working directory: $Root" -ForegroundColor Gray
 
-# 5) Start API
-Write-Host "Starting API on port $Port..." -ForegroundColor Cyan
-python -m uvicorn src.main:app --reload --host 127.0.0.1 --port $Port
+# 1. Verify .env has ANTHROPIC_API_KEY
+if (!(Test-Path "$Root\.env") -or !(Select-String -Path "$Root\.env" -Pattern "ANTHROPIC_API_KEY=sk-" -Quiet)) {
+  Write-Host "[WARN] .env missing or ANTHROPIC_API_KEY not set — AI Advisor will use scripted responses only" -ForegroundColor Yellow
+}
+
+# 2. Start all services
+Write-Host "`n[1/3] Starting Docker services..." -ForegroundColor Green
+docker compose up -d
+
+# 3. Wait for backend health
+Write-Host "[2/3] Waiting for backend to be healthy..." -ForegroundColor Green
+$attempts = 0
+do {
+  Start-Sleep -Seconds 3
+  $attempts++
+  $health = docker inspect --format "{{.State.Health.Status}}" pilotforge-api 2>$null
+  Write-Host "      pilotforge-api: $health ($attempts/10)" -ForegroundColor Gray
+} while ($health -ne "healthy" -and $attempts -lt 10)
+
+if ($health -ne "healthy") {
+  Write-Host "[WARN] Backend not healthy after 30s — check logs: docker compose logs backend" -ForegroundColor Yellow
+}
+
+# 4. Summary
+Write-Host "`n[3/3] Status:" -ForegroundColor Green
+docker ps --filter "name=pilotforge" --format "table {{.Names}}`t{{.Status}}"
+
+Write-Host "`n=== Ready ===" -ForegroundColor Cyan
+Write-Host "  App:      http://localhost" -ForegroundColor White
+Write-Host "  API docs: http://localhost:8001/api/0.1.0/docs" -ForegroundColor White
+Write-Host "  Login:    admin@pilotforge.com / pilotforge2024" -ForegroundColor White
+Write-Host ""
