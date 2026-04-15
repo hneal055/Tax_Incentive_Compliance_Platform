@@ -43,3 +43,6 @@ DATABASE_URL=*.txt
 
 # Railway
 .railway/
+
+# MMB Connector (separate repo)
+SceneIQ-MMB-Connector/
