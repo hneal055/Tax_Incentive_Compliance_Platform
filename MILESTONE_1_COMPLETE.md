@@ -1,13 +1,13 @@
-# PilotForge - Milestone 1 Complete! 🎉
+# SceneIQ - Milestone 1 Complete! 🎉
 
 Date: January 3, 2026
-GitHub: https://github.com/hneal055/PilotForge
+GitHub: https://github.com/hneal055/SceneIQ
 > Tax Incentive Intelligence for Film & TV
 > Tax Incentive Intelligence for Film & TV
 ## ✅ COMPLETED
 
 ### 1. Project Infrastructure ✅
-- Location: C:\Projects\PilotForge
+- Location: C:\Projects\SceneIQ
 > Tax Incentive Intelligence for Film & TV
 > Tax Incentive Intelligence for Film & TV
 - Complete folder structure

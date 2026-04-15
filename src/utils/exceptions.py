@@ -1,5 +1,5 @@
 """
-Custom Exception Classes and Error Handlers for PilotForge
+Custom Exception Classes and Error Handlers for SceneIQ
 Provides consistent error responses across the API
 """
 
@@ -14,8 +14,8 @@ from typing import Any, Dict
 logger = logging.getLogger(__name__)
 
 
-class PilotForgeException(Exception):
-    """Base exception for PilotForge application"""
+class SceneIQException(Exception):
+    """Base exception for SceneIQ application"""
     
     def __init__(
         self,
@@ -31,7 +31,7 @@ class PilotForgeException(Exception):
         super().__init__(self.message)
 
 
-class ValidationError(PilotForgeException):
+class ValidationError(SceneIQException):
     """Raised when request validation fails"""
     
     def __init__(self, message: str, details: Dict[str, Any] = None):
@@ -43,7 +43,7 @@ class ValidationError(PilotForgeException):
         )
 
 
-class NotFoundError(PilotForgeException):
+class NotFoundError(SceneIQException):
     """Raised when a resource is not found"""
     
     def __init__(self, resource: str, resource_id: str = None):
@@ -57,7 +57,7 @@ class NotFoundError(PilotForgeException):
         )
 
 
-class DatabaseError(PilotForgeException):
+class DatabaseError(SceneIQException):
     """Raised when database operation fails"""
     
     def __init__(self, message: str, details: Dict[str, Any] = None):
@@ -69,7 +69,7 @@ class DatabaseError(PilotForgeException):
         )
 
 
-class UnauthorizedError(PilotForgeException):
+class UnauthorizedError(SceneIQException):
     """Raised when authentication fails"""
     
     def __init__(self, message: str = "Unauthorized"):
@@ -80,7 +80,7 @@ class UnauthorizedError(PilotForgeException):
         )
 
 
-class ForbiddenError(PilotForgeException):
+class ForbiddenError(SceneIQException):
     """Raised when user lacks permissions"""
     
     def __init__(self, message: str = "Forbidden"):
@@ -113,12 +113,12 @@ def error_response(
 def setup_exception_handlers(app: FastAPI) -> None:
     """Register all exception handlers with the FastAPI app"""
     
-    @app.exception_handler(PilotForgeException)
-    async def pilotforge_exception_handler(request: Request, exc: PilotForgeException):
+    @app.exception_handler(SceneIQException)
+    async def pilotforge_exception_handler(request: Request, exc: SceneIQException):
         correlation_id = request.headers.get("X-Correlation-ID", "no-id")
         
         logger.error(
-            f"PilotForgeException: {exc.message}",
+            f"SceneIQException: {exc.message}",
             extra={
                 "correlation_id": correlation_id,
                 "error_code": exc.error_code,

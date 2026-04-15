@@ -171,7 +171,7 @@ async def _notify_subscribers(
         jurisdiction=jurisdiction,
         severity=severity,
     )
-    subject = f"[PilotForge] Regulatory Alert: {title[:80]}"
+    subject = f"[SceneIQ] Regulatory Alert: {title[:80]}"
 
     for pref in prefs:
         # Empty jurisdictions list = subscribe to everything

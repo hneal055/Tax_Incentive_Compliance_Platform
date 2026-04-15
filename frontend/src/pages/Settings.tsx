@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, BellOff, Save, Check } from 'lucide-react';
+import { Bell, BellOff, Save, Check, Mail, Calendar } from 'lucide-react';
 import api from '../api';
 import type { Jurisdiction, NotificationPreference } from '../types';
+
+type ReportFrequency = 'daily' | 'weekly' | 'never';
 
 function Settings() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
@@ -12,9 +14,10 @@ function Settings() {
   const [saved, setSaved] = useState(false);
 
   // Form state
-  const [email, setEmail] = useState('');
-  const [active, setActive] = useState(true);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [email,           setEmail]           = useState('');
+  const [active,          setActive]          = useState(true);
+  const [selected,        setSelected]        = useState<Set<string>>(new Set());
+  const [reportFrequency, setReportFrequency] = useState<ReportFrequency>('never');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -28,6 +31,7 @@ function Settings() {
       setEmail(existing.emailAddress);
       setActive(existing.active);
       setSelected(new Set(existing.jurisdictions));
+      setReportFrequency((existing.reportFrequency as ReportFrequency) ?? 'never');
     }
     setLoading(false);
   }, []);
@@ -58,9 +62,10 @@ function Settings() {
     setSaved(false);
     try {
       const updated = await api.notifications.upsertPreferences({
-        emailAddress: email.trim(),
-        jurisdictions: Array.from(selected),
+        emailAddress:    email.trim(),
+        jurisdictions:   Array.from(selected),
         active,
+        reportFrequency,
       });
       setPref(updated);
       setSaved(true);
@@ -79,6 +84,7 @@ function Settings() {
       setEmail('');
       setActive(true);
       setSelected(new Set());
+      setReportFrequency('never');
     } finally {
       setDeleting(false);
     }
@@ -89,6 +95,12 @@ function Settings() {
     return acc;
   }, {});
 
+  const FREQ_OPTIONS: { value: ReportFrequency; label: string; description: string }[] = [
+    { value: 'never',  label: 'Never',        description: 'Receive event alerts only, no digest' },
+    { value: 'daily',  label: 'Daily digest',  description: 'Summary email every morning at 08:00 UTC' },
+    { value: 'weekly', label: 'Weekly digest', description: 'Summary email every Monday at 08:00 UTC' },
+  ];
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
@@ -98,7 +110,7 @@ function Settings() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Notification Settings</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Get email alerts when regulatory rules change</p>
+          <p className="text-sm text-slate-500 mt-0.5">Email alerts and scheduled monitoring reports</p>
         </div>
       </div>
 
@@ -111,11 +123,17 @@ function Settings() {
         <form onSubmit={handleSave} className="space-y-6">
           {/* Email + active toggle */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-            <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Alert Delivery</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="w-4 h-4 text-slate-500" />
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Alert Delivery</h2>
+            </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email address</label>
+              <label htmlFor="settings-email" className="block text-sm font-medium text-slate-700 mb-1.5">
+                Email address
+              </label>
               <input
+                id="settings-email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
@@ -136,11 +154,50 @@ function Settings() {
                 className={`relative w-11 h-6 rounded-full transition-colors ${active ? 'bg-blue-600' : 'bg-slate-300'}`}
                 role="switch"
                 aria-checked={active}
+                aria-label="Toggle alerts"
               >
                 <span
                   className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${active ? 'translate-x-5' : 'translate-x-0'}`}
                 />
               </button>
+            </div>
+          </div>
+
+          {/* Email reports */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4 text-slate-500" />
+              <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Email Reports</h2>
+            </div>
+            <p className="text-xs text-slate-500 -mt-2">
+              Scheduled summaries of new monitoring events sent to the address above.
+              SMTP must be configured on the server for delivery to work.
+            </p>
+
+            <div className="space-y-2">
+              {FREQ_OPTIONS.map(opt => (
+                <label
+                  key={opt.value}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                    reportFrequency === opt.value
+                      ? 'border-blue-300 bg-blue-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reportFrequency"
+                    value={opt.value}
+                    checked={reportFrequency === opt.value}
+                    onChange={() => setReportFrequency(opt.value)}
+                    className="mt-0.5 accent-blue-600"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">{opt.label}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{opt.description}</p>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
 
@@ -151,7 +208,7 @@ function Settings() {
                 <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Jurisdictions</h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   {selected.size === 0
-                    ? 'No filter — you will receive alerts for all jurisdictions'
+                    ? 'No filter — receive alerts for all jurisdictions'
                     : `Filtered to ${selected.size} jurisdiction${selected.size === 1 ? '' : 's'}`}
                 </p>
               </div>
@@ -222,7 +279,6 @@ function Settings() {
             </button>
           </div>
 
-          {/* Status note if prefs exist */}
           {pref && (
             <p className="text-xs text-slate-400 text-right -mt-2">
               Last updated {new Date(pref.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

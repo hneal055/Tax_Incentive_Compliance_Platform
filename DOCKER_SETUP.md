@@ -1,4 +1,4 @@
-# Docker Container Setup - PilotForge
+# Docker Container Setup - SceneIQ
 
 **Created:** February 18, 2026  
 **Status:** Ready to build
@@ -68,7 +68,7 @@ Manage containers easily:
 
 ### Step 2: Build the Image
 ```powershell
-# Build the PilotForge image
+# Build the SceneIQ image
 .\build-image.ps1
 ```
 
@@ -371,4 +371,4 @@ docker cp pilotforge-api:/app/logs ./local-logs
 
 **Created by:** AI Assistant  
 **Date:** February 18, 2026  
-**Project:** PilotForge - Tax Incentive Compliance Platform
+**Project:** SceneIQ - Tax Incentive Compliance Platform

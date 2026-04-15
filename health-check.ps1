@@ -1,9 +1,9 @@
 # health-check.ps1
-# PilotForge Health Check - Run this FIRST after environment setup
+# SceneIQ Health Check - Run this FIRST after environment setup
 # Validates: Database connection, Prisma sync, API startup, basic endpoints
 
 Write-Host "=====================================" -ForegroundColor Cyan
-Write-Host "PilotForge Health Check" -ForegroundColor Cyan
+Write-Host "SceneIQ Health Check" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 

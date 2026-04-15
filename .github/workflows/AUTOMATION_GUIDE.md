@@ -1,13 +1,13 @@
-# 🤖 PilotForge Automation Suite
+# 🤖 SceneIQ Automation Suite
 
-> Complete automation toolkit for PilotForge development and deployment
+> Complete automation toolkit for SceneIQ development and deployment
 
 ---
 
 ## 🎯 Overview
 
-The PilotForge Automation Suite provides one-command automation for:
-- **Rebranding** - Update all files with PilotForge branding
+The SceneIQ Automation Suite provides one-command automation for:
+- **Rebranding** - Update all files with SceneIQ branding
 - **Version Management** - Bump versions across the project
 - **Documentation Generation** - Auto-generate API docs
 - **Code Quality** - Testing, linting, formatting
@@ -39,7 +39,7 @@ python automate.py list
 
 ### **1. Rebranding (`rebrand.py`)** 🎨
 
-Automatically updates all project files with PilotForge branding.
+Automatically updates all project files with SceneIQ branding.
 
 ```bash
 # Run rebranding
@@ -105,7 +105,7 @@ python generate_docs.py
 
 **What it generates:**
 - ✅ `API_REFERENCE.md` - Complete API reference
-- ✅ `PilotForge.postman_collection.json` - Postman collection
+- ✅ `SceneIQ.postman_collection.json` - Postman collection
 - ✅ `openapi.json` - OpenAPI specification
 
 **Use cases:**
@@ -125,7 +125,7 @@ python check_branding.py
 ```
 
 **What it checks:**
-- ✅ Correct name usage ("PilotForge" not "Pilot Forge")
+- ✅ Correct name usage ("SceneIQ" not "Pilot Forge")
 - ✅ Copyright format
 - ✅ API title correctness
 - ✅ Tagline usage
@@ -161,7 +161,7 @@ python automate.py all
 
 | Command | Description |
 |---------|-------------|
-| `rebrand` | Rebrand to PilotForge |
+| `rebrand` | Rebrand to SceneIQ |
 | `version` | Bump version numbers |
 | `docs` | Generate API documentation |
 | `test` | Run test suite with coverage |
@@ -270,7 +270,7 @@ nano CHANGELOG.md
 # 5. Commit and tag
 git add .
 git commit -m "Bump version to 1.1.0"
-git tag -a v1.1.0 -m "PilotForge v1.1.0"
+git tag -a v1.1.0 -m "SceneIQ v1.1.0"
 
 # 6. Push with tags
 git push origin main --tags
@@ -325,7 +325,7 @@ pre-commit install
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                  PilotForge Automation                  │
+│                  SceneIQ Automation                  │
 └─────────────────────────────────────────────────────────┘
                            │
                            ▼
@@ -456,7 +456,7 @@ python version_manager.py patch
 
 ## 🎉 Summary
 
-The PilotForge Automation Suite provides:
+The SceneIQ Automation Suite provides:
 - ✅ **One-command** automation for common tasks
 - ✅ **Consistent branding** across all files
 - ✅ **Automated testing** and deployment
@@ -471,4 +471,4 @@ The PilotForge Automation Suite provides:
 
 **Last Updated:** January 10, 2026  
 **Version:** 1.0.0  
-**Project:** PilotForge - Tax Incentive Intelligence for Film & TV
+**Project:** SceneIQ - Tax Incentive Intelligence for Film & TV

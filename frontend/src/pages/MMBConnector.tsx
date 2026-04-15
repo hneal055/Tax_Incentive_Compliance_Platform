@@ -263,7 +263,7 @@ export default function MMBConnector() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Film className="w-6 h-6 text-indigo-600" />MMB Connector</h1>
-          <p className="text-slate-500 text-sm mt-1">Movie Magic Budgeting → PilotForge tax incentive evaluation</p>
+          <p className="text-slate-500 text-sm mt-1">Movie Magic Budgeting → SceneIQ tax incentive evaluation</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={loadDemo} disabled={loadingDemo} className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50">
@@ -324,14 +324,14 @@ export default function MMBConnector() {
               <div className="flex items-end pb-1"><label className="flex items-center gap-2 cursor-pointer select-none"><div onClick={() => set('includeLogo', !form.includeLogo)} className={`w-9 h-5 rounded-full transition-colors ${form.includeLogo ? 'bg-indigo-600' : 'bg-slate-300'}`}><div className={`w-4 h-4 bg-white rounded-full shadow mt-0.5 transition-transform ${form.includeLogo ? 'translate-x-4' : 'translate-x-0.5'}`} /></div><span className="text-xs font-medium text-slate-600">Promo Logo (+10%)</span></label></div>
             </div>
             <button onClick={evaluate} disabled={loading} className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 disabled:opacity-60 transition-colors mt-2">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}{loading ? 'Evaluating...' : 'Send to PilotForge'}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}{loading ? 'Evaluating...' : 'Send to SceneIQ'}
             </button>
           </div>
         </div>
 
         <div className="lg:col-span-3 space-y-4">
           {error && <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm"><AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" /><p className="text-red-700">{error}</p></div>}
-          {!result && !loading && !error && (<div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-white border border-slate-200 rounded-xl"><div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center"><BarChart3 className="w-7 h-7 text-indigo-500" /></div><p className="font-semibold text-slate-700">No results yet</p><p className="text-sm text-slate-400 max-w-xs">Fill in project details and click <strong>Send to PilotForge</strong>, or load the demo.</p></div>)}
+          {!result && !loading && !error && (<div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-white border border-slate-200 rounded-xl"><div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center"><BarChart3 className="w-7 h-7 text-indigo-500" /></div><p className="font-semibold text-slate-700">No results yet</p><p className="text-sm text-slate-400 max-w-xs">Fill in project details and click <strong>Send to SceneIQ</strong>, or load the demo.</p></div>)}
           {loading && (<div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 animate-pulse"><div className="h-4 bg-slate-200 rounded w-1/2" /><div className="h-12 bg-indigo-100 rounded-xl" /><div className="h-20 bg-slate-100 rounded-xl" /><div className="h-20 bg-slate-100 rounded-xl" /></div>)}
           {result && (
             <div className="space-y-4">
@@ -352,7 +352,7 @@ export default function MMBConnector() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 pt-2">
-        {[{icon: Film, label: 'Formats Supported', text: '.mmbx · .mdb · .csv · .xlsx'},{icon: DollarSign, label: 'Incentive Engine', text: 'Largo + PilotForge integration'},{icon: MapPin, label: 'Jurisdictions', text: '23 US, Canadian & International'}].map(({ icon: Icon, label, text }) => (
+        {[{icon: Film, label: 'Formats Supported', text: '.mmbx · .mdb · .csv · .xlsx'},{icon: DollarSign, label: 'Incentive Engine', text: 'Largo + SceneIQ integration'},{icon: MapPin, label: 'Jurisdictions', text: '23 US, Canadian & International'}].map(({ icon: Icon, label, text }) => (
           <div key={label} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3"><Icon className="w-5 h-5 text-indigo-500 shrink-0" /><div><p className="text-xs font-semibold text-slate-700">{label}</p><p className="text-xs text-slate-500">{text}</p></div></div>
         ))}
       </div>

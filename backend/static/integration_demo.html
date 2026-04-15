@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Largo + SceneIQ Integration Demo</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 24px;
+      color: #1e293b;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .header-left h1 { font-size: 26px; font-weight: 800; color: #1e293b; }
+    .header-left p  { color: #64748b; font-size: 14px; margin-top: 6px; }
+    .brands { display: flex; align-items: center; gap: 12px; }
+    .brand-chip {
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .brand-largo    { background: #d1fae5; color: #065f46; }
+    .brand-pilot    { background: #dbeafe; color: #1e40af; }
+    .brand-plus     { color: #94a3b8; font-size: 18px; font-weight: 300; }
+
+    /* ── Two-panel grid ── */
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .panel-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .icon-largo  { background: #d1fae5; }
+    .icon-pilot  { background: #dbeafe; }
+    .panel-title { font-size: 16px; font-weight: 700; color: #1e293b; }
+    .panel-sub   { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+    }
+    input:focus, select:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); background: white; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; }
+    .toggle-row input[type="checkbox"] { width: auto; }
+    .toggle-row label { margin: 0; text-transform: none; font-size: 13px; font-weight: 500; color: #475569; letter-spacing: 0; }
+    select[multiple] { min-height: 132px; background: #f8fafc; }
+    .locations-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 8px; }
+    .btn-mini { border: none; border-radius: 8px; background: #0ea5e9; color: white; font-weight: 700; padding: 0 12px; cursor: pointer; }
+    .btn-mini:hover { opacity: 0.92; }
+    .btn-mini-ghost { background: #64748b; }
+    .field-help { font-size: 11px; color: #64748b; margin-top: 6px; }
+
+    .btn-send {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-send:hover  { opacity: 0.92; }
+    .btn-send:active { transform: scale(0.98); }
+    .btn-send:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Results panel ── */
+    .results-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      color: #94a3b8;
+      gap: 12px;
+      text-align: center;
+    }
+    .results-empty .icon { font-size: 48px; }
+    .results-empty p { font-size: 14px; }
+
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Project summary strip ── */
+    .project-summary {
+      background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+      border: 1.5px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .summary-item { flex: 1; min-width: 100px; }
+    .summary-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; }
+    .summary-value { font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+
+    /* ── Recommendation card ── */
+    .rec-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .rec-card.eligible   { border-color: #bbf7d0; }
+    .rec-card.ineligible { border-color: #fecaca; opacity: 0.7; }
+
+    .rec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #f8fafc;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .rec-card.eligible   .rec-header { background: #f0fdf4; }
+    .rec-card.ineligible .rec-header { background: #fff5f5; }
+
+    .rec-title  { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .rec-jur    { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .rec-credit { text-align: right; }
+    .rec-credit .amount { font-size: 22px; font-weight: 800; color: #10b981; }
+    .rec-credit .rate   { font-size: 11px; color: #64748b; }
+
+    .rec-body { padding: 14px 18px; }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-cat   { background: #eff6ff; color: #1d4ed8; }
+    .badge-bonus { background: #fef3c7; color: #92400e; }
+    .badge-na    { background: #fee2e2; color: #991b1b; }
+
+    /* ── Audit score ── */
+    .audit-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .audit-label { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; }
+    .progress-bar { flex: 1; height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #10b981); }
+    .audit-score { font-size: 13px; font-weight: 800; color: #1e293b; white-space: nowrap; }
+
+    /* ── Checklist ── */
+    .checklist-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: #3b82f6;
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .checklist { list-style: none; margin-top: 8px; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: #475569;
+      padding: 5px 0;
+      border-top: 1px solid #f1f5f9;
+    }
+    .checklist li .check { color: #10b981; font-size: 14px; margin-top: -1px; flex-shrink: 0; }
+    .checklist li .opt   { color: #94a3b8; font-style: italic; font-size: 11px; }
+
+    .ineligible-msg {
+      background: #fff5f5;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #b91c1c;
+      margin-top: 8px;
+    }
+
+    /* ── Total bar ── */
+    .total-bar {
+      background: linear-gradient(135deg, #1e40af, #4f46e5);
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+      margin-bottom: 18px;
+    }
+    .total-bar .label { font-size: 13px; font-weight: 600; opacity: 0.85; }
+    .total-bar .amount { font-size: 26px; font-weight: 900; }
+
+    /* ── Value cards ── */
+    .value-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 700px) { .value-cards { grid-template-columns: 1fr; } }
+
+    .value-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .value-card .vc-icon { font-size: 30px; margin-bottom: 12px; }
+    .value-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .value-card p  { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+    .error-box {
+      background: #fff5f5;
+      border: 1.5px solid #fecaca;
+      border-radius: 12px;
+      padding: 18px 22px;
+      color: #b91c1c;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Largo + SceneIQ Integration</h1>
+      <p>Creative intelligence meets financial optimization — end-to-end production decision support</p>
+    </div>
+    <div class="brands">
+      <span class="brand-chip brand-largo">Largo.ai</span>
+      <span class="brand-plus">+</span>
+      <span class="brand-chip brand-pilot">SceneIQ</span>
+    </div>
+  </div>
+
+  <!-- Two panels -->
+  <div class="panels">
+
+    <!-- Left: Largo input -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon icon-largo">🎬</div>
+        <div>
+          <div class="panel-title">Largo — Project Metadata</div>
+          <div class="panel-sub">Creative intelligence & audience prediction</div>
+        </div>
+      </div>
+
+      <form id="largoForm">
+        <div class="form-group">
+          <label for="projectName">Project Name</label>
+          <input type="text" id="projectName" list="projectHistoryList" value="Peach State Chronicles" placeholder="e.g. The Last Frontier" required />
+          <datalist id="projectHistoryList"></datalist>
+          <div class="field-help">Recent project names appear in the dropdown.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Genre</label>
+            <select id="genre">
+              <option value="Drama" selected>Drama</option>
+              <option value="Action">Action</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Thriller">Thriller</option>
+              <option value="Horror">Horror</option>
+              <option value="Documentary">Documentary</option>
+              <option value="Sci-Fi">Sci-Fi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Budget (USD)</label>
+            <input type="number" id="budget" value="2500000" min="1" step="50000" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="locationsSelect">Filming Locations</label>
+          <select id="locationsSelect" multiple size="6"></select>
+          <div class="locations-actions">
+            <input type="text" id="customLocation" placeholder="Add custom location (e.g. Savannah)" />
+            <button type="button" id="addLocationBtn" class="btn-mini">Add</button>
+            <button type="button" id="clearLocationsBtn" class="btn-mini btn-mini-ghost">Clear</button>
+          </div>
+          <div class="field-help">Hold Ctrl/Cmd to select multiple locations.</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Predicted Audience Score (0–100)</label>
+            <input type="number" id="audienceScore" value="78.5" min="0" max="100" step="0.5" />
+          </div>
+          <div class="form-group">
+            <label>Local Hire % (0–100)</label>
+            <input type="number" id="localHire" value="20" min="0" max="100" step="1" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Diversity Score (0–100)</label>
+            <input type="number" id="diversityScore" value="25" min="0" max="100" step="1" />
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+            <div class="toggle-row">
+              <input type="checkbox" id="includeLogo" checked />
+              <label for="includeLogo">Include Georgia Promotional Logo (+10%)</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-send" type="submit" id="submitBtn">
+          <span id="btnIcon">🚀</span>
+          <span id="btnText">Send to SceneIQ</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Right: SceneIQ results -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon icon-pilot">⚡</div>
+        <div>
+          <div class="panel-title">SceneIQ — Incentive Analysis</div>
+          <div class="panel-sub">Tax credit recommendations & audit readiness</div>
+        </div>
+      </div>
+
+      <div id="results">
+        <div class="results-empty">
+          <div class="icon">📊</div>
+          <p>Fill in your project details and click<br><strong>Send to SceneIQ</strong> to see recommendations.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Value cards -->
+  <div class="value-cards">
+    <div class="value-card">
+      <div class="vc-icon">🎯</div>
+      <h3>Creative Validation</h3>
+      <p>Largo analyzes script data, genre fit, and audience predictions to validate creative decisions before production begins.</p>
+    </div>
+    <div class="value-card">
+      <div class="vc-icon">💰</div>
+      <h3>Financial Optimization</h3>
+      <p>SceneIQ maps your production against all applicable tax incentives — maximizing credits, bonuses, and audit readiness automatically.</p>
+    </div>
+    <div class="value-card">
+      <div class="vc-icon">📋</div>
+      <h3>Investor-Ready Reports</h3>
+      <p>Combined outputs give producers a complete picture: predicted audience performance plus verified tax credit projections in one package.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = '';   // same origin; change to http://localhost:8000 for local dev
+
+  function fmt$(n) {
+    if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(2) + 'M';
+    if (n >= 1_000)     return '$' + (n / 1_000).toFixed(0) + 'K';
+    return '$' + n.toLocaleString();
+  }
+  function pct(r) { return (r * 100).toFixed(1) + '%'; }
+  const DEFAULT_LOCATIONS = ['Georgia', 'Atlanta', 'Savannah', 'Louisiana', 'New Orleans', 'Baton Rouge'];
+
+  function normalizeLocation(loc) {
+    return (loc || '').trim();
+  }
+
+  async function loadProjectHistory() {
+    const list = document.getElementById('projectHistoryList');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/integrations/largo/project-history?limit=20`);
+      if (!res.ok) throw new Error('Unable to load project history');
+      const data = await res.json();
+      const projects = Array.isArray(data.projects) ? data.projects : [];
+      list.innerHTML = projects.map(name => `<option value="${name}"></option>`).join('');
+    } catch {
+      list.innerHTML = '';
+    }
+  }
+  function getSelectedLocations() {
+    const select = document.getElementById('locationsSelect');
+    return Array.from(select.selectedOptions).map(o => o.value).filter(Boolean);
+  }
+
+  function renderLocations(locations, selected = []) {
+    const select = document.getElementById('locationsSelect');
+    const selectedSet = new Set(selected.map(s => s.toLowerCase()));
+    select.innerHTML = locations.map(loc => {
+      const isSelected = selectedSet.has(loc.toLowerCase()) ? ' selected' : '';
+      return `<option value="${loc}"${isSelected}>${loc}</option>`;
+    }).join('');
+  }
+
+  async function loadLocations() {
+    const names = new Set(DEFAULT_LOCATIONS);
+
+    try {
+      const [locationsRes, demoRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/integrations/largo/available-locations`),
+        fetch(`${API_BASE}/api/v1/integrations/largo/demo-payload`),
+      ]);
+
+      if (locationsRes.ok) {
+        const locationData = await locationsRes.json();
+        (locationData.locations || []).forEach(loc => names.add(loc));
+      }
+
+      if (demoRes.ok) {
+        const demoData = await demoRes.json();
+        (demoData.locations || []).forEach(loc => names.add(loc));
+      }
+    } catch {
+      // Keep default fallback list only.
+    }
+
+    const sorted = Array.from(names)
+      .map(normalizeLocation)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+
+    renderLocations(sorted, ['Georgia', 'Atlanta', 'Savannah']);
+  }
+
+  function addCustomLocation() {
+    const input = document.getElementById('customLocation');
+    const value = normalizeLocation(input.value);
+    if (!value) return;
+
+    const select = document.getElementById('locationsSelect');
+    let found = false;
+    Array.from(select.options).forEach(opt => {
+      if (opt.value.toLowerCase() === value.toLowerCase()) {
+        opt.selected = true;
+        found = true;
+      }
+    });
+
+    if (!found) {
+      const opt = new Option(value, value, true, true);
+      select.add(opt);
+    }
+
+    input.value = '';
+    input.focus();
+  }
+
+  document.getElementById('addLocationBtn').addEventListener('click', addCustomLocation);
+  document.getElementById('clearLocationsBtn').addEventListener('click', () => {
+    Array.from(document.getElementById('locationsSelect').options).forEach(o => o.selected = false);
+  });
+  document.getElementById('customLocation').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addCustomLocation();
+    }
+  });
+
+  loadProjectHistory();
+  loadLocations();
+
+  document.getElementById('largoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn     = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const results = document.getElementById('results');
+
+    // Loading state
+    btn.disabled = true;
+    btnIcon.textContent = '';
+    btnText.textContent = 'Analyzing…';
+    results.innerHTML = '<div class="results-empty"><div class="spinner"></div><p>Running incentive analysis…</p></div>';
+
+    const locations = getSelectedLocations();
+    if (locations.length === 0) {
+      results.innerHTML = '<div class="error-box"><strong>⚠️ Missing locations</strong><br>Please select at least one filming location.</div>';
+      btn.disabled = false;
+      btnIcon.textContent = '🚀';
+      btnText.textContent = 'Send to SceneIQ';
+      return;
+    }
+
+    const payload = {
+      project_name:    document.getElementById('projectName').value,
+      genre:           document.getElementById('genre').value,
+      budget:          parseFloat(document.getElementById('budget').value),
+      locations,
+      audience_score:  parseFloat(document.getElementById('audienceScore').value) || null,
+      include_logo:    document.getElementById('includeLogo').checked,
+      local_hire_pct:  (parseFloat(document.getElementById('localHire').value) || 0) / 100,
+      diversity_score: (parseFloat(document.getElementById('diversityScore').value) || 0) / 100,
+    };
+
+    try {
+      const res  = await fetch(`${API_BASE}/api/v1/integrations/largo/project`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      await loadProjectHistory();
+      renderResults(data);
+    } catch (err) {
+      results.innerHTML = `
+        <div class="error-box">
+          <strong>⚠️ Request failed</strong><br>
+          ${err.message}<br><br>
+          <small>Make sure the SceneIQ backend is running and the Georgia database is seeded.</small>
+        </div>`;
+    } finally {
+      btn.disabled    = false;
+      btnIcon.textContent = '🚀';
+      btnText.textContent = 'Send to SceneIQ';
+    }
+  });
+
+  function renderResults(data) {
+    const results = document.getElementById('results');
+    const eligible = data.recommendations.filter(r => r.eligible);
+    let html = '';
+
+    // Project summary
+    html += `
+      <div class="project-summary">
+        <div class="summary-item">
+          <div class="summary-label">Project</div>
+          <div class="summary-value">${data.project_name}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Genre</div>
+          <div class="summary-value">${data.genre}</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Budget</div>
+          <div class="summary-value">${fmt$(data.budget)}</div>
+        </div>
+        ${data.audience_score != null ? `
+        <div class="summary-item">
+          <div class="summary-label">Audience Score</div>
+          <div class="summary-value">${data.audience_score}/100</div>
+        </div>` : ''}
+      </div>`;
+
+    // Total credits bar
+    if (data.total_estimated_credits > 0) {
+      html += `
+        <div class="total-bar">
+          <div class="label">Total Estimated Tax Credits</div>
+          <div class="amount">${fmt$(data.total_estimated_credits)}</div>
+        </div>`;
+    }
+
+    // Recommendations
+    data.recommendations.forEach((rec, i) => {
+      const cls = rec.eligible ? 'eligible' : 'ineligible';
+      html += `<div class="rec-card ${cls}">`;
+
+      // Header
+      html += `
+        <div class="rec-header">
+          <div>
+            <div class="rec-title">${rec.program_name}</div>
+            <div class="rec-jur">${rec.jurisdiction}</div>
+          </div>
+          <div class="rec-credit">
+            <div class="amount">${rec.eligible ? fmt$(rec.estimated_credit) : '—'}</div>
+            <div class="rate">${rec.eligible ? pct(rec.credit_rate) + ' effective rate' : 'Ineligible'}</div>
+          </div>
+        </div>`;
+
+      html += `<div class="rec-body">`;
+
+      if (!rec.eligible && rec.ineligibility_reason) {
+        html += `<div class="ineligible-msg">⛔ ${rec.ineligibility_reason}</div>`;
+      }
+
+      if (rec.eligible) {
+        // Qualified spend
+        html += `<div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+          Qualified spend: <strong>${fmt$(rec.qualified_spend)}</strong> (80% of budget)
+        </div>`;
+
+        // Qualified categories
+        if (rec.qualified_categories.length > 0) {
+          html += `<div class="badges">`;
+          rec.qualified_categories.forEach(c => {
+            html += `<span class="badge badge-cat">${c.replace(/_/g,' ')}</span>`;
+          });
+          html += `</div>`;
+        }
+
+        // Bonuses
+        if (rec.bonuses_applied.length > 0) {
+          html += `<div class="badges">`;
+          rec.bonuses_applied.forEach(b => {
+            html += `<span class="badge badge-bonus">+ ${b.name} (${pct(b.rate)}) = ${fmt$(b.amount)}</span>`;
+          });
+          html += `</div>`;
+        }
+
+        // Audit readiness
+        html += `
+          <div class="audit-row">
+            <span class="audit-label">Audit Readiness</span>
+            <div class="progress-bar"><div class="progress-fill" style="width:${rec.audit_readiness_score}%"></div></div>
+            <span class="audit-score">${rec.audit_readiness_score}/100</span>
+          </div>`;
+
+        // Checklist (collapsible)
+        if (rec.pre_application_checklist.length > 0) {
+          const uid = `cl_${i}`;
+          html += `
+            <button class="checklist-toggle" onclick="toggleChecklist('${uid}')">
+              <span id="${uid}_arrow">▶</span> Pre-Application Checklist (${rec.pre_application_checklist.length} items)
+            </button>
+            <ul class="checklist" id="${uid}" style="display:none;">`;
+          rec.pre_application_checklist.forEach(item => {
+            html += `<li>
+              <span class="check">✓</span>
+              <span>${item.item}${!item.required ? ' <em class="opt">(optional)</em>' : ''}</span>
+            </li>`;
+          });
+          html += `</ul>`;
+        }
+
+        // Transferability
+        if (rec.transferable) {
+          html += `<div style="margin-top:10px;font-size:11px;color:#10b981;font-weight:600;">
+            ✅ Credits are transferable
+          </div>`;
+        }
+        if (rec.sunset_date) {
+          html += `<div style="font-size:11px;color:#94a3b8;margin-top:4px;">
+            Program sunset: ${rec.sunset_date}
+          </div>`;
+        }
+      }
+
+      html += `</div></div>`;   // rec-body, rec-card
+    });
+
+    if (eligible.length === 0) {
+      html += `
+        <div class="results-empty" style="min-height:120px;">
+          <p>No eligible programs found for this project.<br>
+          Try adjusting the budget or filming locations.</p>
+        </div>`;
+    }
+
+    results.innerHTML = html;
+  }
+
+  function toggleChecklist(uid) {
+    const el    = document.getElementById(uid);
+    const arrow = document.getElementById(uid + '_arrow');
+    const open  = el.style.display !== 'none';
+    el.style.display    = open ? 'none' : 'block';
+    arrow.textContent   = open ? '▶' : '▼';
+  }
+</script>
+</body>
+</html>

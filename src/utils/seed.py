@@ -188,7 +188,7 @@ _DEMO_PRODUCTIONS = [
         "budgetTotal":      4500000.0,
         "budgetQualifying": 3600000.0,
         "status":           "planning",
-        "productionCompany":"PilotForge Studios",
+        "productionCompany":"SceneIQ Studios",
         "startDate":        datetime(2026, 6, 1),
     },
 ]

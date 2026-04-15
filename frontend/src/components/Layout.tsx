@@ -1,4 +1,4 @@
-import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings, MapPin, Link2, ClipboardCheck, BookOpen, Layers, Zap } from 'lucide-react';
+import { LayoutDashboard, Clapperboard, Calculator, Globe, Bot, Bell, LogOut, FlaskConical, Settings, Link2, ClipboardCheck, BookOpen, Layers, Zap } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 
 
@@ -14,7 +14,6 @@ const tabs = [
   { id: 'calculator', label: 'Incentive Calculator', icon: Calculator },
   { id: 'jurisdictions', label: 'Jurisdictions', icon: Globe },
   { id: 'advisor', label: 'AI Advisor', icon: Bot, badge: 'NEW' },
-  { id: 'georgia', label: 'Georgia', icon: MapPin },
   { id: 'mmb', label: 'MMB Connector', icon: Link2, badge: 'NEW' },
   { id: 'localRules',   label: 'Local Rules',       icon: BookOpen },
   { id: 'pendingRules', label: 'Rule Review',       icon: ClipboardCheck },
@@ -42,7 +41,7 @@ function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
             $
           </div>
-          <span className="text-white text-[17px] font-bold tracking-wide">PilotForge</span>
+          <span className="text-white text-[17px] font-bold tracking-wide">SceneIQ</span>
         </div>
 
         {/* Mock data indicator — only visible when USE_REAL_API=false */}
@@ -120,6 +119,9 @@ function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         <main className="flex-1 bg-slate-50 p-8 overflow-y-auto">
           {children}
         </main>
+        <footer className="bg-slate-50 border-t border-slate-200 px-8 py-3">
+          <p className="text-xs text-slate-400">SceneIQ &copy; 2026 — Scene Reader Studio Technologies LLC</p>
+        </footer>
       </div>
     </div>
   );

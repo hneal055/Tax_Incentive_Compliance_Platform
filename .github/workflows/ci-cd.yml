@@ -336,13 +336,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "PilotForge CI/CD Pipeline ${{ steps.status.outputs.status }}",
+              "text": "SceneIQ CI/CD Pipeline ${{ steps.status.outputs.status }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*PilotForge CI/CD Pipeline* ${{ steps.status.outputs.status }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
+                    "text": "*SceneIQ CI/CD Pipeline* ${{ steps.status.outputs.status }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}\n*Author:* ${{ github.actor }}"
                   }
                 },
                 {

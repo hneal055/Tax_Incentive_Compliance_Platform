@@ -32,7 +32,7 @@ export default function Login() {
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
             <Zap className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">PilotForge</span>
+          <span className="text-xl font-bold text-white tracking-tight">SceneIQ</span>
         </div>
 
         {/* Card */}
@@ -101,7 +101,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-slate-600 mt-6">
-          PilotForge &copy; {new Date().getFullYear()} — Internal use only
+          SceneIQ &copy; 2026 — Scene Reader Studio Technologies LLC
         </p>
       </div>
     </div>

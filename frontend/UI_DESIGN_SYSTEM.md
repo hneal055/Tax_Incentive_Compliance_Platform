@@ -1,4 +1,4 @@
-# PilotForge UI Design System
+# SceneIQ UI Design System
 
 ## Design Overview
 

@@ -1,4 +1,4 @@
-# PilotForge Emergency Restore
+# SceneIQ Emergency Restore
 git fetch origin
 git checkout main
 git reset --hard origin/stable-backup

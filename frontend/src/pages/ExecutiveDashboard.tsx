@@ -38,7 +38,7 @@ export default function ExecutiveDashboard() {
         <div className="p-4 border-b border-gray-300">
           <div className="flex items-center gap-2">
             <div className="text-2xl font-bold">⊞</div>
-            <h1 className="text-xl font-bold text-black">PilotForge</h1>
+            <h1 className="text-xl font-bold text-black">SceneIQ</h1>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function ExecutiveDashboard() {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600">
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <h1 className="text-lg font-semibold text-gray-800">PilotForge</h1>
+            <h1 className="text-lg font-semibold text-gray-800">SceneIQ</h1>
           </div>
           <div className="flex items-center gap-4">
             <button className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded border border-gray-300">Remix</button>

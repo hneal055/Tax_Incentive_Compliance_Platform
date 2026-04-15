@@ -18,7 +18,7 @@ from src.utils.database import prisma
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/advisor", tags=["AI Advisor"])
 
-SYSTEM_PROMPT = """You are PilotForge AI Advisor, an expert in film and television production tax incentives. You help producers, production companies, and accountants maximize tax incentives across global jurisdictions.
+SYSTEM_PROMPT = """You are SceneIQ AI Advisor, an expert in film and television production tax incentives. You help producers, production companies, and accountants maximize tax incentives across global jurisdictions.
 
 Your expertise includes:
 - Film tax credits and incentive programs across US states (Georgia, New York, California, Louisiana, Illinois, Michigan, New Jersey, Virginia, Colorado, Hawaii, Oregon, Montana, Mississippi, New Mexico, etc.)
@@ -161,6 +161,121 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "Offsets are refundable tax rebates administered by Screen Australia. "
         "The Location Offset can be stacked with state-level incentives."
     )),
+    (["colorado", " co "], (
+        "**Colorado Film Incentive Program**\n\n"
+        "Colorado offers a **20% cash rebate** on qualified Colorado production expenditures.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $100K qualified Colorado spend\n"
+        "- Administered by the Colorado Office of Film, Television and Media (coloradofilm.org)\n"
+        "- No annual program cap\n\n"
+        "**Local support:** Denver Film Commission, Boulder, and Colorado Springs all have local film offices "
+        "providing permits and location services. Colorado's mountain scenery, urban Denver, and diverse "
+        "landscapes make it a versatile production destination."
+    )),
+    (["hawaii", " hi "], (
+        "**Hawaii Film Production Tax Credit**\n\n"
+        "Hawaii offers a **20–25% refundable tax credit** on qualified Hawaii expenditures.\n\n"
+        "**Rates:**\n"
+        "- **20%** for productions on Oahu (Honolulu)\n"
+        "- **25%** for productions on neighbor islands (Maui, Big Island, Kauai) — +5% uplift\n\n"
+        "**Requirements:**\n"
+        "- No minimum spend threshold\n"
+        "- Must be a qualified production (film, TV, commercial, digital media)\n"
+        "- Credits are refundable — paid as cash if they exceed Hawaii tax liability\n\n"
+        "Administered by the Hawaii Film Office (filmoffice.hawaii.gov)."
+    )),
+    (["illinois", " il "], (
+        "**Illinois Film Services Tax Credit**\n\n"
+        "Illinois offers a **30–45% refundable tax credit** — one of the highest rates in the US with **no credit cap**.\n\n"
+        "**Base rate:** 30% on all Illinois qualified production expenditures\n"
+        "**Bonuses (stackable):**\n"
+        "- **+5%** Illinois Film Green Sustainability Plan compliance\n"
+        "- **+5%** Relocation series bonus for productions relocating to Illinois\n\n"
+        "**Requirements:** Minimum $50K qualified spend. Cook County (Chicago) has additional "
+        "local production support through the Chicago Film Office.\n\n"
+        "Administered by the Illinois Film Office (film.illinois.gov)."
+    )),
+    (["michigan", " mi "], (
+        "**Michigan Film Production Incentive**\n\n"
+        "Michigan offers a **30% rebate** on qualified Michigan production expenditures.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $50K qualified Michigan spend\n"
+        "- Rebate is refundable — paid as cash\n"
+        "- Must register with the Michigan Film Office before principal photography\n\n"
+        "**Detroit** has an active local film commission with studio infrastructure. "
+        "Grand Rapids (Film GR) provides West Michigan production support.\n\n"
+        "Administered by the Michigan Film Office (michiganfilmoffice.org)."
+    )),
+    (["mississippi", " ms "], (
+        "**Mississippi Film Incentive**\n\n"
+        "Mississippi offers a **25% base rebate + 10% resident payroll bonus** on qualified spend.\n\n"
+        "**Combined maximum: 35%** on wages paid to Mississippi residents.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $50K qualified Mississippi spend\n"
+        "- Rebates are refundable\n\n"
+        "Mississippi's historic locations (Natchez, Gulf Coast, Jackson) and low production costs "
+        "make it an attractive destination for period dramas and indie features.\n\n"
+        "Administered by Film Mississippi (filmmississippi.org)."
+    )),
+    (["montana", " mt "], (
+        "**Montana Media Production Tax Credit**\n\n"
+        "Montana offers a **35% labor-based tax credit** on qualified Montana wages and compensation.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $50K qualified Montana labor spend\n"
+        "- Credit applies to wages paid to Montana residents and non-residents working in Montana\n"
+        "- Refundable credit\n\n"
+        "Montana's vast wilderness, Glacier National Park adjacent locations, and low costs "
+        "make it popular for westerns, outdoor adventures, and nature documentaries. "
+        "Key hubs: Billings, Missoula, and Bozeman.\n\n"
+        "Administered by the Montana Film Office (montanafilm.com)."
+    )),
+    (["new jersey", " nj "], (
+        "**New Jersey Film Tax Credit**\n\n"
+        "New Jersey offers a **30–35% refundable tax credit** on qualified New Jersey expenditures.\n\n"
+        "**Base rate:** 30% on all qualified NJ production spend\n"
+        "**Diversity bonus:** +5% for productions that meet NJ diversity and inclusion criteria\n\n"
+        "**Requirements:**\n"
+        "- Minimum $1M qualified NJ spend\n"
+        "- 60% of principal photography must be in New Jersey\n\n"
+        "**Key locations:** Jersey City (NYC skyline backdrop), Newark, Atlantic City, Pine Barrens. "
+        "NJ is in proximity to NYC studios and has competitive rates relative to New York.\n\n"
+        "Administered by the NJ Motion Picture Television Commission (njfilmoffice.com)."
+    )),
+    (["oregon", " or "], (
+        "**Oregon Production Investment Fund (OPIF)**\n\n"
+        "Oregon offers a **20% rebate** on qualified Oregon production expenditures.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $75K qualified Oregon spend (reduced to $1K for Oregon-based companies)\n"
+        "- Rebate paid after completion and audit\n"
+        "- Program has an annual budget cap — apply early in the fiscal year\n\n"
+        "Portland has an active film office (portland.gov/film) supporting urban and Pacific Northwest shoots. "
+        "Oregon's diverse landscapes (coast, mountains, high desert, old-growth forest) support a wide range of productions.\n\n"
+        "Administered by Oregon Film (oregonfilm.org)."
+    )),
+    (["pennsylvania", " pa "], (
+        "**Pennsylvania Film Production Tax Credit**\n\n"
+        "Pennsylvania offers a **25% transferable tax credit** on qualified Pennsylvania expenditures.\n\n"
+        "**Requirements:**\n"
+        "- Minimum $100K qualified PA spend\n"
+        "- 60% of total production budget must be spent in Pennsylvania\n"
+        "- Credits are transferable — can be sold to PA taxpayers\n\n"
+        "**Key locations:** Philadelphia (PA-PHILADELPHIA film office), Pittsburgh, Lancaster County. "
+        "Philadelphia's diverse architecture and proximity to New York make it a popular NYC stand-in.\n\n"
+        "Administered by the Pennsylvania Film Office (filmpa.com)."
+    )),
+    (["virginia", " va "], (
+        "**Virginia Film Tax Credit**\n\n"
+        "Virginia offers a **20–30% refundable tax credit** on qualified Virginia expenditures.\n\n"
+        "**Base rate:** 20% on all qualified Virginia production spend\n"
+        "**Rural enhanced credit:** +10% for productions shooting in qualifying rural Virginia areas "
+        "(Shenandoah Valley, Southwest Virginia, Eastern Shore)\n\n"
+        "**Requirements:**\n"
+        "- Minimum $250K qualified Virginia spend\n"
+        "- No annual credit cap\n\n"
+        "**Key locations:** Richmond (historic architecture), Virginia Beach (coast + military), "
+        "Northern Virginia (DC proximity), Shenandoah Valley (Blue Ridge scenery).\n\n"
+        "Administered by the Virginia Film Office (film.virginia.org)."
+    )),
     (["highest", "best", "compare", "which jurisd", "top state", "most competitive"], (
         "**Top Film Incentive Jurisdictions — 2026**\n\n"
         "| Jurisdiction | Rate | Min Spend | Notes |\n"
@@ -176,7 +291,7 @@ _SCRIPTED: list[tuple[list[str], str]] = [
         "| New York | 25–35% | $1M | Upstate bonus |\n"
         "| California | 25% | $1M | $330M annual allocation |\n\n"
         "The best jurisdiction depends on your budget, shooting locations, and crew residency. "
-        "PilotForge's calculator can run a side-by-side comparison for your specific production."
+        "SceneIQ's calculator can run a side-by-side comparison for your specific production."
     )),
     (["stack", "federal", "section 181", "181 "], (
         "**Stacking Federal + State Incentives**\n\n"
@@ -234,7 +349,7 @@ _SCRIPTED: list[tuple[list[str], str]] = [
 ]
 
 _DEFAULT_RESPONSE = (
-    "**PilotForge AI Advisor**\n\n"
+    "**SceneIQ AI Advisor**\n\n"
     "I'm your expert guide to film and television tax incentives across 35+ jurisdictions.\n\n"
     "I can help you with:\n\n"
     "- **Jurisdiction comparisons** — credit rates, caps, and eligibility across US states and international programs\n"

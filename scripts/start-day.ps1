@@ -10,7 +10,7 @@ Set-Location $Root
 
 # ── Status-only mode ──────────────────────────────────────────────────────────
 if ($Status) {
-  Write-Host "`n=== PilotForge Service Status ===" -ForegroundColor Cyan
+  Write-Host "`n=== SceneIQ Service Status ===" -ForegroundColor Cyan
   docker ps --filter "name=pilotforge" --format "table {{.Names}}`t{{.Status}}`t{{.Ports}}"
   exit 0
 }
@@ -24,7 +24,7 @@ if ($Logs) {
 }
 
 # ── Normal startup ────────────────────────────────────────────────────────────
-Write-Host "`n=== PilotForge Daily Startup ===" -ForegroundColor Cyan
+Write-Host "`n=== SceneIQ Daily Startup ===" -ForegroundColor Cyan
 Write-Host "Working directory: $Root" -ForegroundColor Gray
 
 # 1. Verify .env has ANTHROPIC_API_KEY

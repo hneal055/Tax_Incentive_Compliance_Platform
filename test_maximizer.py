@@ -1,4 +1,4 @@
-from maximizer import PilotForgeMaximizer, MaximizedResult
+from maximizer import SceneIQMaximizer, MaximizedResult
 
 
 def print_result(result: MaximizedResult, label: str = ""):
@@ -45,7 +45,7 @@ def print_result(result: MaximizedResult, label: str = ""):
 
 
 def test_maximizer():
-    engine = PilotForgeMaximizer()
+    engine = SceneIQMaximizer()
 
     # ── Scenario 1: Erie County (Buffalo) — lat/lng, $5M spend ────────────────
     result1 = engine.maximize(

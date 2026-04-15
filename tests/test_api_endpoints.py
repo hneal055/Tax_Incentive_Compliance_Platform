@@ -1,5 +1,5 @@
 """
-Test API endpoints for PilotForge
+Test API endpoints for SceneIQ
 Tax Incentive Intelligence for Film & TV
 """
 import pytest
@@ -19,7 +19,7 @@ class TestHealthEndpoints:
             
             assert response.status_code == 200
             data = response.json()
-            assert data["message"] == "Welcome to PilotForge"
+            assert data["message"] == "Welcome to SceneIQ"
             assert "version" in data
             assert "api" in data
 

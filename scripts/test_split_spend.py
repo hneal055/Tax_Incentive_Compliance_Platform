@@ -1,8 +1,8 @@
 import os, sys
 sys.path.insert(0, '/app')
-from maximizer import PilotForgeMaximizer
+from maximizer import SceneIQMaximizer
 
-engine = PilotForgeMaximizer()
+engine = SceneIQMaximizer()
 
 print("=== No split ===")
 r = engine.maximize(

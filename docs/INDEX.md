@@ -1,7 +1,7 @@
 # Tax Incentive Compliance Platform - Testing Suite Index
 ## Complete End-to-End Testing Infrastructure
 
-**Platform:** PilotForge  
+**Platform:** SceneIQ  
 **Coverage:** 32 Jurisdictions | 33 Incentive Programs | 60+ API Endpoints  
 **Test Count:** 180+ comprehensive tests  
 **Test Lines:** 2,850+ lines of test code
@@ -512,7 +512,7 @@ This testing suite provides:
 ---
 
 **Testing Suite Version:** 1.0  
-**Created For:** Tax Incentive Compliance Platform (PilotForge)  
+**Created For:** Tax Incentive Compliance Platform (SceneIQ)  
 **Coverage:** 32 Jurisdictions | 33 Programs | 60+ Endpoints  
 **Test Count:** 180+ comprehensive tests
 

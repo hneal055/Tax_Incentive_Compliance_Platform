@@ -1,9 +1,9 @@
-# PilotForge Demo — One-command launcher (Windows)
+# SceneIQ Demo — One-command launcher (Windows)
 # Usage: Right-click → Run with PowerShell  OR  .\start.ps1 in a terminal
 
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Cyan
-Write-Host "  PilotForge  —  Tax Incentive Intelligence" -ForegroundColor White
+Write-Host "  SceneIQ  —  Tax Incentive Intelligence" -ForegroundColor White
 Write-Host "  Demo Environment" -ForegroundColor DarkGray
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""

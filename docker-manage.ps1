@@ -1,5 +1,5 @@
 # ========================================
-# Docker Management Script for PilotForge
+# Docker Management Script for SceneIQ
 # Simplified container management
 # ========================================
 
@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = "Continue"
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "PilotForge - Docker Manager" -ForegroundColor White
+Write-Host "SceneIQ - Docker Manager" -ForegroundColor White
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Check Docker is running

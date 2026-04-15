@@ -1,4 +1,4 @@
-# Build and push the PilotForge demo frontend image.
+# Build and push the SceneIQ demo frontend image.
 # Run this ONCE from the project root before distributing the demo folder.
 # Requires: docker login hneal1038 (or your Docker Hub credentials)
 

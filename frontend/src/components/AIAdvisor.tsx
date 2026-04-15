@@ -14,7 +14,7 @@ const SUGGESTED_PROMPTS = [
   'What documentation is required for Louisiana credit applications?',
 ];
 
-const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
+const WELCOME = `Welcome to **SceneIQ AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
 
 
 // ─── Client-side scripted demo responses ─────────────────────────────────────
@@ -34,7 +34,7 @@ const SCRIPTED: [string[], string][] = [
   [['compare', 'vs', 'versus', 'best', 'highest', 'top'], `**Top Film Incentive Jurisdictions — 2025**\n\n| Jurisdiction | Rate | Min Spend | Notes |\n|---|---|---|---|\n| New Mexico | 25–40% | None | Fully refundable |\n| Georgia | 20–30% | $500K | Logo bonus available |\n| Louisiana | 25%+15% | $300K | Transferable credits |\n| New York | 25–35% | $1M | Upstate bonus |\n| California | 25% | $1M | Competitive allocation |\n| UK | 25% | None | AVEC — cultural test |\n| Ireland | 32% | None | Section 481 |\n| Illinois | 30–45% | $50K | No credit cap |\n\nThe best jurisdiction depends on your budget, shooting locations, and crew residency.`],
 ];
 
-const DEFAULT_RESPONSE = `That's a great question about film tax incentives. PilotForge tracks incentive programs across 23 jurisdictions globally.\n\nFor personalized analysis, try asking about:\n- **Specific jurisdictions** (Georgia, New York, California, UK, Ireland)\n- **Qualifying expenses** for a particular state\n- **Stacking strategies** to combine federal and state incentives\n- **Application requirements** and documentation\n- **Minimum spend** thresholds by jurisdiction`;
+const DEFAULT_RESPONSE = `That's a great question about film tax incentives. SceneIQ tracks incentive programs across 23 jurisdictions globally.\n\nFor personalized analysis, try asking about:\n- **Specific jurisdictions** (Georgia, New York, California, UK, Ireland)\n- **Qualifying expenses** for a particular state\n- **Stacking strategies** to combine federal and state incentives\n- **Application requirements** and documentation\n- **Minimum spend** thresholds by jurisdiction`;
 
 function getScriptedResponse(q: string): string {
   const lower = q.toLowerCase();

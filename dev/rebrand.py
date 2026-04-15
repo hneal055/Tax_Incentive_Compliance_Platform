@@ -1,6 +1,6 @@
 """
-PilotForge Rebranding Script
-Automatically updates all project files with new PilotForge branding
+SceneIQ Rebranding Script
+Automatically updates all project files with new SceneIQ branding
 """
 import os
 import re
@@ -10,7 +10,7 @@ from datetime import datetime
 # Branding configuration
 BRAND_CONFIG = {
     'old_name': 'Tax-Incentive Compliance Platform',
-    'new_name': 'PilotForge',
+    'new_name': 'SceneIQ',
     'tagline': 'Tax Incentive Intelligence for Film & TV',
     'tagline_alt': 'Forge Your Production\'s Future',
     'author': 'Howard Neal',
@@ -32,21 +32,21 @@ FILE_PATTERNS = [
 # Replacement rules
 REPLACEMENTS = [
     # Main name replacements
-    (r'Tax-Incentive Compliance Platform', 'PilotForge'),
-    (r'Tax_Incentive_Compliance_Platform', 'PilotForge'),
+    (r'Tax-Incentive Compliance Platform', 'SceneIQ'),
+    (r'Tax_Incentive_Compliance_Platform', 'SceneIQ'),
     (r'tax-incentive-platform', 'pilotforge'),
     (r'tax_incentive_platform', 'pilotforge'),
     
     # Add taglines
-    (r'(PilotForge)(\s*\n)', r'\1\n> Tax Incentive Intelligence for Film & TV\n'),
+    (r'(SceneIQ)(\s*\n)', r'\1\n> Tax Incentive Intelligence for Film & TV\n'),
     
     # Update API messages
     (r'"message": "Tax-Incentive Compliance Platform API"', 
-     '"message": "Welcome to PilotForge", "tagline": "Tax Incentive Intelligence for Film & TV"'),
+     '"message": "Welcome to SceneIQ", "tagline": "Tax Incentive Intelligence for Film & TV"'),
     
     # Update descriptions
     (r'Professional tax incentive calculation', 
-     'PilotForge - Tax Incentive Intelligence for Film & TV Productions'),
+     'SceneIQ - Tax Incentive Intelligence for Film & TV Productions'),
 ]
 
 
@@ -99,7 +99,7 @@ def update_main_py(filepath):
     # Update FastAPI app initialization
     content = re.sub(
         r'title="[^"]*"',
-        f'title="PilotForge API"',
+        f'title="SceneIQ API"',
         content
     )
     
@@ -112,7 +112,7 @@ def update_main_py(filepath):
     # Update root endpoint
     content = re.sub(
         r'"message": "[^"]*Compliance Platform[^"]*"',
-        '"message": "Welcome to PilotForge", "tagline": "Tax Incentive Intelligence for Film & TV"',
+        '"message": "Welcome to SceneIQ", "tagline": "Tax Incentive Intelligence for Film & TV"',
         content
     )
     
@@ -130,14 +130,14 @@ def update_readme(filepath):
     # Replace title
     content = re.sub(
         r'# 🎬 Tax-Incentive Compliance Platform',
-        '# 🎬 PilotForge',
+        '# 🎬 SceneIQ',
         content
     )
     
     # Add tagline after title
     if '> **Tax Incentive Intelligence' not in content:
         content = re.sub(
-            r'(# 🎬 PilotForge\n)',
+            r'(# 🎬 SceneIQ\n)',
             r'\1\n> **Tax Incentive Intelligence for Film & TV Productions**\n',
             content
         )
@@ -145,7 +145,7 @@ def update_readme(filepath):
     # Update project description
     content = re.sub(
         r'The Tax-Incentive Compliance Platform is',
-        'PilotForge is',
+        'SceneIQ is',
         content
     )
     
@@ -163,7 +163,7 @@ def update_license(filepath):
     # Update copyright holder
     content = re.sub(
         r'Copyright \(c\) \d{4}(-\d{4})? [^\n]+',
-        f'Copyright (c) {BRAND_CONFIG["year"]} {BRAND_CONFIG["author"]} - PilotForge',
+        f'Copyright (c) {BRAND_CONFIG["year"]} {BRAND_CONFIG["author"]} - SceneIQ',
         content
     )
     
@@ -175,19 +175,19 @@ def update_license(filepath):
 
 def create_brand_guidelines(project_root):
     """Create brand guidelines document"""
-    brand_doc = f"""# 🎨 PilotForge Brand Guidelines
+    brand_doc = f"""# 🎨 SceneIQ Brand Guidelines
 
 ## Brand Identity
 
 ### Name
-**PilotForge**
+**SceneIQ**
 
 ### Tagline
 Primary: "Tax Incentive Intelligence for Film & TV"
 Alternative: "Forge Your Production's Future"
 
 ### Mission Statement
-PilotForge empowers film and television productions to maximize their tax incentive 
+SceneIQ empowers film and television productions to maximize their tax incentive 
 savings through intelligent location comparison, compliance verification, and 
 professional reporting across 32 global jurisdictions.
 
@@ -259,25 +259,25 @@ professional reporting across 32 global jurisdictions.
 
 ### Primary Tagline Use
 ```
-PilotForge
+SceneIQ
 Tax Incentive Intelligence for Film & TV
 ```
 
 ### Short Form
 ```
-PilotForge: Smart Tax Incentives
+SceneIQ: Smart Tax Incentives
 ```
 
 ### Social Media Bio
 ```
-PilotForge helps film & TV productions maximize tax incentives 
+SceneIQ helps film & TV productions maximize tax incentives 
 across 32 global jurisdictions. 💰🎬
 ```
 
 ### Email Signature
 ```
 [Name]
-[Title], PilotForge
+[Title], SceneIQ
 Tax Incentive Intelligence for Film & TV
 pilotforge.com
 ```
@@ -288,14 +288,14 @@ pilotforge.com
 
 ### API Title
 ```python
-title="PilotForge API"
+title="SceneIQ API"
 description="Tax Incentive Intelligence for Film & TV Productions"
 ```
 
 ### Welcome Message
 ```json
 {{
-  "message": "Welcome to PilotForge",
+  "message": "Welcome to SceneIQ",
   "tagline": "Tax Incentive Intelligence for Film & TV",
   "version": "1.0.0"
 }}
@@ -304,7 +304,7 @@ description="Tax Incentive Intelligence for Film & TV Productions"
 ### Error Messages
 Keep branded and professional:
 ```
-"PilotForge was unable to process your request..."
+"SceneIQ was unable to process your request..."
 ```
 
 ---
@@ -327,12 +327,12 @@ Keep branded and professional:
 
 ### Copyright Notice
 ```
-Copyright (c) {BRAND_CONFIG['year']} {BRAND_CONFIG['author']} - PilotForge
+Copyright (c) {BRAND_CONFIG['year']} {BRAND_CONFIG['author']} - SceneIQ
 ```
 
 ### Trademark Usage
 ```
-PilotForge™
+SceneIQ™
 ```
 (Use ™ until registered, then ®)
 
@@ -341,7 +341,7 @@ PilotForge™
 ## Don'ts
 
 ❌ Don't call it "Pilot Forge" (two words)
-❌ Don't use "The PilotForge" (no article)
+❌ Don't use "The SceneIQ" (no article)
 ❌ Don't abbreviate to "PF" in user-facing content
 ❌ Don't change the capitalization (not "pilotForge" or "PILOTFORGE")
 
@@ -359,7 +359,7 @@ PilotForge™
 
 def main():
     """Main rebranding script"""
-    print("🎬 PilotForge Automated Rebranding Script")
+    print("🎬 SceneIQ Automated Rebranding Script")
     print("=" * 60)
     
     # Get project root
@@ -410,9 +410,9 @@ def main():
     print("1. Review changes: git diff")
     print("2. Test the application: python -m uvicorn src.main:app --reload")
     print("3. Run tests: pytest")
-    print("4. Commit changes: git add . && git commit -m 'Rebrand to PilotForge'")
+    print("4. Commit changes: git add . && git commit -m 'Rebrand to SceneIQ'")
     print("5. Register domain: pilotforge.com")
-    print("\n🚀 Welcome to PilotForge!")
+    print("\n🚀 Welcome to SceneIQ!")
 
 
 if __name__ == '__main__':

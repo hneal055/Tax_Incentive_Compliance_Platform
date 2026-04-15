@@ -1,11 +1,11 @@
-# PilotForge — One-command startup
+# SceneIQ — One-command startup
 # Usage:  .\start.ps1
 # Works on any machine — pulls images from Docker Hub if not present locally.
 # Opens http://localhost:3000 automatically once all services are healthy.
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  PilotForge  —  Tax Incentive Platform" -ForegroundColor White
+Write-Host "  SceneIQ  —  Tax Incentive Platform" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

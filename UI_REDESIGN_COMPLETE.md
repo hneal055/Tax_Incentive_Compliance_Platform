@@ -16,7 +16,7 @@
 ✅ **Top Header** (Fixed Top)
 - White background
 - Menu toggle button
-- "PilotForge" title
+- "SceneIQ" title
 - Action buttons: Remix, Device, ⚡, ⊞
 
 ✅ **Main Content Area** (Scrollable)

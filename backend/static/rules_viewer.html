@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Georgia Rules</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #1e3c72; color: white; }
+        pre { background: #2a5298; padding: 20px; text-align: left; overflow: auto; border-radius: 8px; }
+        .rule-card { background: #2a5298; padding: 20px; margin: 16px auto; max-width: 700px; text-align: left; border-radius: 8px; }
+        .rule-card h3 { margin: 0 0 8px; font-size: 18px; }
+        .rule-card .pct { font-size: 32px; font-weight: bold; color: #93c5fd; }
+        .badge { display: inline-block; background: #1e3a8a; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin: 3px 2px; }
+        .error { color: #fca5a5; }
+    </style>
+</head>
+<body>
+    <h1>Georgia Film Tax Credit Rules</h1>
+    <div id="content">Loading...</div>
+    <script>
+        const BASE = window.location.origin;
+
+        async function load() {
+            try {
+                // Login to get JWT
+                const loginRes = await fetch(`${BASE}/api/0.1.0/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@pilotforge.com', password: 'pilotforge2024' })
+                });
+                if (!loginRes.ok) throw new Error('Login failed');
+                const { access_token } = await loginRes.json();
+
+                // Fetch Georgia jurisdiction
+                const jurRes = await fetch(`${BASE}/api/0.1.0/jurisdictions`, {
+                    headers: { Authorization: `Bearer ${access_token}` }
+                });
+                const jurData = await jurRes.json();
+                const ga = (jurData.jurisdictions || jurData).find(j => j.code === 'GA');
+                if (!ga) throw new Error('Georgia jurisdiction not found');
+
+                // Fetch incentive rules for Georgia
+                const rulesRes = await fetch(`${BASE}/api/0.1.0/incentive-rules?jurisdiction_id=${ga.id}`, {
+                    headers: { Authorization: `Bearer ${access_token}` }
+                });
+                const rulesData = await rulesRes.json();
+                const rules = rulesData.rules || rulesData;
+
+                if (!rules.length) {
+                    document.getElementById('content').innerHTML = '<p>No rules found for Georgia.</p>';
+                    return;
+                }
+
+                let html = '';
+                rules.forEach(rule => {
+                    const badges = (rule.eligibleExpenses || []).map(e => `<span class="badge">${e}</span>`).join('');
+                    html += `
+                        <div class="rule-card">
+                            <h3>${rule.ruleName}</h3>
+                            <div class="pct">${rule.percentage}%</div>
+                            <p style="margin:8px 0;font-size:13px;opacity:.8;">Code: ${rule.ruleCode} &nbsp;|&nbsp; Type: ${rule.incentiveType}</p>
+                            ${rule.minSpend ? `<p style="font-size:13px;">Min spend: $${rule.minSpend.toLocaleString()}</p>` : ''}
+                            ${rule.maxCredit ? `<p style="font-size:13px;">Max credit: $${rule.maxCredit.toLocaleString()}</p>` : ''}
+                            <p style="font-size:13px;">Effective: ${rule.effectiveDate ? rule.effectiveDate.split('T')[0] : 'N/A'}</p>
+                            <div style="margin-top:10px;">${badges}</div>
+                        </div>`;
+                });
+                document.getElementById('content').innerHTML = html;
+            } catch (err) {
+                document.getElementById('content').innerHTML = `<p class="error">Error: ${err.message}</p>`;
+            }
+        }
+
+        load();
+    </script>
+</body>
+</html>

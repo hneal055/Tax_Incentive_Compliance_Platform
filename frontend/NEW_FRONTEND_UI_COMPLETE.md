@@ -1,12 +1,12 @@
 # Frontend UI Redesign Complete
 
-The frontend UI has been redesigned to match the ""PilotForge"" executive dashboard screenshot.
+The frontend UI has been redesigned to match the ""SceneIQ"" executive dashboard screenshot.
 
 ## Changes Implemented
 
 ### Layout (Sidebar)
 - **Dark Mode Aesthetic**: Implemented a dark slate sidebar (`bg-[#0f172a]`) with white/slate text.
-- **Logo**: Simplified to a blue square with a white "$" symbol and "PilotForge" text.
+- **Logo**: Simplified to a blue square with a white "$" symbol and "SceneIQ" text.
 - **Navigation Items**:
   - Dashboard
   - Productions (Clapperboard icon)

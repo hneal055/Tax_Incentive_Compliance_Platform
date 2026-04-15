@@ -222,7 +222,7 @@ jobs:
 **File**: `.github/CODEOWNERS`
 
 ```
-# PilotForge Code Owners
+# SceneIQ Code Owners
 
 # Global owner for everything
 *                           @hneal055
@@ -261,7 +261,7 @@ Check that `README.md` displays correctly:
 
 - [ ] Click "Create a new release"
 - [ ] Tag: `v1.0.0`
-- [ ] Title: `PilotForge v1.0.0 - Production Ready`
+- [ ] Title: `SceneIQ v1.0.0 - Production Ready`
 - [ ] Description:
 ```markdown
 ## What's New

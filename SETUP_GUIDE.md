@@ -1,4 +1,4 @@
-# PilotForge — Setup & Launch Guide
+# SceneIQ — Setup & Launch Guide
 
 **Tax Incentive Compliance Platform for Film & TV Production**
 
@@ -237,4 +237,4 @@ Browser
 
 ---
 
-*PilotForge — Tax Incentive Intelligence for Film & TV*
+*SceneIQ — Tax Incentive Intelligence for Film & TV*

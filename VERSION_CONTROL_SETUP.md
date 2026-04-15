@@ -2,7 +2,7 @@
 
 ## Summary
 
-Your PilotForge project now has production-grade Git & version control setup:
+Your SceneIQ project now has production-grade Git & version control setup:
 
 ---
 
@@ -34,7 +34,7 @@ Includes:
 **Tag**: `v1.0.0`
 
 ```
-PilotForge v1.0.0: Production-Ready Tax Incentive Compliance Platform
+SceneIQ v1.0.0: Production-Ready Tax Incentive Compliance Platform
 
 All 8 development stages complete:
 - Database & ORM fully validated

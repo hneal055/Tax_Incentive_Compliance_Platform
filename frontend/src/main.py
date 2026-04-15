@@ -1,5 +1,5 @@
 """
-PilotForge - Tax Incentive Intelligence for Film & TV
+SceneIQ - Tax Incentive Intelligence for Film & TV
 
 Main FastAPI application for tax incentive calculation and compliance verification.
 """
@@ -13,7 +13,7 @@ except ImportError:
     api_router = None import settings
 from src.utils.database import prisma
 app = FastAPI(outes import router
-    title="PilotForge - Tax Incentive Intelligence",
+    title="SceneIQ - Tax Incentive Intelligence",
     version="0.1.0"
 ) Configure logging
 logging.basicConfig(
@@ -27,7 +27,7 @@ app.add_middleware(me)s - %(name)s - %(levelname)s - %(message)s",
 )sync def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
 # Health endpoint
-@app.get("/health") Starting PilotForge")
+@app.get("/health") Starting SceneIQ")
 async def health(): Tax Incentive Intelligence for Film & TV")
     return {"status": "healthy"}
         await prisma.connect()
@@ -38,8 +38,8 @@ if api_router:eption as e:  # noqa: BLE001
 # Optionally, add a root endpoint
 @app.get("/")
 async def root():
-    return {"message": "Welcome to PilotForge API"}
-    logger.info("🛑 Shutting down PilotForge")
+    return {"message": "Welcome to SceneIQ API"}
+    logger.info("🛑 Shutting down SceneIQ")
     try:
         await prisma.disconnect()
         logger.info("✅ Database disconnected")
@@ -77,7 +77,7 @@ app.include_router(router, prefix="/api/0.1.0")
 async def root():
     """Root endpoint - API information."""
     return {
-        "message": "Welcome to PilotForge",
+        "message": "Welcome to SceneIQ",
         "tagline": "Tax Incentive Intelligence for Film & TV",
         "version": settings.API_VERSION,
         "status": "running",
@@ -142,7 +142,7 @@ async def internal_error_handler(request, exc):  # noqa: ANN001, D401
 async def startup_banner() -> None:
     """Display startup banner."""
     print("\n" + "=" * 70)
-    print("🎬  PilotForge")
+    print("🎬  SceneIQ")
     print("   Tax Incentive Intelligence for Film & TV")
     print("=" * 70)
     print(f"📊 API Version: {settings.API_VERSION}")

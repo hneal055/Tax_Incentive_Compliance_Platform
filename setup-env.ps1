@@ -1,5 +1,5 @@
 # setup-env.ps1
-Write-Host "Setting up PilotForge environment..." -ForegroundColor Cyan
+Write-Host "Setting up SceneIQ environment..." -ForegroundColor Cyan
 
 # Remove old venv if it exists
 if (Test-Path .venv) {

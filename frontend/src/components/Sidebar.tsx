@@ -65,7 +65,7 @@ export default function Sidebar() {
             <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center font-bold text-lg">
               $
             </div>
-            <h1 className="text-xl font-bold">PilotForge</h1>
+            <h1 className="text-xl font-bold">SceneIQ</h1>
           </div>
         </div>
 

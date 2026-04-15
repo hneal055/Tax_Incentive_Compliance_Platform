@@ -1,4 +1,4 @@
-# Contributing to PilotForge
+# Contributing to SceneIQ
 
 Welcome! We're excited you want to contribute to the Tax Incentive Compliance Platform. This guide will help you get started.
 
@@ -550,4 +550,4 @@ Contributors will be recognized in:
 - Release notes
 - Contributors page
 
-Thank you for contributing to PilotForge! 🚀
+Thank you for contributing to SceneIQ! 🚀

@@ -33,7 +33,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "PilotForge Budget API", "demo": "/static/budget_demo.html"}
+    return {"message": "SceneIQ Budget API", "demo": "/static/budget_demo.html"}
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

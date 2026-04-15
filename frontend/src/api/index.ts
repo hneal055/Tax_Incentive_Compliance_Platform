@@ -16,6 +16,8 @@ import type {
   LocalRule,
   MaximizeResult,
   ChecklistResponse,
+  UserScenario,
+  MaximumPossibleCreditResponse,
 } from '../types';
 
 import { mockApi } from '../mocks/api';
@@ -227,7 +229,7 @@ export const api = {
         'notifications.getPreferences',
       ),
 
-    upsertPreferences: (data: { emailAddress: string; jurisdictions: string[]; active: boolean }) =>
+    upsertPreferences: (data: { emailAddress: string; jurisdictions: string[]; active: boolean; reportFrequency?: string }) =>
       withFallback(
         async () => { const r = await apiClient.post('/notifications/preferences', data); return r.data as NotificationPreference; },
         async () => ({} as NotificationPreference),
@@ -315,6 +317,16 @@ export const api = {
         },
         async () => ({ resolved_state: null, jurisdictions: [] }),
         'maximizer.lookup',
+      ),
+
+    getMaximumPossibleCredit: (params?: { jurisdiction?: string; budget?: number }) =>
+      withFallback(
+        async () => {
+          const r = await apiClient.get('/maximize/maximum-possible-credit', { params });
+          return r.data as MaximumPossibleCreditResponse;
+        },
+        async () => ({ summaries: [], best_case_headline: null, generated_at: new Date().toISOString() } as MaximumPossibleCreditResponse),
+        'maximizer.getMaximumPossibleCredit',
       ),
   },
 
@@ -444,6 +456,31 @@ export const api = {
           requirements: [],
         } as ChecklistResponse),
         `requirements.getChecklist(${code})`,
+      ),
+  },
+
+  scenarios: {
+    list: () =>
+      withFallback(
+        async () => { const r = await apiClient.get('/scenarios'); return r.data as UserScenario[]; },
+        async () => [] as UserScenario[],
+        'scenarios.list',
+      ),
+
+    create: (data: { name: string; codes: string; spend: string; projectType: string; splitSpend: Record<string, string> }) =>
+      withFallback(
+        async () => { const r = await apiClient.post('/scenarios', data); return r.data as UserScenario; },
+        async () => ({} as UserScenario),
+        'scenarios.create',
+        false,
+      ),
+
+    delete: (id: string) =>
+      withFallback(
+        async () => { await apiClient.delete(`/scenarios/${id}`); },
+        async () => {},
+        `scenarios.delete(${id})`,
+        false,
       ),
   },
 };

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# PilotForge Startup Script for Render
+# SceneIQ Startup Script for Render
 
-echo "🎬 Starting PilotForge..."
+echo "🎬 Starting SceneIQ..."
 
 # Generate Prisma client
 echo "🔧 Generating Prisma client..."

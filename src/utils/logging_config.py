@@ -1,5 +1,5 @@
 """
-Structured Logging Configuration for PilotForge
+Structured Logging Configuration for SceneIQ
 Provides JSON-formatted logs with correlation IDs for tracing
 """
 

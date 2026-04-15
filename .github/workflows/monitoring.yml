@@ -1,0 +1,68 @@
+name: Scheduled Feed Monitoring
+
+# Runs daily at 07:00 UTC (one hour before the in-app digest fires at 08:00).
+# Also triggerable manually via the Actions tab for ad-hoc checks.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"     # 07:00 UTC daily
+  workflow_dispatch:
+    inputs:
+      jurisdiction_codes:
+        description: "Comma-separated jurisdiction codes to check (blank = all)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run — fetch feeds but do not write to DB"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  feed-check:
+    name: Check regulatory feeds
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install requests feedparser psycopg2-binary python-dotenv
+
+      - name: Run monitor.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          CODES="${{ github.event.inputs.jurisdiction_codes }}"
+          DRY="${{ github.event.inputs.dry_run }}"
+
+          ARGS=""
+          if [ -n "$CODES" ]; then
+            # Convert comma-separated list to multiple --code flags
+            for CODE in $(echo "$CODES" | tr ',' ' '); do
+              ARGS="$ARGS --code $CODE"
+            done
+          fi
+          if [ "$DRY" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+
+          echo "Running: python monitor.py $ARGS"
+          python monitor.py $ARGS
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Feed Check Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Triggered: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "Codes: ${{ github.event.inputs.jurisdiction_codes || 'ALL' }}" >> $GITHUB_STEP_SUMMARY
+          echo "Dry run: ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY

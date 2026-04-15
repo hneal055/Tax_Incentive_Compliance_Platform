@@ -1,5 +1,5 @@
 # ========================================
-# Build Docker Image for PilotForge
+# Build Docker Image for SceneIQ
 # ========================================
 
 param(
@@ -9,7 +9,7 @@ param(
 )
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "PilotForge - Docker Image Builder" -ForegroundColor White
+Write-Host "SceneIQ - Docker Image Builder" -ForegroundColor White
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 # Check Docker is running

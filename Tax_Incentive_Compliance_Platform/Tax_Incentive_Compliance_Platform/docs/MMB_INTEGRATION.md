@@ -1,6 +1,6 @@
 # MMB (Movie Magic Budgeting) Integration
 
-This document describes the MMB file parser integration for PilotForge.
+This document describes the MMB file parser integration for SceneIQ.
 
 ## Overview
 

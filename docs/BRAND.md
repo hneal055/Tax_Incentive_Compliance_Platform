@@ -1,7 +1,7 @@
 # Brand Guidelines (BRAND.md)
 
 ## Name
-PilotForge
+SceneIQ
 
 ## Tagline
 Tax Incentive Intelligence for Film & TV
@@ -27,22 +27,22 @@ Tax Incentive Intelligence for Film & TV
 
 ## 💼 **COMMERCIAL POSITIONING:**
 
-### **With "PilotForge" You Can:**
+### **With "SceneIQ" You Can:**
 
 1. **Pitch to Studios** ✅
-   - "We're PilotForge, the tax incentive intelligence platform"
+   - "We're SceneIQ, the tax incentive intelligence platform"
    - Sounds legit and professional
 
 2. **Raise Investment** ✅
-   - "PilotForge is revolutionizing production tax planning"
+   - "SceneIQ is revolutionizing production tax planning"
    - Brandable, scalable name
 
 3. **Attract Clients** ✅
    - Production companies remember the name
-   - Easy to recommend: "Just use PilotForge"
+   - Easy to recommend: "Just use SceneIQ"
 
 4. **Build Company** ✅
-   - "I founded PilotForge in 2025"
+   - "I founded SceneIQ in 2025"
    - Works as a real company name
 
 ---
@@ -51,7 +51,7 @@ Tax Incentive Intelligence for Film & TV
 
 ### **Concept 1: Film + Forge**
 ```
-🎬 + 🔨 = PilotForge icon
+🎬 + 🔨 = SceneIQ icon
 (Film slate + hammer/forge)
 ```
 

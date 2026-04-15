@@ -1,5 +1,5 @@
 """
-PilotForge Database Setup Script
+SceneIQ Database Setup Script
 Creates database, runs migrations, and seeds initial data
 """
 import asyncio
@@ -30,7 +30,7 @@ INCENTIVE_RULES = [
 ]
 
 async def setup():
-    print("🎬 PilotForge Database Setup")
+    print("🎬 SceneIQ Database Setup")
     print("=" * 50)
     prisma = Prisma()
     await prisma.connect()
@@ -51,7 +51,7 @@ async def setup():
             print(f"  ✓ {rule_data['ruleName']}")
         print(f"✅ Created {len(INCENTIVE_RULES)} incentive rules\n")
         print("=" * 50)
-        print("✅ Setup complete! PilotForge is ready!")
+        print("✅ Setup complete! SceneIQ is ready!")
     finally:
         await prisma.disconnect()
 

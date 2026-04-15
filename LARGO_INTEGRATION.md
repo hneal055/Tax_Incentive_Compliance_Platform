@@ -1,12 +1,12 @@
-# Largo + PilotForge Integration
+# Largo + SceneIQ Integration
 
-This document covers setup, usage, and API reference for the Largo.ai ↔ PilotForge tax incentive integration.
+This document covers setup, usage, and API reference for the Largo.ai ↔ SceneIQ tax incentive integration.
 
 ---
 
 ## Overview
 
-PilotForge exposes a REST API that Largo.ai (or any production platform) can call to receive real-time tax incentive recommendations. Given a project's budget, filming locations, and optional bonus parameters, the API evaluates every active incentive program and returns estimated credits, eligibility status, bonus breakdowns, and pre-application checklists.
+SceneIQ exposes a REST API that Largo.ai (or any production platform) can call to receive real-time tax incentive recommendations. Given a project's budget, filming locations, and optional bonus parameters, the API evaluates every active incentive program and returns estimated credits, eligibility status, bonus breakdowns, and pre-application checklists.
 
 ---
 
@@ -20,7 +20,7 @@ Largo.ai  ──POST──▶  /api/v1/integrations/largo/project  ──▶  SQ
                     (sorted by estimated credit, eligible first)
 ```
 
-The integration lives in the **`backend/`** app — a standalone FastAPI + SQLAlchemy + SQLite service, separate from the main PilotForge Prisma/PostgreSQL app in `src/`.
+The integration lives in the **`backend/`** app — a standalone FastAPI + SQLAlchemy + SQLite service, separate from the main SceneIQ Prisma/PostgreSQL app in `src/`.
 
 ---
 
@@ -99,6 +99,7 @@ Evaluate incentive programs for a Largo project submission.
 | `include_logo` | bool | No | Include promotional logo for bonus eligibility |
 | `local_hire_pct` | float | No | Fraction of crew that are local residents (0.0–1.0) |
 | `diversity_score` | float | No | Diversity score for key creative roles (0.0–1.0) |
+| `film_lease_partner` | bool | No | Flags eligibility for designated film-lease partner facility uplift |
 
 **Response**
 
@@ -144,6 +145,25 @@ Returns a ready-to-use sample request payload for testing.
 curl http://localhost:8002/api/v1/integrations/largo/demo-payload
 ```
 
+### GET `/api/v1/integrations/largo/maximum-possible-credit`
+
+Returns best-case stacked credit summaries for each active jurisdiction/program.
+For example, New Jersey can surface as an "Up to 45% + sales tax exemption" best-case path depending on bonus stack conditions.
+
+**Query params**
+
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `jurisdiction` | string | No | Optional jurisdiction filter, e.g. `New Jersey` |
+| `budget` | float | No | Optional project budget to calculate `maximum_credit_amount` using the 80% qualified-spend assumption |
+
+**Example**
+
+```bash
+curl "http://localhost:8002/api/v1/integrations/largo/maximum-possible-credit?jurisdiction=New%20Jersey&budget=2500000"
+```
+
+
 ---
 
 ## Incentive Calculation Logic
@@ -168,7 +188,7 @@ Bonus rates and thresholds are stored per-program in the `rules` JSON column and
 Open `http://localhost:8002/static/integration_demo.html` for a full UI demo:
 
 - **Left panel** — Largo project form (budget, locations, genre, bonus toggles)
-- **Right panel** — PilotForge results (estimated credits, audit readiness score, expandable checklists)
+- **Right panel** — SceneIQ results (estimated credits, audit readiness score, expandable checklists)
 - Loads the demo payload automatically via **Load Demo** button
 - Displays a total credit bar across all eligible jurisdictions
 
@@ -221,7 +241,14 @@ curl -X POST http://localhost:8002/api/v1/integrations/largo/project \
 
 ## Extending the Integration
 
-**Add a new jurisdiction/program** — seed a new row into the `programs` table with a `rules` JSON blob following the schema used by existing programs. No code changes required.
+**Add a new jurisdiction/program** — add scripts in `backend/scripts/` that mirror `add_georgia.py` + `seed_georgia.py`, register them in the single baseline entry point (`backend/scripts/seed_baseline.py`), and keep startup (`backend/app/main.py`) calling `seed_baseline()`. The `rules` payload must follow the existing JSON schema keys used by active programs (`base_credit_rate`, `minimum_requirements`, `bonus_conditions`, `local_hire_bonus`, `diversity_bonus`, `checklist`, `transferability`, `sunset_date`).
+
+Current baseline seeds are Georgia, Louisiana, and New Jersey. New Jersey rules include designated sub-jurisdiction metadata for 35% tiers and film-lease partner qualification metadata for up to 40% tiers. To run all baseline seeders in one command:
+
+```bash
+cd backend
+python scripts/seed_baseline.py
+```
 
 **Save submissions to the database** — `LargoProject` model (`backend/app/models/largo_project.py`) is ready. Add a `db.add(LargoProject(...))` call in the `evaluate_largo_project` endpoint to persist every inbound request.
 

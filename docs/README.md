@@ -1,4 +1,4 @@
-# 🎬 PilotForge
+# 🎬 SceneIQ
 
 > **Tax Incentive Intelligence for Film & TV Productions**
 
@@ -9,15 +9,15 @@
 
 ---
 
-## 🎯 What is PilotForge?
+## 🎯 What is SceneIQ?
 
-PilotForge is a comprehensive tax incentive calculation and compliance platform 
+SceneIQ is a comprehensive tax incentive calculation and compliance platform 
 for the global film and television industry. We help productions maximize their 
 tax savings by comparing 32 jurisdictions and 33 incentive programs worldwide.
 
 ### 💰 Real-World Impact
 
-**Example:** A $5M feature film uses PilotForge to discover Louisiana offers 
+**Example:** A $5M feature film uses SceneIQ to discover Louisiana offers 
 $1.75M in stackable credits (35%) vs California's $1M (20%).
 
 **Result: $750,000 in additional savings** 🎉
@@ -27,4 +27,4 @@ $1.75M in stackable credits (35%) vs California's $1M (20%).
 ```
 MIT License
 
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2025-2026 Howard Neal - SceneIQ

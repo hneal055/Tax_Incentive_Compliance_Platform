@@ -8,7 +8,7 @@
 
 ## 📊 Current Services Status
 
-### ✅ PilotForge Stack (ALL HEALTHY)
+### ✅ SceneIQ Stack (ALL HEALTHY)
 
 | Service | Image | Port | Status | Health |
 |---------|-------|------|--------|--------|

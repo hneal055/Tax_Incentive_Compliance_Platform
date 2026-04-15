@@ -1,11 +1,11 @@
-# PilotForge — Frequently Asked Questions
+# SceneIQ — Frequently Asked Questions
 
 ## Platform Overview
 
-### What is PilotForge?
-PilotForge is a tax incentive compliance platform for film and television productions. It helps producers, line producers, and production accountants identify, compare, and track incentive programs across 35+ jurisdictions worldwide — and maximize the total incentive value of a project through multi-market analysis.
+### What is SceneIQ?
+SceneIQ is a tax incentive compliance platform for film and television productions. It helps producers, line producers, and production accountants identify, compare, and track incentive programs across 35+ jurisdictions worldwide — and maximize the total incentive value of a project through multi-market analysis.
 
-### Who is PilotForge for?
+### Who is SceneIQ for?
 - **Producers and studios** — evaluating which location maximizes incentive returns
 - **Line producers / UPMs** — tracking qualified spend and documentation requirements
 - **Production accountants** — preparing cost reports and credit applications
@@ -101,7 +101,7 @@ The UK provides **25% on qualifying UK production expenditure (QUKE)**. Producti
 
 ---
 
-## Using PilotForge
+## Using SceneIQ
 
 ### Dashboard
 The Dashboard shows your active production portfolio with status indicators, budget totals, and recent activity. Use it as your starting point to track which productions need attention.
@@ -136,7 +136,7 @@ The AI Advisor is a planning tool. Always confirm final figures with a qualified
 ### How current is the data?
 Incentive rules are updated through two mechanisms:
 1. **Automated feed monitoring** — the monitor runs against official film commission URLs and extracts new rules into the pending queue
-2. **Manual seeding** — verified rules are inserted by PilotForge staff after source verification
+2. **Manual seeding** — verified rules are inserted by SceneIQ staff after source verification
 
 Rules have `effectiveDate` and `expirationDate` fields. The platform displays only active, currently-effective rules.
 
@@ -150,8 +150,8 @@ Each rule includes a `sourceUrl` and notes on where the data was verified. For f
 - San Antonio: filmsanantonio.com
 - UK: bfi.org.uk/certification
 
-### Are PilotForge calculations legally binding?
-No. PilotForge provides estimates for production planning purposes. Incentive eligibility depends on detailed cost reports, CPA certification, and state office review. Always engage a qualified production accountant before committing to a location based on incentive projections.
+### Are SceneIQ calculations legally binding?
+No. SceneIQ provides estimates for production planning purposes. Incentive eligibility depends on detailed cost reports, CPA certification, and state office review. Always engage a qualified production accountant before committing to a location based on incentive projections.
 
 ---
 

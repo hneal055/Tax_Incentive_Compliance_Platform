@@ -1,4 +1,4 @@
-# PilotForge — Tax Incentive Intelligence Platform
+# SceneIQ — Tax Incentive Intelligence Platform
 ## Demo Setup Guide
 
 ---
@@ -23,7 +23,7 @@ After installing, open it and wait for the whale icon in your taskbar to stop an
 
 **Step 2 — Extract the zip file**
 
-Extract `PilotForge-Demo.zip` to any folder on your computer (Desktop, Documents, etc.).
+Extract `SceneIQ-Demo.zip` to any folder on your computer (Desktop, Documents, etc.).
 Keep all files together in the same folder — do not move individual files out.
 
 **Step 3 — Launch the platform**
@@ -87,7 +87,7 @@ Open Docker Desktop from the Start Menu (Windows) or Applications (Mac). Wait ~3
 The backend takes up to 30 seconds to initialize on first launch. Wait, then refresh the browser.
 
 **"Port 3000 is already in use"**
-Another application on your computer is using port 3000. Either stop that application, or contact your PilotForge representative for an alternate configuration.
+Another application on your computer is using port 3000. Either stop that application, or contact your SceneIQ representative for an alternate configuration.
 
 **PowerShell security warning on Windows**
 If Windows blocks `start.ps1`, open PowerShell as Administrator and run:
@@ -98,5 +98,5 @@ Then try `start.ps1` again.
 
 ---
 
-*PilotForge · Tax Incentive Intelligence for Film & TV Production*
+*SceneIQ · Tax Incentive Intelligence for Film & TV Production*
 *For support contact: [your email here]*

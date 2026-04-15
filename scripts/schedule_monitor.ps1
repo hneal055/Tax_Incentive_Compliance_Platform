@@ -1,8 +1,8 @@
-# PilotForge — Register Sub-Jurisdiction Monitor in Windows Task Scheduler
+# SceneIQ — Register Sub-Jurisdiction Monitor in Windows Task Scheduler
 # Run once as Administrator to set up daily monitoring.
 # Usage: Right-click → Run with PowerShell (as Administrator)
 
-$TaskName    = "PilotForge-SubJurisdiction-Monitor"
+$TaskName    = "SceneIQ-SubJurisdiction-Monitor"
 $ProjectPath = "c:\Projects\Tax_Incentive_Compliance_Platform"
 $PythonExe   = "$ProjectPath\.venv\Scripts\python.exe"
 $ScriptPath  = "$ProjectPath\monitor.py"
@@ -45,7 +45,7 @@ Register-ScheduledTask `
     -Trigger   $Trigger `
     -Settings  $Settings `
     -Principal $Principal `
-    -Description "PilotForge daily sub-jurisdiction feed monitor. Checks county/city feeds for tax incentive changes and queues Claude extractions for review." | Out-Null
+    -Description "SceneIQ daily sub-jurisdiction feed monitor. Checks county/city feeds for tax incentive changes and queues Claude extractions for review." | Out-Null
 
 Write-Host ""
 Write-Host "  Task registered: $TaskName" -ForegroundColor Green

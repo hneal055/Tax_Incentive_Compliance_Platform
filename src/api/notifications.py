@@ -1,8 +1,8 @@
 """
-Notification Preferences API — per-user email alert subscriptions.
+Notification Preferences API — per-user email alert subscriptions and report schedule.
 """
 import logging
-from typing import Optional
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -18,9 +18,10 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
 class PrefUpsert(BaseModel):
-    emailAddress:  str
-    jurisdictions: list[str] = []   # empty = subscribe to all
-    active:        bool = True
+    emailAddress:    str
+    jurisdictions:   list[str]                        = []       # empty = all
+    active:          bool                             = True
+    reportFrequency: Literal["daily", "weekly", "never"] = "never"
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -45,21 +46,22 @@ async def upsert_preferences(
         pref = await prisma.notificationpreference.update(
             where={"userId": current_user.sub},
             data={
-                "emailAddress":  data.emailAddress,
-                "jurisdictions": data.jurisdictions,
-                "active":        data.active,
+                "emailAddress":    data.emailAddress,
+                "jurisdictions":   data.jurisdictions,
+                "active":          data.active,
+                "reportFrequency": data.reportFrequency,
             },
         )
     else:
-        # Verify user exists
         user = await prisma.user.find_unique(where={"id": current_user.sub})
         if not user:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
         pref = await prisma.notificationpreference.create(data={
-            "userId":        current_user.sub,
-            "emailAddress":  data.emailAddress,
-            "jurisdictions": data.jurisdictions,
-            "active":        data.active,
+            "userId":          current_user.sub,
+            "emailAddress":    data.emailAddress,
+            "jurisdictions":   data.jurisdictions,
+            "active":          data.active,
+            "reportFrequency": data.reportFrequency,
         })
     logger.info(f"Notification preferences updated for user {current_user.email}")
     return pref

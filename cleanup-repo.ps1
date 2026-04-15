@@ -1,6 +1,6 @@
 # ========================================
 # Repository Cleanup Script
-# PilotForge - Tax Incentive Compliance Platform
+# SceneIQ - Tax Incentive Compliance Platform
 # ========================================
 
 param(

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="PilotForge Tax Incentive Compliance Platform",
+    title="SceneIQ Tax Incentive Compliance Platform",
     description="API for managing film and television tax incentives",
     version="1.0.0",
 )
@@ -46,7 +46,7 @@ else:
 async def root():
     """Root endpoint with API information."""
     return {
-        "message": "PilotForge Tax Incentive Compliance Platform",
+        "message": "SceneIQ Tax Incentive Compliance Platform",
         "version": "1.0.0",
         "docs": "/docs",
         "demo": "/static/index.html",
@@ -64,19 +64,14 @@ async def startup_event():
     """Initialize database and seed data on startup."""
     try:
         from app.db.session import engine, Base
-        from scripts.add_georgia import add_georgia
-        from scripts.seed_georgia import seed_georgia
+        from scripts.seed_baseline import seed_baseline
 
-        logger.info("🚀 Running database initialization...")
+        logger.info("Running database initialization...")
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ Tables created")
+        logger.info("Tables created")
 
-        # Add Georgia jurisdiction if not present
-        add_georgia()
+        seed_baseline()
 
-        # Seed Georgia program rules
-        seed_georgia()
-
-        logger.info("✅ Startup complete!")
+        logger.info("Startup complete")
     except Exception as e:
         logger.error(f"Startup error: {e}")

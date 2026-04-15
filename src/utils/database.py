@@ -1,5 +1,5 @@
 """
-Database connection module for PilotForge
+Database connection module for SceneIQ
 """
 from prisma import Prisma
 

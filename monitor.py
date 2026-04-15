@@ -1,5 +1,5 @@
 """
-PilotForge — Sub-Jurisdiction Monitor
+SceneIQ — Sub-Jurisdiction Monitor
 Fetches feed URLs for county/city/town jurisdictions, detects content changes
 via SHA-256 hash comparison, sends changed content to Claude for rule extraction,
 and stores extracted rules as PendingRule records for human review.
@@ -115,7 +115,7 @@ async def fetch_url(url: str, timeout: int = 30) -> str | None:
         async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as http:
             r = await http.get(
                 url,
-                headers={"User-Agent": "PilotForge-Monitor/1.0 (tax incentive compliance)"},
+                headers={"User-Agent": "SceneIQ-Monitor/1.0 (tax incentive compliance)"},
             )
             r.raise_for_status()
             content_type = r.headers.get("content-type", "")
@@ -270,7 +270,7 @@ async def process_jurisdiction(db: Prisma, jur, dry_run: bool = False) -> dict:
 
 async def main(code_filter: str | None = None, dry_run: bool = False):
     log.info("═" * 60)
-    log.info("PilotForge Sub-Jurisdiction Monitor")
+    log.info("SceneIQ Sub-Jurisdiction Monitor")
     if dry_run:
         log.info("DRY RUN MODE — no database writes")
     log.info("═" * 60)
@@ -320,7 +320,7 @@ async def main(code_filter: str | None = None, dry_run: bool = False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="PilotForge Sub-Jurisdiction Monitor")
+    parser = argparse.ArgumentParser(description="SceneIQ Sub-Jurisdiction Monitor")
     parser.add_argument("--code",    help="Run a single jurisdiction by code (e.g. NY-ERIE)")
     parser.add_argument("--dry-run", action="store_true", help="Fetch only, no DB writes or Claude calls")
     args = parser.parse_args()

@@ -1,5 +1,5 @@
 """
-Container & Deployment Guide for PilotForge
+Container & Deployment Guide for SceneIQ
 Production-ready deployment instructions and best practices
 """
 

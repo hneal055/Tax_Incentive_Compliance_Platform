@@ -1,11 +1,11 @@
-# 📖 PilotForge - User Manual
+# 📖 SceneIQ - User Manual
 
 > **Tax Incentive Intelligence for Film & TV Productions**  
-> Complete guide to the PilotForge platform
+> Complete guide to the SceneIQ platform
 
 **Version:** 1.1.0  
 **Last Updated:** February 3, 2026  
-**Product Name:** PilotForge
+**Product Name:** SceneIQ
 
 ---
 
@@ -37,9 +37,9 @@ This user manual is organized into focused guides for easy navigation:
 
 ## 🎬 Introduction
 
-### **What is PilotForge?**
+### **What is SceneIQ?**
 
-PilotForge is a comprehensive tax incentive calculation and compliance platform designed specifically for the global film and television production industry. It helps producers, line producers, and production accountants:
+SceneIQ is a comprehensive tax incentive calculation and compliance platform designed specifically for the global film and television production industry. It helps producers, line producers, and production accountants:
 
 - **Compare tax incentives** across 32+ global jurisdictions
 - **Calculate potential savings** with precision and compliance
@@ -58,7 +58,7 @@ PilotForge is a comprehensive tax incentive calculation and compliance platform 
 ✅ **Modern React UI** - Intuitive, responsive interface  
 ✅ **RESTful API** - Full programmatic access
 
-### **Who Should Use PilotForge?**
+### **Who Should Use SceneIQ?**
 
 - **Production Managers** - Planning shooting locations
 - **Line Producers** - Budgeting and cost analysis
@@ -354,7 +354,7 @@ We welcome contributions! Please see:
 
 ## 📄 License
 
-**Proprietary and Confidential** - Copyright (c) 2026 PilotForge. All Rights Reserved. See [LICENSE](../LICENSE) for full terms and restrictions.
+**Proprietary and Confidential** - Copyright (c) 2026 SceneIQ. All Rights Reserved. See [LICENSE](../LICENSE) for full terms and restrictions.
 
 ---
 
@@ -368,7 +368,7 @@ We welcome contributions! Please see:
 
 ---
 
-**Thank you for using PilotForge!**
+**Thank you for using SceneIQ!**
 
 *Making tax incentives simple for film & TV productions worldwide.*
 

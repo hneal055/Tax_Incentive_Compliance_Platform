@@ -5,7 +5,6 @@ import Productions from './pages/Productions';
 import Calculator from './pages/Calculator';
 import Jurisdictions from './pages/Jurisdictions';
 import AIAdvisor from './components/AIAdvisor';
-import Georgia from './pages/Georgia';
 import MMBConnector from './pages/MMBConnector';
 import PendingRules from './pages/PendingRules';
 import LocalRules from './pages/LocalRules';
@@ -31,7 +30,6 @@ function App() {
     calculator:   <Calculator />,
     jurisdictions: <Jurisdictions />,
     advisor:      <AIAdvisor />,
-    georgia:      <Georgia />,
     mmb:          <MMBConnector />,
     pendingRules:    <PendingRules />,
     localRules:      <LocalRules />,

@@ -1,5 +1,5 @@
 """
-PilotForge Version Management Automation
+SceneIQ Version Management Automation
 Automatically bumps version numbers across all files
 """
 import re
@@ -19,9 +19,9 @@ VERSION_FILES = {
     ],
 }
 
-CHANGELOG_TEMPLATE = """# Changelog - PilotForge
+CHANGELOG_TEMPLATE = """# Changelog - SceneIQ
 
-All notable changes to PilotForge will be documented in this file.
+All notable changes to SceneIQ will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -146,7 +146,7 @@ def create_git_tag(version):
         # Create annotated tag
         subprocess.run([
             'git', 'tag', '-a', f'v{version}',
-            '-m', f'PilotForge v{version}'
+            '-m', f'SceneIQ v{version}'
         ], check=True)
         
         print(f"✅ Created git tag v{version}")
@@ -158,7 +158,7 @@ def create_git_tag(version):
 
 def main():
     """Main version management script"""
-    print("🎬 PilotForge Version Management")
+    print("🎬 SceneIQ Version Management")
     print("=" * 60)
     
     # Get current version
@@ -214,7 +214,7 @@ def main():
     print("4. Push: git push origin main")
     if create_tag.lower() == 'y':
         print(f"5. Push tag: git push origin v{new_version}")
-    print("\n🚀 PilotForge v{} ready!".format(new_version))
+    print("\n🚀 SceneIQ v{} ready!".format(new_version))
 
 
 if __name__ == '__main__':

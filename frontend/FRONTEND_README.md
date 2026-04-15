@@ -1,6 +1,6 @@
-# PilotForge Frontend
+# SceneIQ Frontend
 
-Modern React frontend for the PilotForge Tax Incentive Intelligence Platform.
+Modern React frontend for the SceneIQ Tax Incentive Intelligence Platform.
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ Modern React frontend for the PilotForge Tax Incentive Intelligence Platform.
 - 🎬 Production management (create, view, list)
 - 🌍 Global jurisdiction browsing
 - 🧮 Tax incentive calculator
-- 🎨 Responsive design with PilotForge branding
+- 🎨 Responsive design with SceneIQ branding
 - ⚡ Fast development with Vite HMR
 
 ## Getting Started
@@ -53,4 +53,4 @@ npm run preview
 
 ## License
 
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2025-2026 Howard Neal - SceneIQ

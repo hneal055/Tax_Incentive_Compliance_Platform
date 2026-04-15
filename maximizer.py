@@ -1,5 +1,5 @@
 """
-PilotForge Maximizer Engine
+SceneIQ Maximizer Engine
 Optimizes tax incentive stacking across jurisdiction layers.
 
 Usage:
@@ -128,7 +128,7 @@ class MaximizedResult:
 
 # ── Engine ────────────────────────────────────────────────────────────────────
 
-class PilotForgeMaximizer:
+class SceneIQMaximizer:
     RULE_TYPE_MAP = {
         "tax_credit":    "credit",
         "tax_abatement": "tax_abatement",
@@ -545,7 +545,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    parser = argparse.ArgumentParser(description="PilotForge Maximizer")
+    parser = argparse.ArgumentParser(description="SceneIQ Maximizer")
     parser.add_argument("lat", type=float, nargs="?", help="Latitude")
     parser.add_argument("lng", type=float, nargs="?", help="Longitude")
     parser.add_argument("--codes", nargs="+", help="Explicit jurisdiction codes")
@@ -566,7 +566,7 @@ def main():
                 parser.error(f"Invalid --location-spend value '{item}' — use CODE:AMOUNT")
             spend_by_location[code.upper()] = float(amount_str)
 
-    maximizer = PilotForgeMaximizer()
+    maximizer = SceneIQMaximizer()
     result = maximizer.maximize(
         lat=args.lat,
         lng=args.lng,

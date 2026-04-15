@@ -125,8 +125,19 @@ export interface NotificationPreference {
   jurisdictions: string[];
   emailAddress: string;
   active: boolean;
+  reportFrequency: 'daily' | 'weekly' | 'never';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserScenario {
+  id: string;
+  name: string;
+  codes: string;
+  spend: string;
+  projectType: string;
+  splitSpend: Record<string, string>;
+  savedAt: string;
 }
 
 export interface UserProfile {
@@ -255,4 +266,21 @@ export interface PendingRule {
   reviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+export interface MaximumPossibleCreditSummary {
+  jurisdiction: string;
+  base_credit_rate: number;
+  maximum_credit_rate: number;
+  maximum_credit_percent: number;
+  qualified_spend_assumption: number | null;
+  maximum_credit_amount: number | null;
+  required_conditions: string[];
+  stackable_components: Array<{ name: string; rate: number; percent: number; condition: string }>;
+  additional_benefits: Array<{ type: string; rate?: number; description?: string }>;
+}
+
+export interface MaximumPossibleCreditResponse {
+  summaries: MaximumPossibleCreditSummary[];
+  best_case_headline: string | null;
+  generated_at: string;
 }

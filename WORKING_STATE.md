@@ -1,4 +1,4 @@
-# PilotForge - Working State
+# SceneIQ - Working State
 **Date:** January 9, 2026
 **Status:** ✅ FULLY OPERATIONAL - Phase 2 Complete
 
@@ -191,6 +191,6 @@ python test_production.py
 
 **Last Updated:** January 9, 2026, 7:15 PM
 **Status:** All core APIs operational, ready for calculations engine
-**GitHub:** https://github.com/hneal055/PilotForge
+**GitHub:** https://github.com/hneal055/SceneIQ
 > Tax Incentive Intelligence for Film & TV
 > Tax Incentive Intelligence for Film & TV

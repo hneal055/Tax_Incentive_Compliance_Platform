@@ -1,10 +1,10 @@
-# Comprehensive Test Suite Runner for PilotForge
+# Comprehensive Test Suite Runner for SceneIQ
 # Tax Incentive Intelligence for Film & TV
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-Write-Host "🎬 PilotForge - Comprehensive Test Suite" -ForegroundColor Cyan
+Write-Host "🎬 SceneIQ - Comprehensive Test Suite" -ForegroundColor Cyan
 Write-Host "=" * 70 -ForegroundColor Cyan
 Write-Host ""
 

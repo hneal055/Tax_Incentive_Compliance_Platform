@@ -229,8 +229,26 @@ model User {
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   notificationPreference NotificationPreference?
+  savedScenarios         UserScenario[]
 
   @@map("users")
+}
+
+/// Maximizer scenarios saved by a user — persisted in DB, not localStorage.
+model UserScenario {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  codes       String
+  spend       String
+  projectType String   @default("film")
+  splitSpend  Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("user_scenarios")
 }
 
 model ComplianceItem {
@@ -251,14 +269,16 @@ model ComplianceItem {
 }
 
 model NotificationPreference {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jurisdictions String[]
-  emailAddress  String
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jurisdictions   String[]
+  emailAddress    String
+  active          Boolean  @default(true)
+  /// daily | weekly | never
+  reportFrequency String   @default("never")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("notification_preferences")
 }

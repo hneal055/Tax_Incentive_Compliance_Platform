@@ -28,9 +28,18 @@ Thumbs.db
 *.log
 logs/
 
-# Environment
+# Environment / Secrets
 .env
 .env.local
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+sk-ant-*.txt
+DATABASE_URL=*.txt
+*.key
+*.pem
 
 # Railway
 .railway/

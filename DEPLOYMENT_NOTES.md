@@ -1,4 +1,4 @@
-# PilotForge Deployment Notes
+# SceneIQ Deployment Notes
 
 ## Current Status
 - ✅ Works perfectly locally

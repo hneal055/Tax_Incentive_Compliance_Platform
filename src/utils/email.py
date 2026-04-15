@@ -73,7 +73,7 @@ def build_monitoring_alert_html(
   {url_line}
   <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;">
   <p style="font-size:11px;color:#94a3b8;">
-    You received this because you subscribed to regulatory monitoring alerts in PilotForge.
+    You received this because you subscribed to regulatory monitoring alerts in SceneIQ.
   </p>
 </div>
 """

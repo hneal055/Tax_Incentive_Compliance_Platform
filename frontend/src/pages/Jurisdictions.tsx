@@ -110,7 +110,7 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900">Contact Concierge</h2>
-              <p className="text-slate-500 text-xs mt-0.5">PilotForge specialist team · typically replies in 2h</p>
+              <p className="text-slate-500 text-xs mt-0.5">SceneIQ specialist team · typically replies in 2h</p>
             </div>
           </div>
           <button type="button" onClick={onClose} title="Close" aria-label="Close" className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -125,7 +125,7 @@ function ConciergeModal({ onClose }: { onClose: () => void }) {
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1.5">Request Received</h3>
             <p className="text-slate-500 text-sm max-w-xs">
-              A PilotForge specialist will review your inquiry and reach out within 2 business hours.
+              A SceneIQ specialist will review your inquiry and reach out within 2 business hours.
             </p>
             <div className="mt-6 w-full bg-slate-50 rounded-xl p-4 text-left space-y-1.5 border border-slate-100">
               <p className="text-xs text-slate-500"><span className="font-semibold text-slate-700">Name:</span> {form.name}</p>
@@ -422,7 +422,7 @@ export default function Jurisdictions() {
             <span className="text-indigo-700 font-bold text-sm">Agency Directory</span>
           </div>
           <p className="text-indigo-500 text-xs leading-relaxed mb-4">
-            PilotForge connects with over 400 jurisdictions globally. Contact our concierge for help with custom applications.
+            SceneIQ connects with over 400 jurisdictions globally. Contact our concierge for help with custom applications.
           </p>
           <button
             type="button"
@@ -519,14 +519,14 @@ export default function Jurisdictions() {
                     }`}
                 >
                   {/* Card header */}
-                  <div className="flex items-start gap-3">
-                    <span className="text-slate-400 text-sm font-semibold mt-1 shrink-0">{j.code}</span>
+                  <div className="flex items-start justify-between gap-2 min-w-0">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-slate-900 leading-tight">{j.name}</h3>
+                      <p className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-0.5">{j.code}</p>
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">{j.name}</h3>
                     </div>
                     {rate > 0 && (
                       <span className="shrink-0 px-2 py-0.5 bg-emerald-500 text-white text-[11px] font-bold rounded-md tracking-wide">
-                        {rate}% BASE
+                        {rate}%
                       </span>
                     )}
                   </div>

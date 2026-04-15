@@ -21,7 +21,7 @@ router.include_router(expenses_router)
 async def api_root():
     """API root endpoint"""
     return {
-        "message": "PilotForge API",
+        "message": "SceneIQ API",
         "version": "v1",
         "endpoints": {
            "jurisdictions": "/api/0.1.0/jurisdictions",

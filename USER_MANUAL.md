@@ -1,4 +1,4 @@
-# PilotForge — Tax Incentive Compliance Platform
+# SceneIQ — Tax Incentive Compliance Platform
 ## User Manual v2.1
 
 ---
@@ -29,7 +29,7 @@
 
 ## 1. Platform Overview
 
-PilotForge is a tax incentive compliance platform built for film and TV production professionals. It centralizes jurisdiction research, incentive calculation, compliance tracking, rule monitoring, and AI-powered advisory in one system.
+SceneIQ is a tax incentive compliance platform built for film and TV production professionals. It centralizes jurisdiction research, incentive calculation, compliance tracking, rule monitoring, and AI-powered advisory in one system.
 
 ### Core Capabilities
 
@@ -130,7 +130,7 @@ python scripts/seed_maximizer_test.py
 
 ## 3. Dashboard
 
-**Navigation:** Click the PilotForge logo or "Dashboard" in the sidebar.
+**Navigation:** Click the SceneIQ logo or "Dashboard" in the sidebar.
 
 The dashboard provides an executive overview of all productions and incentive performance.
 
@@ -1492,5 +1492,5 @@ JWT_EXPIRE_HOURS=8
 
 ---
 
-*PilotForge v2.1 — Tax Incentive Compliance Platform*
+*SceneIQ v2.1 — Tax Incentive Compliance Platform*
 *For support, file an issue at the project repository.*

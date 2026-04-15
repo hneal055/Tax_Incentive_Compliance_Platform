@@ -29,7 +29,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # PilotForge Backend API (Production)
+  # SceneIQ Backend API (Production)
   backend:
     image: ${DOCKER_REGISTRY}/pilotforge:${APP_VERSION:-latest}
     container_name: pilotforge-api

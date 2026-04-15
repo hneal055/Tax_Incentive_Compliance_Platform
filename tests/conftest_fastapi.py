@@ -1,6 +1,6 @@
 """
 Pytest Configuration for FastAPI + Prisma
-Tax Incentive Compliance Platform - PilotForge
+Tax Incentive Compliance Platform - SceneIQ
 """
 import pytest
 import pytest_asyncio

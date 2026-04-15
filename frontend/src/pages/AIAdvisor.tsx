@@ -48,7 +48,7 @@ function getContextualPrompts(prod: Production): string[] {
   return prompts.slice(0, 4);
 }
 
-const WELCOME = `Welcome to **PilotForge AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
+const WELCOME = `Welcome to **SceneIQ AI Advisor**. I can help you maximize tax incentives for your productions.\n\nAsk me about jurisdiction comparisons, qualifying expenses, application requirements, or incentive stacking strategies. For more targeted analysis, select a production context in the left panel.`;
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000') as string;
 const API_VERSION = (import.meta.env.VITE_API_VERSION || '0.1.0') as string;
@@ -94,7 +94,7 @@ function getFallbackResponse(question: string): string {
     return "**Stacking Federal + State Incentives**\n\n**Section 181 (Federal):** 100% first-year deduction for productions up to $15M. No application required.\n\n**State credits:** Apply on top of Section 181. The federal deduction reduces taxable income; the state credit directly offsets tax liability.";
   if (q.includes('document') || q.includes('application') || q.includes('require'))
     return "**Standard Application Requirements**\n\n**Pre-production:**\n- Production company registration in the state\n- Estimated budget breakdown\n- Shooting schedule with location days\n\n**Post-production:**\n- Final cost report (CPA-certified)\n- Payroll records with residency verification\n- Vendor invoices for all qualified spend";
-  return "**PilotForge AI Advisor**\n\nI can help you with:\n\n- **Jurisdiction comparisons** — rates across 35+ states and countries\n- **Qualifying expenses** — what counts toward your incentive base\n- **Application requirements** — documentation, timelines, pre-certification\n- **Incentive stacking** — combining federal Section 181 with state credits\n\nTry asking about Georgia, California, New York, Louisiana, Texas, New Mexico, or the UK.";
+  return "**SceneIQ AI Advisor**\n\nI can help you with:\n\n- **Jurisdiction comparisons** — rates across 35+ states and countries\n- **Qualifying expenses** — what counts toward your incentive base\n- **Application requirements** — documentation, timelines, pre-certification\n- **Incentive stacking** — combining federal Section 181 with state credits\n\nTry asking about Georgia, California, New York, Louisiana, Texas, New Mexico, or the UK.";
 }
 
 function AIAdvisor() {

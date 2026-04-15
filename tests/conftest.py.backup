@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for PilotForge
+Pytest configuration and fixtures for SceneIQ
 Tax Incentive Intelligence for Film & TV
 
 This module provides test fixtures and configuration for the test suite,

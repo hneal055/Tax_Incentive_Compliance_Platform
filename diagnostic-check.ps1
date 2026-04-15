@@ -1,10 +1,10 @@
 # ========================================
 # System Diagnostic Check
-# Tests all key components of PilotForge
+# Tests all key components of SceneIQ
 # ========================================
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "PilotForge System Diagnostic" -ForegroundColor White
+Write-Host "SceneIQ System Diagnostic" -ForegroundColor White
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 $results = @{

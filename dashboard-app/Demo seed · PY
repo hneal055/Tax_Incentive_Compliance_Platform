@@ -1,5 +1,5 @@
 """
-PilotForge Demo Pre-Load Script
+SceneIQ Demo Pre-Load Script
 Run before Thursday demo to populate all productions with expenses,
 compliance checklists, and monitoring events.
 
@@ -190,7 +190,7 @@ async def seed_monitoring_events():
 
 async def main():
     print("\n" + "=" * 60)
-    print("PilotForge Demo Pre-Load Script")
+    print("SceneIQ Demo Pre-Load Script")
     print("=" * 60)
 
     await prisma.connect()
@@ -229,7 +229,7 @@ async def main():
     print(f"  Incentive rules: {rules_count}")
     print(f"  Monitoring events: {events_count}")
     print(f"{'=' * 60}")
-    print("\nPilotForge is ready for demo.")
+    print("\nSceneIQ is ready for demo.")
     print("URL: https://taxincentivecomplianceplatform-production.up.railway.app")
     print("Login: admin@pilotforge.com / pilotforge2024\n")
 

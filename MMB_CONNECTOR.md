@@ -1,8 +1,8 @@
-# PilotForge MMB Connector
+# SceneIQ MMB Connector
 
-Integration guide for connecting Movie Magic Budgeting (MMB) to the PilotForge Tax Incentive Intelligence platform.
+Integration guide for connecting Movie Magic Budgeting (MMB) to the SceneIQ Tax Incentive Intelligence platform.
 
-GitHub repo: [hneal055/PilotForge-MMB-Connector](https://github.com/hneal055/PilotForge-MMB-Connector)
+GitHub repo: [hneal055/SceneIQ-MMB-Connector](https://github.com/hneal055/SceneIQ-MMB-Connector)
 
 ---
 
@@ -11,8 +11,8 @@ GitHub repo: [hneal055/PilotForge-MMB-Connector](https://github.com/hneal055/Pil
 The MMB Connector is a standalone Python library that:
 
 1. **Parses** `.mmbx`, `.mdb`, CSV, and Excel exports from Movie Magic Budgeting
-2. **Transforms** the budget data into PilotForge's standardized schema
-3. **Evaluates** the budget against active incentive programs via the PilotForge API
+2. **Transforms** the budget data into SceneIQ's standardized schema
+3. **Evaluates** the budget against active incentive programs via the SceneIQ API
 4. **Returns** ranked incentive recommendations with estimated credits, bonuses, and audit checklists
 
 ---
@@ -35,14 +35,14 @@ BudgetTransformer  (src/transformers/budget_transformer.py)
   - Computes incentive-eligible subtotals
         │
         ▼
-PilotForgeClient  (src/connectors/pilotforge_api.py)
+SceneIQClient  (src/connectors/pilotforge_api.py)
   - evaluate_budget()  →  POST /api/v1/integrations/largo/project
   - get_incentive_programs()  →  GET /api/v1/programs/
   - list_productions()  →  GET /api/0.1.0/productions/  (main app)
   - calculate_incentive()  →  POST /api/0.1.0/calculate  (main app)
         │
         ▼
-PilotForge Backend (this repo)
+SceneIQ Backend (this repo)
   backend/  — FastAPI + SQLite  (Largo integration, incentive programs)
   src/      — FastAPI + Prisma/PostgreSQL  (productions, calculator, jurisdictions)
 ```
@@ -54,14 +54,14 @@ PilotForge Backend (this repo)
 ### 1. Clone and install the connector
 
 ```bash
-git clone https://github.com/hneal055/PilotForge-MMB-Connector.git
-cd PilotForge-MMB-Connector
+git clone https://github.com/hneal055/SceneIQ-MMB-Connector.git
+cd SceneIQ-MMB-Connector
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Start the PilotForge backend
+### 2. Start the SceneIQ backend
 
 ```bash
 # From Tax_Incentive_Compliance_Platform/backend/
@@ -73,7 +73,7 @@ uvicorn app.main:app --reload --port 8002
 ```python
 from src.parsers.mmb_parser import MMBParser
 from src.transformers.budget_transformer import BudgetTransformer
-from src.connectors.pilotforge_api import PilotForgeClient
+from src.connectors.pilotforge_api import SceneIQClient
 
 # Parse
 parser = MMBParser()
@@ -84,7 +84,7 @@ transformer = BudgetTransformer()
 pf_data = transformer.transform_to_pilotforge(raw)
 
 # Evaluate
-client = PilotForgeClient(environment="local_backend")
+client = SceneIQClient(environment="local_backend")
 result = client.evaluate_budget(
     pf_data,
     include_logo=True,
@@ -189,9 +189,9 @@ sudo apt install mdbtools
 
 ---
 
-## PilotForge Budget Schema
+## SceneIQ Budget Schema
 
-The transformer outputs this standardized schema before sending to PilotForge:
+The transformer outputs this standardized schema before sending to SceneIQ:
 
 ```python
 {
@@ -237,12 +237,12 @@ The transformer outputs this standardized schema before sending to PilotForge:
 ## Running the Demo
 
 ```bash
-# Start PilotForge backend
+# Start SceneIQ backend
 cd Tax_Incentive_Compliance_Platform/backend
 uvicorn app.main:app --reload --port 8002
 
 # In a second terminal — run the connector example
-cd PilotForge-MMB-Connector
+cd SceneIQ-MMB-Connector
 python examples/test_integration_example.py
 
 # Or view the interactive demo UI
@@ -254,14 +254,14 @@ open http://localhost:8002/static/integration_demo.html
 ## Connector File Map
 
 ```
-PilotForge-MMB-Connector/
+SceneIQ-MMB-Connector/
 ├── src/
 │   ├── parsers/
 │   │   └── mmb_parser.py          # MMBX, MDB, CSV/Excel parsing
 │   ├── transformers/
-│   │   └── budget_transformer.py  # MMB → PilotForge schema mapping
+│   │   └── budget_transformer.py  # MMB → SceneIQ schema mapping
 │   ├── connectors/
-│   │   ├── pilotforge_api.py      # PilotForge REST client (wired to this repo)
+│   │   ├── pilotforge_api.py      # SceneIQ REST client (wired to this repo)
 │   │   └── mmb_api.py             # MMB API stub (future)
 │   └── intelligence/
 │       └── tax_optimizer.py       # TaxOptimizer, IncentiveProgram dataclasses

@@ -1,5 +1,5 @@
 # ========================================
-# Multi-stage build for PilotForge
+# Multi-stage build for SceneIQ
 # Python 3.12 + FastAPI
 # ========================================
 

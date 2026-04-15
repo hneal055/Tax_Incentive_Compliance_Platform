@@ -1,5 +1,5 @@
 """
-Security Module for PilotForge
+Security Module for SceneIQ
 Provides input validation, rate limiting, and security headers
 """
 

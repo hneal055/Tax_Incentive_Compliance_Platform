@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PilotForge Real-Time Jurisdiction Monitoring System provides automated tracking of tax incentive program changes across multiple jurisdictions. The system monitors external sources (RSS feeds, web pages, APIs), detects changes, classifies events, and delivers real-time notifications to connected clients.
+The SceneIQ Real-Time Jurisdiction Monitoring System provides automated tracking of tax incentive program changes across multiple jurisdictions. The system monitors external sources (RSS feeds, web pages, APIs), detects changes, classifies events, and delivers real-time notifications to connected clients.
 
 ## Architecture
 

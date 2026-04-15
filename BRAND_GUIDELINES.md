@@ -1,16 +1,16 @@
-# 🎨 PilotForge Brand Guidelines
+# 🎨 SceneIQ Brand Guidelines
 
 ## Brand Identity
 
 ### Name
-**PilotForge**
+**SceneIQ**
 
 ### Tagline
 Primary: "Tax Incentive Intelligence for Film & TV"
 Alternative: "Forge Your Production's Future"
 
 ### Mission Statement
-PilotForge empowers film and television productions to maximize their tax incentive 
+SceneIQ empowers film and television productions to maximize their tax incentive 
 savings through intelligent location comparison, compliance verification, and 
 professional reporting across 32 global jurisdictions.
 
@@ -82,25 +82,25 @@ professional reporting across 32 global jurisdictions.
 
 ### Primary Tagline Use
 ```
-PilotForge
+SceneIQ
 Tax Incentive Intelligence for Film & TV
 ```
 
 ### Short Form
 ```
-PilotForge: Smart Tax Incentives
+SceneIQ: Smart Tax Incentives
 ```
 
 ### Social Media Bio
 ```
-PilotForge helps film & TV productions maximize tax incentives 
+SceneIQ helps film & TV productions maximize tax incentives 
 across 32 global jurisdictions. 💰🎬
 ```
 
 ### Email Signature
 ```
 [Name]
-[Title], PilotForge
+[Title], SceneIQ
 Tax Incentive Intelligence for Film & TV
 pilotforge.com
 ```
@@ -111,14 +111,14 @@ pilotforge.com
 
 ### API Title
 ```python
-title="PilotForge API"
+title="SceneIQ API"
 description="Tax Incentive Intelligence for Film & TV Productions"
 ```
 
 ### Welcome Message
 ```json
 {
-  "message": "Welcome to PilotForge",
+  "message": "Welcome to SceneIQ",
   "tagline": "Tax Incentive Intelligence for Film & TV",
   "version": "1.0.0"
 }
@@ -127,7 +127,7 @@ description="Tax Incentive Intelligence for Film & TV Productions"
 ### Error Messages
 Keep branded and professional:
 ```
-"PilotForge was unable to process your request..."
+"SceneIQ was unable to process your request..."
 ```
 
 ---
@@ -150,12 +150,12 @@ Keep branded and professional:
 
 ### Copyright Notice
 ```
-Copyright (c) 2025-2026 Howard Neal - PilotForge
+Copyright (c) 2025-2026 Howard Neal - SceneIQ
 ```
 
 ### Trademark Usage
 ```
-PilotForge™
+SceneIQ™
 ```
 (Use ™ until registered, then ®)
 
@@ -164,7 +164,7 @@ PilotForge™
 ## Don'ts
 
 ❌ Don't call it "Pilot Forge" (two words)
-❌ Don't use "The PilotForge" (no article)
+❌ Don't use "The SceneIQ" (no article)
 ❌ Don't abbreviate to "PF" in user-facing content
 ❌ Don't change the capitalization (not "pilotForge" or "PILOTFORGE")
 

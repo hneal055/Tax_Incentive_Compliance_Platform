@@ -1,5 +1,5 @@
 # Test Coverage Matrix
-## Tax Incentive Compliance Platform - PilotForge
+## Tax Incentive Compliance Platform - SceneIQ
 
 This document maps test files to the features they cover across 32 jurisdictions, 33 incentive programs, and 60+ API endpoints.
 

@@ -1,4 +1,4 @@
-# 🎬 PilotForge - Project Summary
+# 🎬 SceneIQ - Project Summary
 
 ## What I Built
 A complete tax incentive calculation platform for film & TV productions

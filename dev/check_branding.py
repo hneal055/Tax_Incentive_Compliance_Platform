@@ -1,5 +1,5 @@
 """
-PilotForge Brand Consistency Checker
+SceneIQ Brand Consistency Checker
 Ensures all references use correct branding
 """
 import re
@@ -10,9 +10,9 @@ from collections import defaultdict
 # Brand consistency rules
 BRAND_RULES = {
     'correct_name': {
-        'pattern': r'\bPilotForge\b',
+        'pattern': r'\bSceneIQ\b',
         'incorrect': ['Pilot Forge', 'pilot forge', 'pilotforge', 'PILOTFORGE'],
-        'message': 'Use "PilotForge" (one word, capital P and F)'
+        'message': 'Use "SceneIQ" (one word, capital P and F)'
     },
     'tagline': {
         'expected': 'Tax Incentive Intelligence for Film & TV',
@@ -23,12 +23,12 @@ BRAND_RULES = {
         'message': 'Use approved tagline'
     },
     'copyright': {
-        'pattern': r'Copyright \(c\) \d{4}(-\d{4})? Howard Neal - PilotForge',
-        'message': 'Use: Copyright (c) 2025-2026 Howard Neal - PilotForge'
+        'pattern': r'Copyright \(c\) \d{4}(-\d{4})? Howard Neal - SceneIQ',
+        'message': 'Use: Copyright (c) 2025-2026 Howard Neal - SceneIQ'
     },
     'api_title': {
-        'pattern': r'title="PilotForge API"',
-        'message': 'API title should be "PilotForge API"'
+        'pattern': r'title="SceneIQ API"',
+        'message': 'API title should be "SceneIQ API"'
     }
 }
 
@@ -90,7 +90,7 @@ def check_file_branding(filepath):
     
     # Check copyright format (for Python files and LICENSE)
     if filepath.suffix in ['.py', ''] or filepath.name == 'LICENSE':
-        if 'Copyright' in content and 'PilotForge' in content:
+        if 'Copyright' in content and 'SceneIQ' in content:
             if not re.search(BRAND_RULES['copyright']['pattern'], content):
                 issues.append({
                     'file': filepath,
@@ -139,7 +139,7 @@ def print_issues_report(issues, files_checked):
     print(f"Issues found: {len(issues)}")
     
     if not issues:
-        print("\n✅ All files follow PilotForge brand guidelines!")
+        print("\n✅ All files follow SceneIQ brand guidelines!")
         return
     
     # Group issues by type
@@ -183,7 +183,7 @@ fixes = [
     {{
         'file': Path('{issue['file']}'),
         'find': '{issue['found']}',
-        'replace': 'PilotForge'
+        'replace': 'SceneIQ'
     }},
 """
     
@@ -210,7 +210,7 @@ print("\\n🎉 Auto-fix complete!")
 
 def main():
     """Main brand consistency checker"""
-    print("🎨 PilotForge Brand Consistency Checker")
+    print("🎨 SceneIQ Brand Consistency Checker")
     print("=" * 60)
     
     # Get project root

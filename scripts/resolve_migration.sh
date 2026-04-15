@@ -86,7 +86,7 @@ DRY_RUN="${DRY_RUN:-0}"
 # ── Banner ────────────────────────────────────────────────────────────────────
 echo -e "${BOLD}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║         PilotForge — Migration Resolution Script             ║"
+echo "║         SceneIQ — Migration Resolution Script             ║"
 echo "║         Target: ${FAILED_MIGRATION}  ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${RESET}"

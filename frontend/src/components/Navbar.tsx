@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
               <Clapperboard className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-white text-xl font-bold tracking-tight">PilotForge</h1>
+              <h1 className="text-white text-xl font-bold tracking-tight">SceneIQ</h1>
               <p className="text-blue-200 text-xs font-medium">Tax Incentive Intelligence</p>
             </div>
           </Link>

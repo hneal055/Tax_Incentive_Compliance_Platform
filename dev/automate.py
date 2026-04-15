@@ -1,5 +1,5 @@
 """
-PilotForge Master Automation Runner
+SceneIQ Master Automation Runner
 One command to automate everything!
 """
 import subprocess
@@ -10,9 +10,9 @@ from datetime import datetime
 
 AUTOMATIONS = {
     'rebrand': {
-        'name': 'Rebrand to PilotForge',
+        'name': 'Rebrand to SceneIQ',
         'script': 'rebrand.py',
-        'description': 'Update all files with PilotForge branding',
+        'description': 'Update all files with SceneIQ branding',
         'requires_api': False
     },
     'version': {
@@ -55,11 +55,11 @@ AUTOMATIONS = {
 
 
 def print_banner():
-    """Print PilotForge banner"""
+    """Print SceneIQ banner"""
     banner = """
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🎬 PilotForge Automation Suite                         ║
+║   🎬 SceneIQ Automation Suite                         ║
 ║   Tax Incentive Intelligence for Film & TV               ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝

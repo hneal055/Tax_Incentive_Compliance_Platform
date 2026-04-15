@@ -6,7 +6,7 @@ import {
   GitCompare, Plus, X, ExternalLink,
 } from 'lucide-react';
 import api from '../api';
-import type { MaximizeResult, ChecklistResponse } from '../types';
+import type { MaximizeResult, ChecklistResponse, UserScenario, MaximumPossibleCreditSummary } from '../types';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -51,16 +51,6 @@ type InputMode = 'latLng' | 'codes';
 type PageMode  = 'maximize' | 'compare';
 type ResultTab = 'incentives' | 'requirements';
 
-interface SavedScenario {
-  id: string;
-  name: string;
-  codes: string;
-  spend: string;
-  type: string;
-  splitSpend: Record<string, string>;
-  savedAt: string;
-}
-
 interface CompareSlot {
   id: string;
   label: string;
@@ -70,18 +60,6 @@ interface CompareSlot {
   result: MaximizeResult | null;
   loading: boolean;
   error: string | null;
-}
-
-// ── localStorage helpers ──────────────────────────────────────────────────────
-
-const LS_KEY = 'pilotforge_scenarios';
-
-function loadScenarios(): SavedScenario[] {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
-  catch { return []; }
-}
-function saveScenarios(list: SavedScenario[]) {
-  localStorage.setItem(LS_KEY, JSON.stringify(list));
 }
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -381,16 +359,22 @@ export default function Maximizer() {
   const [loading,     setLoading]     = useState(false);
   const [result,      setResult]      = useState<MaximizeResult | null>(null);
   const [error,       setError]       = useState<string | null>(null);
+  const [maxSummary,  setMaxSummary]  = useState<MaximumPossibleCreditSummary | null>(null);
+  const [maxHeadline, setMaxHeadline] = useState<string | null>(null);
+  const [maxLoading,  setMaxLoading]  = useState(false);
+  const [maxError,    setMaxError]    = useState<string | null>(null);
   const [resultTab,   setResultTab]   = useState<ResultTab>('incentives');
 
   // ── split spend ──
   const [splitEnabled, setSplitEnabled] = useState(false);
   const [splitSpend,   setSplitSpend]   = useState<Record<string, string>>({});
 
-  // ── saved scenarios ──
-  const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>(loadScenarios);
-  const [savePrompt, setSavePrompt] = useState(false);
-  const [saveName,   setSaveName]   = useState('');
+  // ── saved scenarios (DB-backed) ──
+  const [savedScenarios,     setSavedScenarios]     = useState<UserScenario[]>([]);
+  const [scenariosLoading,   setScenariosLoading]   = useState(false);
+  const [savePrompt,         setSavePrompt]         = useState(false);
+  const [saveName,           setSaveName]           = useState('');
+  const [saving,             setSaving]             = useState(false);
 
   // ── compare slots ──
   const [compareSlots, setCompareSlots] = useState<CompareSlot[]>([
@@ -398,6 +382,15 @@ export default function Maximizer() {
     { id: '2', label: 'Chicago', codes: 'IL, IL-COOK', spend: '5000000', type: 'film', result: null, loading: false, error: null },
     { id: '3', label: 'LA',      codes: 'CA, CA-LA',   spend: '5000000', type: 'film', result: null, loading: false, error: null },
   ]);
+
+  // Load saved scenarios from API on mount
+  useEffect(() => {
+    setScenariosLoading(true);
+    api.scenarios.list()
+      .then(setSavedScenarios)
+      .catch(() => {/* silently fail — scenarios list is non-critical */})
+      .finally(() => setScenariosLoading(false));
+  }, []);
 
   const spendNum = parseFloat(spendRaw.replace(/[^0-9.]/g, '')) || undefined;
   const parsedCodes = useMemo(() =>
@@ -451,32 +444,42 @@ export default function Maximizer() {
   }
 
   // ── save scenario ──
-  function handleSave() {
-    if (!saveName.trim()) return;
-    const scenario: SavedScenario = {
-      id: Date.now().toString(),
-      name: saveName.trim(),
-      codes: codesRaw, spend: spendRaw, type: projectType,
-      splitSpend: splitEnabled ? splitSpend : {},
-      savedAt: new Date().toISOString(),
-    };
-    const updated = [scenario, ...savedScenarios];
-    setSavedScenarios(updated);
-    saveScenarios(updated);
-    setSavePrompt(false); setSaveName('');
+  async function handleSave() {
+    if (!saveName.trim() || saving) return;
+    setSaving(true);
+    try {
+      const created = await api.scenarios.create({
+        name:        saveName.trim(),
+        codes:       codesRaw,
+        spend:       spendRaw,
+        projectType: projectType,
+        splitSpend:  splitEnabled ? splitSpend : {},
+      });
+      setSavedScenarios(prev => [created, ...prev]);
+      setSavePrompt(false);
+      setSaveName('');
+    } catch {
+      /* save failure is non-fatal; user stays in prompt */
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function deleteScenario(id: string) {
-    const updated = savedScenarios.filter(s => s.id !== id);
-    setSavedScenarios(updated);
-    saveScenarios(updated);
+  async function deleteScenario(id: string) {
+    setSavedScenarios(prev => prev.filter(s => s.id !== id));
+    try {
+      await api.scenarios.delete(id);
+    } catch {
+      // Reload from server on failure so UI stays consistent
+      api.scenarios.list().then(setSavedScenarios).catch(() => {});
+    }
   }
 
-  function loadScenario(s: SavedScenario) {
+  function loadScenario(s: UserScenario) {
     setMode('codes');
     handleCodesChange(s.codes);
     setSpendRaw(s.spend);
-    setProjectType(s.type);
+    setProjectType(s.projectType);
     if (Object.keys(s.splitSpend).length > 0) {
       setSplitEnabled(true);
       setSplitSpend(s.splitSpend);
@@ -486,6 +489,42 @@ export default function Maximizer() {
     }
   }
 
+
+  function pickSummaryJurisdiction(): string | undefined {
+    const upperCodes = parsedCodes.map(c => c.toUpperCase());
+    if (upperCodes.some(c => c === 'NJ' || c.startsWith('NJ-') || c.includes('NEW') && c.includes('JERSEY'))) {
+      return 'New Jersey';
+    }
+    if (result?.resolved_state) return result.resolved_state;
+    return undefined;
+  }
+
+  useEffect(() => {
+    if (!result) {
+      setMaxSummary(null);
+      setMaxHeadline(null);
+      setMaxError(null);
+      setMaxLoading(false);
+      return;
+    }
+
+    const jurisdiction = pickSummaryJurisdiction();
+    setMaxLoading(true);
+    setMaxError(null);
+
+    api.maximizer.getMaximumPossibleCredit({ jurisdiction, budget: spendNum })
+      .then((res) => {
+        setMaxHeadline(res.best_case_headline);
+        setMaxSummary(res.summaries[0] ?? null);
+      })
+      .catch((err: unknown) => {
+        setMaxSummary(null);
+        setMaxHeadline(null);
+        setMaxError(err instanceof Error ? err.message : 'Unable to load maximum credit summary');
+      })
+      .finally(() => setMaxLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, spendNum, parsedCodes.join(',')]);
   // ── compare slot actions ──
   function updateSlot(id: string, field: keyof CompareSlot, value: string) {
     setCompareSlots(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
@@ -703,8 +742,8 @@ export default function Maximizer() {
                         onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setSavePrompt(false); }}
                         placeholder="Scenario name"
                         className="flex-1 border border-blue-400 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                      <button type="button" aria-label="Confirm save" onClick={handleSave} className="px-2.5 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700">
-                        <BookmarkCheck className="w-3.5 h-3.5" />
+                      <button type="button" aria-label="Confirm save" onClick={handleSave} disabled={saving} className="px-2.5 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 disabled:opacity-60">
+                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkCheck className="w-3.5 h-3.5" />}
                       </button>
                       <button type="button" aria-label="Cancel save" onClick={() => setSavePrompt(false)} className="px-2.5 py-1.5 text-slate-400 hover:text-slate-600 text-xs rounded-lg border border-slate-200">
                         <X className="w-3.5 h-3.5" />
@@ -728,6 +767,7 @@ export default function Maximizer() {
                     { label: 'Los Angeles — $5M Film',  codes: 'CA, CA-LA',   spend: '5000000', type: 'film' },
                     { label: 'Erie County — $5M Film',  codes: 'NY, NY-ERIE', spend: '5000000', type: 'film' },
                     { label: 'Georgia — $5M Film',      codes: 'GA',          spend: '5000000', type: 'film' },
+                    { label: 'New Jersey — Maximum',  codes: 'NJ, NJ-NEWARK', spend: '5000000', type: 'film' },
                   ].map(preset => (
                     <button key={preset.label} type="button"
                       onClick={() => { setMode('codes'); handleCodesChange(preset.codes); setSpendRaw(preset.spend); setProjectType(preset.type); setSplitEnabled(false); setSplitSpend({}); }}
@@ -742,6 +782,11 @@ export default function Maximizer() {
                 {savedScenarios.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-100">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Saved</p>
+                    {scenariosLoading ? (
+                      <div className="flex items-center gap-2 text-xs text-slate-400 px-1 py-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Loading…
+                      </div>
+                    ) : (
                     <div className="space-y-1">
                       {savedScenarios.map(s => (
                         <div key={s.id} className="flex items-center gap-1">
@@ -756,6 +801,7 @@ export default function Maximizer() {
                         </div>
                       ))}
                     </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -811,6 +857,51 @@ export default function Maximizer() {
                     </div>
                   </div>
 
+
+                  {/* Maximum possible credit summary card */}
+                  <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <h3 className="text-sm font-semibold text-slate-800">Maximum Possible Credit</h3>
+                      {maxLoading && <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />}
+                    </div>
+
+                    {maxError && !maxLoading && (
+                      <p className="text-xs text-slate-500">{maxError}</p>
+                    )}
+
+                    {!maxError && !maxLoading && maxHeadline && (
+                      <p className="text-sm text-slate-700 mb-2">
+                        <span className="font-semibold text-slate-900">{maxHeadline}</span>
+                        {maxSummary?.maximum_credit_amount != null && (
+                          <span className="ml-2 text-slate-500">({fmtUSD(maxSummary.maximum_credit_amount)})</span>
+                        )}
+                      </p>
+                    )}
+
+                    {!maxError && !maxLoading && maxSummary && (
+                      <>
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">Conditions to Achieve Max</p>
+                        <ul className="space-y-1">
+                          {maxSummary.required_conditions.map((condition, i) => (
+                            <li key={`${condition}-${i}`} className="text-xs text-slate-600 flex items-start gap-1.5">
+                              <span className="mt-0.5 shrink-0 text-slate-400">•</span>
+                              <span>{condition}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {maxSummary.additional_benefits.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {maxSummary.additional_benefits.map((benefit, i) => (
+                              <span key={`${benefit.type}-${i}`} className="px-2 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {benefit.type.replace(/_/g, ' ')}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {/* Result tabs */}
                   <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm bg-white no-print">
                     <button type="button" onClick={() => setResultTab('incentives')}

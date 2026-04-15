@@ -8,7 +8,7 @@ router = APIRouter(prefix="/georgia", tags=["Georgia"])
 @router.get("/health")
 async def legacy_health():
     count = await prisma.jurisdiction.count()
-    return {"status": "ok", "api_version": "v1", "engine": "Scene Reader Studio Rules Engine", "platform": "PilotForge", "jurisdictions_loaded": count}
+    return {"status": "ok", "api_version": "v1", "engine": "Scene Reader Studio Rules Engine", "platform": "SceneIQ", "jurisdictions_loaded": count}
 
 @router.get("/jurisdictions")
 async def list_jurisdictions():
